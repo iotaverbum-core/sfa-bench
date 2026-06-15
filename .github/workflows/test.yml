@@ -27,3 +27,6 @@ jobs:
 
       - name: Run tamper and contamination suite
         run: python tamper_suite.py
+
+      - name: Run SFA-Agent demo
+        run: python agent_demo.py

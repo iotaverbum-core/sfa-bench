@@ -1,0 +1,20 @@
+{
+  "facts": [
+    {
+      "id": "f1",
+      "subject": "contract_value",
+      "value": 50000,
+      "unit": "USD"
+    },
+    {
+      "id": "f2",
+      "subject": "approval_status",
+      "value": "pending"
+    },
+    {
+      "id": "f3",
+      "subject": "vendor",
+      "value": "Acme Corp"
+    }
+  ]
+}

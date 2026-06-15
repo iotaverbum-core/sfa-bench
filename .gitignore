@@ -1,3 +1,5 @@
 __pycache__/
 *.pyc
 artifacts/*.sealed.json
+.tamper-tmp/
+agent_runs/
