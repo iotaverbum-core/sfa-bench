@@ -1,8 +1,11 @@
-"""SFA-Bench v0.2: Sealed Failure Artifacts plus failure history.
+"""SFA-Bench v0.3: Sealed Failure Artifacts plus tamper detection.
 
 Reasoning failures are preserved, replayable, classified, hash-chained, and
-analyzable as historical events. stdlib only; no network, no LLM, no repair.
-"""
-from . import artifact, case, categories, families, hashing, history, ledger, verifier  # noqa: F401
+analyzable as historical events. The trust layer can also detect attempts to
+corrupt, launder, rewrite, or contaminate that history.
 
-__version__ = "0.2.0"
+stdlib only; no network, no LLM, no repair.
+"""
+from . import artifact, case, categories, families, hashing, history, ledger, tamper, validation, verifier  # noqa: F401
+
+__version__ = "0.3.0"

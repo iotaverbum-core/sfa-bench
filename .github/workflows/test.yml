@@ -24,3 +24,6 @@ jobs:
 
       - name: Generate history report
         run: python report.py
+
+      - name: Run tamper and contamination suite
+        run: python tamper_suite.py

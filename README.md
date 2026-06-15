@@ -1,4 +1,4 @@
-# SFA-Bench v0.2
+# SFA-Bench v0.3
 
 **Sealed Failure Artifacts** — a small, deterministic benchmark for preserving
 AI reasoning failures as replayable, tamper-evident historical records.
@@ -8,6 +8,8 @@ v0.1 proved that a failure could be sealed and replayed.
 v0.2 adds the next layer:
 
 > Not merely failure storage. Failure history.
+
+v0.3 adds deterministic tamper and contamination checks for that history.
 
 Most AI evaluation compresses failure into a score. SFA-Bench keeps the failure
 record itself: what failed, why it failed, what family of failure it belongs to,
@@ -26,6 +28,7 @@ stdlib only · no network · no LLM calls · no repair step.
 python run_benchmark.py    # verify all cases, seal FAIL artifacts, append ledger observations
 python replay.py           # re-attest artifacts and the hash-chained ledger
 python report.py           # inspect recurrence, growth, extinction, and lineage
+python tamper_suite.py     # prove corruption attempts are detected in temp copies
 ```
 
 Optional demo history:
@@ -38,6 +41,20 @@ python report.py
 The seeder is clearly marked synthetic. It exists so the historical reporting
 subsystem has a multi-year dataset to demonstrate growth, decline, extinction,
 and lineage without relying on external model calls.
+
+---
+
+## Tamper & Contamination Suite
+
+```bash
+python tamper_suite.py
+```
+
+The tamper suite deliberately corrupts temporary copies of artifacts, cases,
+taxonomy, and ledger entries, then confirms SFA-Bench detects the corruption
+without repairing it.
+
+See [docs/tamper-suite.md](docs/tamper-suite.md).
 
 ---
 
