@@ -1,0 +1,5 @@
+{
+  "conclusion": "The contract should be voided because the vendor is blacklisted.",
+  "cited_evidence": ["f3"],
+  "claims": [{"subject": "vendor_blacklisted", "value": true}]
+}

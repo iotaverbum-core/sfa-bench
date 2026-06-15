@@ -1,0 +1,55 @@
+{
+  "taxonomy_version": "sfa.families.v0.2",
+  "families": [
+    {
+      "id": "unsupported_claim",
+      "parent": null,
+      "label": "Unsupported Claim"
+    },
+    {
+      "id": "unsupported_number",
+      "parent": "unsupported_claim",
+      "label": "Unsupported Number"
+    },
+    {
+      "id": "unsupported_attribution",
+      "parent": "unsupported_claim",
+      "label": "Unsupported Attribution"
+    },
+    {
+      "id": "unsupported_date",
+      "parent": "unsupported_claim",
+      "label": "Unsupported Date"
+    },
+    {
+      "id": "unsupported_citation",
+      "parent": "unsupported_claim",
+      "label": "Unsupported Citation"
+    },
+    {
+      "id": "contradicts_evidence",
+      "parent": null,
+      "label": "Contradicts Evidence"
+    },
+    {
+      "id": "fabricated_entity",
+      "parent": null,
+      "label": "Fabricated Entity"
+    },
+    {
+      "id": "missing_required_field",
+      "parent": null,
+      "label": "Missing Required Field"
+    },
+    {
+      "id": "schema_violation",
+      "parent": null,
+      "label": "Schema Violation"
+    },
+    {
+      "id": "uncategorized",
+      "parent": null,
+      "label": "Uncategorized"
+    }
+  ]
+}

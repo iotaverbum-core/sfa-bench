@@ -1,0 +1,5 @@
+{
+  "conclusion": "The vendor is Acme Corp, confirmed by records f3 and f9.",
+  "cited_evidence": ["f3", "f9"],
+  "claims": [{"subject": "vendor", "value": "Acme Corp"}]
+}

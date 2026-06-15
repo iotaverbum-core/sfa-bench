@@ -1,0 +1,5 @@
+{
+  "conclusion": "The contract has been approved.",
+  "cited_evidence": ["f2"],
+  "claims": [{"subject": "approval_status", "value": "approved"}]
+}

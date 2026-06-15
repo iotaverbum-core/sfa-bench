@@ -1,0 +1,14 @@
+{
+  "verifier_version": "sfa-verifier-0.1",
+  "rules": [
+    {"id": "schema", "type": "field_types",
+     "types": {"conclusion": "str", "cited_evidence": "list", "claims": "list"}},
+    {"id": "required", "type": "required_fields",
+     "fields": ["conclusion", "cited_evidence", "claims"]},
+    {"id": "citations", "type": "citations_exist",
+     "field": "cited_evidence", "evidence_collection": "facts", "id_key": "id"},
+    {"id": "grounding", "type": "claims_match_evidence",
+     "claims_field": "claims", "evidence_collection": "facts",
+     "match_on": "subject", "value_key": "value"}
+  ]
+}

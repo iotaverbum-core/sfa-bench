@@ -1,0 +1,8 @@
+{
+  "conclusion": "The contract is valued at 50000 USD and is pending approval.",
+  "cited_evidence": ["f1", "f2"],
+  "claims": [
+    {"subject": "contract_value", "value": 50000},
+    {"subject": "approval_status", "value": "pending"}
+  ]
+}

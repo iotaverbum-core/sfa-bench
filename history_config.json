@@ -1,0 +1,12 @@
+{
+  "period_granularity": "year",
+  "extinction": {
+    "silent_periods_for_extinct": 1,
+    "decline_window": 3
+  },
+  "_notes": {
+    "period_granularity": "year | month | day - the bucket size for recurrence/extinction",
+    "silent_periods_for_extinct": "a family with prior occurrences but 0 in the last N periods, up to the global latest period, is EXTINCT",
+    "decline_window": "a family active in the latest period whose counts strictly decrease over the last K periods is DECLINING"
+  }
+}
