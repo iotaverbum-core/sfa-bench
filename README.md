@@ -1,5 +1,7 @@
 # SFA-Bench v0.3
 
+![SFA-Bench](https://github.com/iotaverbum-core/sfa-bench/actions/workflows/test.yml/badge.svg)
+
 **Sealed Failure Artifacts** — a small, deterministic benchmark for preserving
 AI reasoning failures as replayable, tamper-evident historical records.
 
@@ -19,6 +21,16 @@ when it recurred, whether it declined, and whether it went extinct.
 Evidence → verdict → artifact → ledger → replay → history.
 
 stdlib only · no network · no LLM calls · no repair step.
+
+---
+
+## Public explanation
+
+Read: [Why AI Needs a Memory of Its Own Failed Reasoning](docs/why-ai-needs-failure-memory.md)
+
+Core claim:
+
+> SFA-Bench is not trying to make models smarter. It is trying to make reasoning history harder to falsify.
 
 ---
 
@@ -58,7 +70,7 @@ See [docs/tamper-suite.md](docs/tamper-suite.md).
 
 ---
 
-## What changed in v0.2
+## What changed
 
 ### v0.1
 
@@ -80,6 +92,18 @@ See [docs/tamper-suite.md](docs/tamper-suite.md).
 - historical reports
 - non-destructive v0.1 migration
 
+### v0.3
+
+- deterministic tamper and contamination suite
+- edited artifact detection
+- edited input, evidence, and candidate detection
+- deleted, edited, and reordered ledger-entry detection
+- fake lineage parent detection
+- taxonomy drift detection
+- gold leakage guard
+- hidden repair guard
+- CI execution of the full trust-layer command set
+
 The benchmark begins answering:
 
 - Is this failure new?
@@ -87,6 +111,7 @@ The benchmark begins answering:
 - What family does it belong to?
 - What descendants emerged from it?
 - Is it growing, declining, or extinct?
+- Can corruption or contamination attempts be detected?
 - How has this reasoning system changed over time?
 
 ---
@@ -94,13 +119,14 @@ The benchmark begins answering:
 ## Repository layout
 
 ```text
-sfa-bench-v02/
+sfa-bench/
 ├── README.md
 ├── run_benchmark.py
 ├── replay.py
 ├── report.py
 ├── migrate.py
 ├── seed_history.py
+├── tamper_suite.py
 ├── families.json
 ├── history_config.json
 ├── artifacts/
@@ -113,6 +139,10 @@ sfa-bench-v02/
 │   ├── case_003_fabricated_citation/
 │   ├── case_004_unsupported_claim/
 │   └── case_005_missing_field/
+├── docs/
+│   ├── concept.md
+│   ├── tamper-suite.md
+│   └── why-ai-needs-failure-memory.md
 └── sfa/
     ├── __init__.py
     ├── artifact.py
@@ -122,6 +152,8 @@ sfa-bench-v02/
     ├── hashing.py
     ├── history.py
     ├── ledger.py
+    ├── tamper.py
+    ├── validation.py
     └── verifier.py
 ```
 
@@ -308,12 +340,13 @@ A run is contaminated if any of these happen:
 - **Non-determinism** — network calls, LLM calls, or non-canonical hashing inside
   the verifier path.
 
-v0.2 makes these easier to detect:
+v0.3 makes these easier to detect:
 
 - gold is structurally outside the verifier path,
 - artifacts are content-sealed,
 - the ledger is hash-chained,
-- replay recomputes both record-level and history-level integrity.
+- replay recomputes both record-level and history-level integrity,
+- the tamper suite deliberately corrupts temporary copies and confirms detection.
 
 ---
 
