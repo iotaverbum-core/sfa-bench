@@ -37,6 +37,7 @@ Core claim:
 ## Quick start
 
 ```bash
+python invariant_suite.py # prove verifier history-blindness invariants
 python run_benchmark.py    # verify all cases, seal FAIL artifacts, append ledger observations
 python replay.py           # re-attest artifacts and the hash-chained ledger
 python report.py           # inspect recurrence, growth, extinction, and lineage

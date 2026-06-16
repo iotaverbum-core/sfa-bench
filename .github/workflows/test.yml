@@ -16,6 +16,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Run verifier invariant suite
+        run: python invariant_suite.py
+
       - name: Run benchmark
         run: python run_benchmark.py
 
