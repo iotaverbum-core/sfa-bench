@@ -16,9 +16,6 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run verifier invariant suite
-        run: python invariant_suite.py
-
       - name: Run benchmark
         run: python run_benchmark.py
 
@@ -31,5 +28,11 @@ jobs:
       - name: Run tamper and contamination suite
         run: python tamper_suite.py
 
+      - name: Run verifier invariant suite
+        run: python invariant_suite.py
+
       - name: Run SFA-Agent demo
         run: python agent_demo.py
+
+      - name: Run external candidate demo
+        run: python external_candidate_demo.py

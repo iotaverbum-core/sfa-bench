@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the deterministic v0.4 SFA-Agent proof of concept."""
+"""Run the deterministic v0.5 SFA-Agent proof of concept."""
 import json
 import os
 import sys
@@ -31,7 +31,7 @@ def main():
     agent = SFAAgent(ROOT)
     result = agent.run(task, evidence_pack, DeterministicFakeAdapter())
 
-    print("SFA-Agent v0.4 demo")
+    print("SFA-Agent v0.5 demo")
     print("=" * 48)
     print(f"run_id: {result.run_id}")
     print(f"run_dir: {os.path.relpath(result.run_dir, ROOT)}")
@@ -49,10 +49,14 @@ def main():
         print(f"  {warning['message']}")
     print("both attempts preserved:")
     for name in (
+        "attempt_001_raw_source.json",
         "attempt_001_candidate.json",
+        "attempt_001_provenance.json",
         "attempt_001_verdict.json",
         "attempt_001_warning.json",
+        "attempt_002_raw_source.json",
         "attempt_002_candidate.json",
+        "attempt_002_provenance.json",
         "attempt_002_verdict.json",
         "summary.json",
     ):

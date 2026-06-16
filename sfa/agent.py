@@ -14,8 +14,9 @@ from . import artifact as artifact_mod
 from . import families as fam_mod
 from . import history as history_mod
 from . import ledger as ledger_mod
+from . import provenance as provenance_mod
 from . import verifier as verifier_mod
-from .model_adapter import ModelAdapter
+from .model_adapter import CandidateOutput, ModelAdapter
 
 
 @dataclass(frozen=True)
@@ -37,7 +38,14 @@ class SFAAgent:
         self.families_path = os.path.join(self.root_dir, "families.json")
         self.config_path = os.path.join(self.root_dir, "history_config.json")
 
-    def run(self, task: dict, evidence_pack: dict, model_adapter: ModelAdapter, run_id: str | None = None) -> AgentResult:
+    def run(
+        self,
+        task: dict,
+        evidence_pack: dict,
+        model_adapter: ModelAdapter,
+        run_id: str | None = None,
+        retry_adapter: ModelAdapter | None = None,
+    ) -> AgentResult:
         """Run one task with at most one warning-guided retry.
 
         `evidence_pack` must contain `evidence` and `verifier_rules`. No gold
@@ -54,8 +62,25 @@ class SFAAgent:
         attempts = []
         warning = None
         for attempt_no in (1, 2):
-            candidate = model_adapter.produce_candidate(task, evidence, warning=warning)
+            adapter = retry_adapter if attempt_no == 2 and retry_adapter is not None else model_adapter
+            adapter_output = _coerce_adapter_output(adapter.produce_candidate(task, evidence, warning=warning), adapter)
+            candidate = adapter_output.candidate
+            raw_source_path = None
+            if adapter_output.raw_source is not None:
+                raw_source_path = os.path.join(run_dir, _attempt_name(attempt_no, "raw_source"))
+                _write_json_new(raw_source_path, adapter_output.raw_source)
             _write_json_new(os.path.join(run_dir, _attempt_name(attempt_no, "candidate")), candidate)
+
+            created_at = datetime.now(timezone.utc).isoformat()
+            provenance = provenance_mod.build_provenance(
+                adapter_output,
+                task,
+                evidence,
+                warning_used=warning is not None,
+                created_at=created_at,
+            )
+            provenance_path = os.path.join(run_dir, _attempt_name(attempt_no, "provenance"))
+            _write_json_new(provenance_path, provenance)
 
             verdict = verifier_mod.verify(task, evidence, candidate, rules)
             attempt_record = {
@@ -63,6 +88,10 @@ class SFAAgent:
                 "status": verdict.status,
                 "category": verdict.category,
                 "verdict": verdict.to_dict(),
+                "provenance_path": provenance_path,
+                "raw_source_path": raw_source_path,
+                "source_hash": provenance["source_hash"],
+                "normalized_candidate_hash": provenance["normalized_candidate_hash"],
             }
 
             if verdict.status == "PASS":
@@ -79,7 +108,7 @@ class SFAAgent:
                 return AgentResult(run_id, run_dir, "PASS", attempts, candidate)
 
             family = fam_mod.classify_family(verdict.category, candidate, evidence)
-            observed_at = datetime.now(timezone.utc).isoformat()
+            observed_at = created_at
             failure_artifact = artifact_mod.seal_failure(
                 case_id,
                 task,
@@ -146,6 +175,20 @@ def _prior_family_entries(ledger_path: str, family: str, exclude_entry_hash: str
         for entry in ledger_mod.read_ledger(ledger_path)
         if entry.get("family") == family and entry.get("entry_hash") != exclude_entry_hash
     ]
+
+
+def _coerce_adapter_output(output, adapter) -> CandidateOutput:
+    if isinstance(output, CandidateOutput):
+        return output
+    return CandidateOutput(
+        candidate=output,
+        raw_source=output,
+        adapter_name=getattr(adapter, "adapter_name", adapter.__class__.__name__),
+        adapter_kind=getattr(adapter, "adapter_kind", "legacy_adapter"),
+        adapter_version=getattr(adapter, "adapter_version", "unknown"),
+        source_type=getattr(adapter, "source_type", "legacy_dict"),
+        source_path=getattr(adapter, "source_path", None),
+    )
 
 
 def _warning_from_history(family: str, prior_entries: list[dict], verdict) -> dict:

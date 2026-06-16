@@ -1,4 +1,4 @@
-# SFA-Agent v0.4
+# SFA-Agent v0.5
 
 SFA-Agent is a minimal proof of concept that places SFA-Bench around a
 swappable model adapter. It is not an agent framework.
@@ -15,6 +15,8 @@ The loop is intentionally small:
 
 The verifier is unchanged. It receives only the task input, evidence, candidate,
 and verifier rules. It never receives the warning and never reads gold labels.
+v0.5 also writes provenance for every attempt, but provenance remains outside
+the verifier boundary.
 
 ## Demo
 
@@ -34,11 +36,15 @@ Each run writes append-only records:
 
 ```text
 agent_runs/<run_id>/
+  attempt_001_raw_source.json
   attempt_001_candidate.json
+  attempt_001_provenance.json
   attempt_001_verdict.json
   attempt_001_warning.json
   attempt_001_failure_artifact.json
+  attempt_002_raw_source.json
   attempt_002_candidate.json
+  attempt_002_provenance.json
   attempt_002_verdict.json
   summary.json
 ```
@@ -55,3 +61,4 @@ fails instead of overwriting records.
 - No mutation of previous run records.
 - The warning is input to the next adapter call only.
 - The verifier remains deterministic and warning-blind.
+- Provenance and adapter metadata are never verifier inputs.

@@ -1,0 +1,10 @@
+{
+  "producer": "external-manual-demo",
+  "answer": "The contract has been approved.",
+  "evidence_ids": [
+    "f2"
+  ],
+  "claims_by_subject": {
+    "approval_status": "approved"
+  }
+}
