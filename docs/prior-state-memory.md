@@ -251,3 +251,5 @@ It is not a leaderboard. It is not a production provider integration. It is not 
 The larger point is simple:
 
 > AI systems will not become safer merely by remembering more. They become safer when failure memory is sealed, replayed, and brought forward as Prior State before the next mistake is made.
+
+This article is part of the SFA-Bench research software artifact archived at https://doi.org/10.5281/zenodo.20766587.

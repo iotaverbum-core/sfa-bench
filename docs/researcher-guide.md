@@ -163,6 +163,10 @@ Use `CITATION.cff` from the repository root. The release citation is:
 
 > Neal, Matthew. (2026). SFA-Bench v1.0.0: Researcher Readiness & Reproducibility. https://github.com/iotaverbum-core/sfa-bench
 
+SFA-Bench can be cited using its Zenodo DOI:
+
+DOI: https://doi.org/10.5281/zenodo.20766587
+
 When reporting results, also identify the repository commit, fixture set,
 taxonomy version, and command used. This is necessary to make a deterministic
 result independently reproducible.

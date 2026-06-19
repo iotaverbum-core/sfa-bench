@@ -6,6 +6,21 @@ All notable changes to SFA-Bench will be documented in this file.
 
 No unreleased changes.
 
+## v1.0.3 — DOI and Citation Update (2026-06-19)
+
+### Added
+
+- Documentation/metadata-only release adding the Zenodo DOI to the README,
+  researcher documentation, and citation metadata.
+
+### Not Changed
+
+- No verifier change.
+- No taxonomy change.
+- No runtime behaviour change.
+- No API, model, or network calls.
+- No live provider integration.
+
 ## v1.0.2 — Zenodo DOI Bootstrap (2026-06-19)
 
 ### Purpose

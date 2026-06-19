@@ -207,6 +207,8 @@ Use the repository metadata in [`CITATION.cff`](CITATION.cff). A plain-text form
 
 > Neal, Matthew. (2026). SFA-Bench v1.0.0: Researcher Readiness & Reproducibility. https://github.com/iotaverbum-core/sfa-bench
 
+DOI: https://doi.org/10.5281/zenodo.20766587
+
 ## License
 
 See [LICENSE](LICENSE).
