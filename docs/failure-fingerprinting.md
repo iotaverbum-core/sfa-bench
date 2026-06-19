@@ -54,3 +54,8 @@ The tamper suite mutates temporary copies to confirm that model reassignment and
 dropped occurrences change the sealed fingerprint inputs. The invariant suite
 confirms verifier blindness, repeatable derivation, and fixed-condition
 comparison refusal.
+
+In v0.9, a separate generator-side policy layer may consume a sealed recurrence
+profile derived from this reporting data. It does not change fingerprint
+meaning, fingerprint derivation, taxonomy, or verifier inputs. See
+[Policy-Guided Retry](policy-guided-retry.md).

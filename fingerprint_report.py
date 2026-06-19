@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Re-derive and print the v0.8 illustrative failure fingerprint report."""
+"""Re-derive and print the v0.9 illustrative failure fingerprint report."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -19,7 +19,7 @@ def main() -> int:
         FIXTURE_SET, EXPECTED, ROOT
     )
     conditions = report["conditions"]
-    print("# SFA-Bench v0.8 - Failure Fingerprint Report")
+    print("# SFA-Bench v0.9 - Failure Fingerprint Report")
     print()
     print(f"fixture set: {FIXTURE_SET.relative_to(ROOT).as_posix()}")
     print(f"fixture set id: {report['fixture_set_id']}")

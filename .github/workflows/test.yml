@@ -48,3 +48,6 @@ jobs:
 
       - name: Re-derive failure fingerprint report
         run: python fingerprint_report.py
+
+      - name: Run policy-guided retry demo
+        run: python policy_demo.py

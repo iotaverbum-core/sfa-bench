@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the deterministic v0.8 SFA-Agent proof of concept."""
+"""Run the deterministic v0.9 SFA-Agent proof of concept."""
 import json
 import os
 import sys
@@ -31,7 +31,7 @@ def main():
     agent = SFAAgent(ROOT)
     result = agent.run(task, evidence_pack, DeterministicFakeAdapter())
 
-    print("SFA-Agent v0.8 demo")
+    print("SFA-Agent v0.9 demo")
     print("=" * 48)
     print(f"run_id: {result.run_id}")
     print(f"run_dir: {os.path.relpath(result.run_dir, ROOT)}")
@@ -45,14 +45,18 @@ def main():
     warning_path = os.path.join(result.run_dir, "attempt_001_warning.json")
     if os.path.exists(warning_path):
         warning = _read_json(warning_path)
-        print("warning generated from failure family:")
+        print("policy guidance generated from sealed recurrence profile:")
         print(f"  {warning['message']}")
+        print("  target: generator/adapter input only")
+        print("  verifier received policy metadata: no")
     print("both attempts preserved:")
     for name in (
         "attempt_001_raw_source.json",
         "attempt_001_candidate.json",
         "attempt_001_provenance.json",
         "attempt_001_verdict.json",
+        "attempt_001_policy_input.json",
+        "attempt_001_policy_decision.json",
         "attempt_001_warning.json",
         "attempt_002_raw_source.json",
         "attempt_002_candidate.json",

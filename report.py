@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v0.8 historical reports.
+"""SFA-Bench v0.9 historical reports.
 
 Answers: how has this reasoning system changed over time?
 Reads the ledger and artifacts. Writes nothing.
@@ -70,7 +70,7 @@ def main():
         config = json.load(fh)
     entries = ledger_mod.read_ledger(LEDGER_PATH)
 
-    print("SFA-Bench v0.8 - Failure History Report")
+    print("SFA-Bench v0.9 - Failure History Report")
     print("=" * 74)
     if not entries:
         print("Ledger is empty. Run: python run_benchmark.py")

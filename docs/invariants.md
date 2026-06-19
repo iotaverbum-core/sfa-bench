@@ -1,4 +1,4 @@
-# SFA-Bench v0.8 Verifier and Fingerprint Invariants
+# SFA-Bench v0.9 Verifier, Fingerprint, and Policy Invariants
 
 `invariant_suite.py` protects the verifier's history-blindness, adapter
 airlock, and fingerprint-blindness boundaries.
@@ -33,6 +33,12 @@ The suite proves these properties:
    fingerprint report.
 10. Fingerprints with different taxonomy, evidence-pack, or prompt-condition
     metadata are refused as incomparable.
+11. A policy directive can change in the generator envelope without changing
+    verifier output because only the normalized candidate crosses the boundary.
+12. The same sealed policy input produces byte-identical policy output.
+13. Multiple recurring families compose in fixed priority order.
+14. Prior remediation history deterministically selects escalation and
+    termination levels.
 
 The dynamic check runs:
 
@@ -47,6 +53,10 @@ The dynamic check runs:
 - a fingerprint-metadata differential
 - repeated fingerprint derivation from the same sealed inputs
 - taxonomy, pack, and prompt-condition comparison mismatches
+- a generator-side policy metadata differential
+- repeated policy derivation from the same sealed recurrence input
+- multi-family composition ordering
+- level-2 escalation and level-3 termination fixtures
 
 Run it directly:
 
@@ -58,5 +68,5 @@ This suite is intentionally separate from verifier behavior. It must fail before
 any verifier change is made to justify touching `sfa/verifier.py`.
 
 Warnings, prior-attempt context, provenance, adapter metadata, fingerprint
-summaries, recurrence data, and future policy guidance may shape reporting or
+summaries, recurrence data, and policy guidance may shape reporting or
 generator inputs only. They must never shape verifier judgment.

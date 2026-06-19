@@ -19,6 +19,7 @@ from . import fingerprints as fingerprints_mod
 from . import hashing
 from . import invariants as invariants_mod
 from . import ledger as ledger_mod
+from . import policy as policy_mod
 from . import rederive as rederive_mod
 from . import validation
 from . import verifier as verifier_mod
@@ -435,6 +436,39 @@ def fingerprint_dropped_occurrence_detected(source_root):
         )
 
 
+def edited_policy_decision_detected(source_root):
+    name = "edited policy decision detected"
+    fixture = os.path.join(
+        source_root, "examples", "policy", "multiple_recurring_families.json"
+    )
+    sealed_input = policy_mod.load_policy_fixture(fixture)
+    decision = policy_mod.decide_policy(sealed_input)
+    decision["directives"][0]["directive_text"] = "tampered generator directive"
+    issues = policy_mod.verify_policy_decision(sealed_input, decision)
+    codes = {issue["code"] for issue in issues}
+    expected = {"decision_hash_mismatch", "policy_replay_mismatch"}
+    if expected.issubset(codes):
+        return TamperResult(name, True)
+    return TamperResult(name, False, "missing " + ", ".join(sorted(expected - codes)))
+
+
+def policy_to_verifier_contamination_guard_passed(source_root):
+    name = "policy-to-verifier contamination guard passed"
+    invariants_mod.assert_verifier_static_guard(
+        os.path.join(source_root, "sfa", "verifier.py")
+    )
+    invariants_mod.assert_verifier_callsite_guard(source_root)
+    case_dir = os.path.join(_cases_dir(source_root), "external_candidate_001")
+    result = invariants_mod.run_policy_metadata_blindness_case(
+        input_obj=_read_json(os.path.join(case_dir, "input.json")),
+        evidence_obj=_read_json(os.path.join(case_dir, "evidence.json")),
+        candidate_obj=_read_json(os.path.join(case_dir, "candidate_answer.json")),
+        rules_obj=_read_json(os.path.join(case_dir, "verifier_rules.json")),
+        repo_root=source_root,
+    )
+    return TamperResult(name, result.matched)
+
+
 def gold_leakage_guard_passed(source_root):
     name = "gold leakage guard passed"
     with temp_workspace(source_root) as root:
@@ -572,6 +606,8 @@ CHECKS = (
     adapter_metadata_blindness_guard_passed,
     fingerprint_model_reassignment_detected,
     fingerprint_dropped_occurrence_detected,
+    edited_policy_decision_detected,
+    policy_to_verifier_contamination_guard_passed,
     gold_leakage_guard_passed,
     hidden_repair_guard_passed,
 )

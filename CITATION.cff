@@ -1,11 +1,11 @@
 cff-version: 1.2.0
-title: SFA-Bench v0.8
+title: SFA-Bench v0.9.0
 message: "If you use SFA-Bench, please cite this repository."
 type: software
 authors:
   - family-names: Neal
     given-names: Matthew
-version: "0.8"
+version: "0.9.0"
 date-released: "2026-06-19"
 repository-code: "https://github.com/iotaverbum-core/sfa-bench"
 url: "https://github.com/iotaverbum-core/sfa-bench"
@@ -24,4 +24,5 @@ abstract: >
   verifies replayability, tracks recurrence, and supports offline transcript
   normalization, re-derivation, an optional live adapter boundary, and
   deterministic fixed-condition failure-family fingerprinting over illustrative
-  model-labelled fixtures without live model calls in CI.
+  model-labelled fixtures, and deterministic generator-side policy-guided retry
+  from sealed recurrence profiles without live model calls in CI.

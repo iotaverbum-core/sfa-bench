@@ -1,8 +1,8 @@
 # Architecture Stack
 
-SFA-Bench v0.8 adds failure fingerprinting above the optional live adapter
-boundary while keeping the deterministic core offline, replayable, and CI-safe.
-It is not a production live-provider integration.
+SFA-Bench v0.9 adds deterministic policy-guided retry above failure
+fingerprinting while keeping the verifier fixed, offline, replayable, and
+CI-safe. It is not a production live-provider integration.
 
 The current repository implements the sealed core through local files,
 deterministic verification, tamper-evident records, transcript normalization,
@@ -19,8 +19,8 @@ Benchmark
 -> Transcript replay / re-derivation
 -> Optional live adapter boundary
 -> Failure fingerprinting
---- current v0.8 boundary ---
 -> Policy-guided retry
+--- current v0.9 boundary ---
 ```
 
 ## Release Boundary
@@ -44,15 +44,18 @@ The current deterministic sealed instrument includes:
 - illustrative fixed-condition multi-model transcript fixtures
 - sealed occurrence derivation and deterministic per-model fingerprints
 - fingerprint reassignment/drop tamper checks and comparison guards
+- sealed recurrence-to-directive policy decisions
+- explicit threshold, compose-all priority, and escalation/termination rules
+- policy-blind verifier and policy mutation/contamination guards
 - replay and attestation of sealed artifacts and the ledger chain
 
 Release sequence:
 
-- v0.5 - external candidate provenance boundary
-- v0.6 - offline transcript replay boundary
-- v0.7 - optional live adapter boundary
-- v0.8 - failure fingerprinting
-- v0.9 - policy-guided retry
+- v0.5 — external candidate provenance boundary
+- v0.6 — offline transcript replay boundary
+- v0.7 — optional live adapter boundary
+- v0.8 — failure fingerprinting
+- v0.9 — policy-guided retry
 
 The repo is stable as the deterministic offline instrument with an optional
 adapter airlock and fixture fingerprint analysis, not as a live benchmark or
@@ -110,13 +113,13 @@ under a fixed pack, prompt condition, and taxonomy. `model_id` is a first-class
 provenance/reporting grouping axis, but is never a verifier input. Legacy
 occurrences without `model_id` resolve to `unknown` and are not rewritten.
 
-Policy-guided retry is not implemented. Any future policy guidance must remain
-generator-side only. Warnings and prior-attempt context may shape the next
-generation prompt, but must never shape verifier judgment.
+Policy-guided retry is implemented only on the generator side. Warnings and
+policy decisions may shape the next generation prompt or adapter input, but
+must never shape verifier judgment or normalized candidate semantics.
 
 ## Roadmap Constraints
 
-Live adapters must be optional and disabled in CI. The v0.8 invariant suite
+Live adapters must be optional and disabled in CI. The v0.9 invariant suite
 fails if a live adapter is reachable in CI. The benchmark can remain model-free
 by ingesting external candidates or transcripts produced elsewhere.
 

@@ -1,4 +1,4 @@
-# SFA-Bench v0.8
+# SFA-Bench v0.9.0
 
 ![SFA-Bench](https://github.com/iotaverbum-core/sfa-bench/actions/workflows/test.yml/badge.svg)
 
@@ -30,6 +30,10 @@ v0.8 adds deterministic, replayable failure fingerprinting by fixture
 `model_id`. Failure fingerprints describe the distribution of observed failure
 families under a fixed pack, prompt condition, and taxonomy.
 
+v0.9 adds deterministic policy-guided retry. SFA-Bench v0.9 can
+deterministically choose generator-side remediation directives from sealed
+recurrence profiles. The verifier remains fixed and policy-blind.
+
 Most AI evaluation compresses failure into a score. SFA-Bench keeps the failure
 record itself: what failed, why it failed, what family of failure it belongs to,
 when it recurred, whether it declined, and whether it went extinct.
@@ -56,9 +60,9 @@ For the current implementation boundary and roadmap, see
 
 ## Current Scope vs Roadmap
 
-SFA-Bench v0.8 is stable as a deterministic offline instrument with an optional
-adapter boundary and a fixture-based fingerprint reporting layer. It is not a
-production live-provider integration.
+SFA-Bench v0.9 is a deterministic offline instrument with an optional adapter
+boundary, fixture-based fingerprint reporting, and generator-side policy-guided
+retry. It is not a production live-provider integration.
 
 Current sealed core:
 
@@ -66,7 +70,7 @@ Current sealed core:
 - failure archive
 - tamper-evident history
 - verifier invariants
-- runtime memory and warning generation on the generator side only
+- deterministic policy-guided retry on the generator side only
 - external provenance for local/manual candidates
 - transcript replay / re-derivation for supported offline fixtures
 - optional live adapter boundary with offline fixture adapter default
@@ -74,24 +78,26 @@ Current sealed core:
 - sealed, fixture-derived occurrences carrying reporting-only `model_id`
 - deterministic per-model failure-family fingerprints under fixed conditions
 - fingerprint input seals and reassignment/drop tamper checks
+- versioned family-to-directive mapping with `count >= 2` recurrence threshold
+- compose-all ordering, deterministic escalation, and fail-closed termination
+- sealed policy inputs/decisions and policy-blind verifier checks
 - replay and attestation of sealed artifacts and the ledger chain
 
 Release roadmap:
 
-- v0.5 - external candidate provenance boundary
-- v0.6 - offline transcript replay boundary
-- v0.7 - optional live adapter boundary
-- v0.8 - failure fingerprinting
-- v0.9 - policy-guided retry
+- v0.5 — external candidate provenance boundary
+- v0.6 — offline transcript replay boundary
+- v0.7 — optional live adapter boundary
+- v0.8 — failure fingerprinting
+- v0.9 — policy-guided retry
 
 Everything in the sealed core must remain deterministic, offline, replayable,
 and CI-safe. Live adapters must be optional, disabled in CI, and kept outside
 the verifier boundary.
 
-SFA-Bench v0.8 does not run live models in CI, include production provider API
-calls or results, claim absolute model behaviour, or perform policy-guided
-retry. Its model IDs and reported distributions are explicitly illustrative
-fixture data.
+SFA-Bench v0.9 does not run live models in CI, include production provider API
+calls or results, or claim that models improve under policy. Its model IDs,
+reported distributions, and policy fixtures are explicitly illustrative.
 
 ---
 
@@ -109,6 +115,7 @@ python external_candidate_demo.py # run the external candidate provenance demo
 python transcript_demo.py  # run the offline transcript normalization demo
 python adapter_demo.py     # run the optional adapter boundary demo with the offline fixture adapter
 python fingerprint_report.py # re-derive illustrative fixed-condition fingerprints
+python policy_demo.py      # choose and seal generator-side remediation directives
 ```
 
 Optional demo history:
@@ -232,6 +239,27 @@ Not added in v0.8.0:
 - policy-guided retry
 - verifier or taxonomy changes
 
+### v0.9.0
+
+- deterministic policy-guided retry from sealed recurrence profiles
+- first-order directives for fabrication, contradiction, unsupported claims,
+  and missing required fields
+- explicit `count >= 2` recurrence threshold
+- compose-all directive ordering: fabrication, contradiction, unsupported
+  claims, then missing fields
+- deterministic level-1 directive, level-2 strict constraint, and level-3
+  stop/human-review behavior
+- sealed policy input and decision hashes
+- offline policy fixtures and `policy_demo.py`
+- policy-blind verifier invariants and policy tamper/contamination checks
+
+Not added in v0.9.0:
+
+- production provider integration or live model repair results
+- API, model, or network calls
+- LLM-selected or stochastic policy
+- verifier or taxonomy changes
+
 The benchmark begins answering:
 
 - Is this failure new?
@@ -246,9 +274,8 @@ The benchmark begins answering:
 
 ## Repository layout
 
-v0.8 adds `fingerprint_report.py`, `sfa/fingerprints.py`, and illustrative
-fixtures under `examples/fingerprints/demo_pack/` on top of the v0.7 adapter
-boundary.
+v0.9 adds `policy_demo.py`, `sfa/policy.py`, and illustrative policy fixtures
+under `examples/policy/` on top of the v0.8 fingerprint layer.
 
 ```text
 sfa-bench/
@@ -428,6 +455,31 @@ sample changes those hashes and fails integrity checks.
 The demo uses only `fixture-model-a`, `fixture-model-b`, and
 `fixture-model-c`. These are illustrative fixtures, not real provider results
 or model rankings. See [Failure Fingerprinting](docs/failure-fingerprinting.md).
+
+---
+
+## Policy-guided retry
+
+Policy-guided retry means: use recurring failure-family evidence to shape the
+next proposal. It does not change verifier judgment. The default versioned
+threshold is `count >= 2` in the relevant recurrence scope.
+
+All recurring mapped families compose in this fixed order:
+
+1. `fabricated_entity`
+2. `contradicts_evidence`
+3. `unsupported_claim`
+4. `missing_required_field`
+
+Level 1 applies the family directive. Level 2 adds a stricter output constraint
+after the same directive was already applied. Level 3 stops automated retry and
+requires human review; retry attempts beyond the configured maximum also stop.
+Policy-guided retry is replayable because the policy decision is derived from
+sealed inputs.
+
+The directive may enter a generator prompt, adapter input, or generator-side
+warning. The verifier receives only the normalized candidate, evidence, task,
+and fixed rules. See [Policy-Guided Retry](docs/policy-guided-retry.md).
 
 ---
 

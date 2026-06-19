@@ -1,0 +1,19 @@
+{
+  "schema": "sfa.policy_fixture.v0.1",
+  "illustrative_fixture_data": true,
+  "fixture_id": "policy-termination",
+  "model_id": "fixture-model-policy",
+  "current_failure_family": "missing_required_field",
+  "retry_attempt_number": 3,
+  "recurrence_profile": {
+    "scope": "fixture-model-policy",
+    "total_failures": 5,
+    "families": {
+      "missing_required_field": {"count": 5, "rate": 1.0}
+    }
+  },
+  "prior_remediation_history": [
+    {"family": "missing_required_field", "directive_id": "schema_first", "applied": true},
+    {"family": "missing_required_field", "directive_id": "schema_first", "applied": true}
+  ]
+}

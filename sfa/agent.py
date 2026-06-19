@@ -14,6 +14,7 @@ from . import artifact as artifact_mod
 from . import families as fam_mod
 from . import history as history_mod
 from . import ledger as ledger_mod
+from . import policy as policy_mod
 from . import provenance as provenance_mod
 from . import verifier as verifier_mod
 from .model_adapter import CandidateOutput, ModelAdapter
@@ -46,7 +47,7 @@ class SFAAgent:
         run_id: str | None = None,
         retry_adapter: ModelAdapter | None = None,
     ) -> AgentResult:
-        """Run one task with at most one warning-guided retry.
+        """Run one task with at most one deterministic policy-guided retry.
 
         `evidence_pack` must contain `evidence` and `verifier_rules`. No gold
         verdict is accepted or loaded by this method.
@@ -131,8 +132,6 @@ class SFAAgent:
                 run_id,
                 provenance["model_id"],
             )
-            prior_entries = _prior_family_entries(self.ledger_path, family, exclude_entry_hash=ledger_entry["entry_hash"])
-
             attempt_record.update(
                 {
                     "family": family,
@@ -141,13 +140,35 @@ class SFAAgent:
                     "ledger_entry_hash": ledger_entry["entry_hash"],
                 }
             )
+            if attempt_no == 1:
+                policy_input = _policy_input_from_ledger(
+                    self.ledger_path,
+                    model_id=provenance["model_id"],
+                    current_failure_family=family,
+                )
+                decision = policy_mod.decide_policy(policy_input)
+                policy_input_path = os.path.join(run_dir, _attempt_name(attempt_no, "policy_input"))
+                policy_decision_path = os.path.join(run_dir, _attempt_name(attempt_no, "policy_decision"))
+                _write_json_new(policy_input_path, policy_input)
+                _write_json_new(policy_decision_path, decision)
+                warning = _warning_from_policy(decision, verdict)
+                _write_json_new(os.path.join(run_dir, _attempt_name(attempt_no, "warning")), warning)
+                attempt_record.update(
+                    {
+                        "policy_input_path": policy_input_path,
+                        "policy_decision_path": policy_decision_path,
+                        "policy_decision_hash": decision["decision_hash"],
+                        "policy_escalation_level": decision["escalation_level"],
+                        "policy_generator_side_only": True,
+                    }
+                )
+                _write_json_new(os.path.join(run_dir, _attempt_name(attempt_no, "verdict")), attempt_record)
+                attempts.append(attempt_record)
+                if decision["directives"] and not decision["termination_recommended"]:
+                    continue
+                break
             _write_json_new(os.path.join(run_dir, _attempt_name(attempt_no, "verdict")), attempt_record)
             attempts.append(attempt_record)
-
-            if attempt_no == 1:
-                warning = _warning_from_history(family, prior_entries, verdict)
-                _write_json_new(os.path.join(run_dir, _attempt_name(attempt_no, "warning")), warning)
-                continue
             break
 
         summary = {
@@ -178,14 +199,6 @@ class SFAAgent:
         )
 
 
-def _prior_family_entries(ledger_path: str, family: str, exclude_entry_hash: str | None = None) -> list[dict]:
-    return [
-        entry
-        for entry in ledger_mod.read_ledger(ledger_path)
-        if entry.get("family") == family and entry.get("entry_hash") != exclude_entry_hash
-    ]
-
-
 def _coerce_adapter_output(output, adapter) -> CandidateOutput:
     if isinstance(output, CandidateOutput):
         return output
@@ -200,33 +213,52 @@ def _coerce_adapter_output(output, adapter) -> CandidateOutput:
     )
 
 
-def _warning_from_history(family: str, prior_entries: list[dict], verdict) -> dict:
-    recent = prior_entries[-3:]
-    count = len(prior_entries)
-    if count:
-        message = (
-            f"{count} prior occurrence(s) in family '{family}'. "
-            "Retry by checking every claim value directly against the cited evidence."
-        )
-    else:
-        message = (
-            f"No prior occurrences in family '{family}'. "
-            "Retry by checking every claim value directly against the cited evidence."
-        )
-    return {
-        "family": family,
-        "prior_occurrence_count": count,
-        "recent_prior_occurrences": [
-            {
-                "case_id": entry.get("case_id"),
-                "category": entry.get("category"),
-                "period": entry.get("period"),
-                "artifact_hash": entry.get("artifact_hash"),
+def _policy_input_from_ledger(
+    ledger_path: str, *, model_id: str, current_failure_family: str
+) -> dict:
+    entries = [
+        entry
+        for entry in ledger_mod.read_ledger(ledger_path)
+        if entry.get("model_id", "unknown") == model_id
+    ]
+    counts: dict[str, int] = {}
+    for entry in entries:
+        family = entry.get("family")
+        if family:
+            counts[family] = counts.get(family, 0) + 1
+    total = len(entries)
+    profile = {
+        "scope": f"model_id:{model_id}",
+        "total_failures": total,
+        "families": {
+            family: {
+                "count": count,
+                "rate": round(count / total, 6) if total else 0.0,
             }
-            for entry in recent
-        ],
+            for family, count in sorted(counts.items())
+        },
+    }
+    return policy_mod.make_policy_input(
+        model_id=model_id,
+        recurrence_profile=profile,
+        current_failure_family=current_failure_family,
+        retry_attempt_number=1,
+        prior_remediation_history=[],
+    )
+
+
+def _warning_from_policy(decision: dict, verdict) -> dict:
+    return {
+        "policy_version": decision["policy_version"],
+        "policy_decision_hash": decision["decision_hash"],
+        "triggered_families": decision["triggered_families"],
+        "directives": decision["directives"],
+        "escalation_level": decision["escalation_level"],
+        "termination_recommended": decision["termination_recommended"],
+        "directive_target": decision["directive_target"],
         "failed_explanation": verdict.explanation,
-        "message": message,
+        "message": decision["generated_caution"],
+        "verifier_received_policy_metadata": False,
     }
 
 

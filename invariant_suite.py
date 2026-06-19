@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v0.8 verifier and fingerprint invariant suite.
+"""SFA-Bench v0.9 verifier, fingerprint, and policy invariant suite.
 
 Run: python invariant_suite.py
 """
@@ -48,7 +48,7 @@ def _summarize_verdict(output):
 def main() -> int:
     invariants = _load_invariants_module()
 
-    print("SFA-Bench v0.8 Verifier & Fingerprint Invariant Suite")
+    print("SFA-Bench v0.9 Verifier, Fingerprint & Policy Invariant Suite")
     print("=" * 74)
 
     invariants.assert_verifier_static_guard(VERIFIER_PATH)
@@ -125,12 +125,34 @@ def main() -> int:
     print("fixed-condition comparison guard: PASS")
     print("  taxonomy, evidence-pack, and prompt-condition mismatches are refused")
 
+    policy_blind = invariants.run_policy_metadata_blindness_case(
+        input_obj=external_case["input_obj"],
+        evidence_obj=external_case["evidence_obj"],
+        candidate_obj=external_case["candidate_obj"],
+        rules_obj=external_case["rules_obj"],
+        repo_root=ROOT,
+    )
+    print("policy-blindness:")
+    print("  generator-only directive differential: PASS")
+    print(f"    baseline: {_summarize_verdict(policy_blind.empty_output)}")
+    print(f"    guidance changed: {_summarize_verdict(policy_blind.populated_output)}")
+
+    invariants.assert_policy_determinism(ROOT)
+    print("policy determinism: PASS")
+    print("  same sealed recurrence input produces byte-identical decision output")
+    invariants.assert_policy_composition_determinism(ROOT)
+    print("policy composition determinism: PASS")
+    print("  multiple recurring families follow the fixed family priority order")
+    invariants.assert_policy_escalation_determinism(ROOT)
+    print("policy escalation determinism: PASS")
+    print("  prior remediation history deterministically selects levels 2 and 3")
+
     invariants.assert_ci_live_adapter_unreachable()
     print("CI live-adapter unreachability: PASS")
     print("  CI registry exposes no live adapters and rejects live opt-in")
 
     print("=" * 74)
-    print("PASS: verifier blindness and deterministic fixed-condition fingerprinting hold")
+    print("PASS: verifier blindness, fingerprints, and generator-side policy invariants hold")
     return 0
 
 

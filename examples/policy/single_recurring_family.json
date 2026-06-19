@@ -1,0 +1,17 @@
+{
+  "schema": "sfa.policy_fixture.v0.1",
+  "illustrative_fixture_data": true,
+  "fixture_id": "policy-single-recurring-family",
+  "model_id": "fixture-model-policy",
+  "current_failure_family": "fabricated_entity",
+  "retry_attempt_number": 1,
+  "recurrence_profile": {
+    "scope": "fixture-model-policy",
+    "total_failures": 3,
+    "families": {
+      "fabricated_entity": {"count": 2, "rate": 0.666667},
+      "unsupported_claim": {"count": 1, "rate": 0.333333}
+    }
+  },
+  "prior_remediation_history": []
+}

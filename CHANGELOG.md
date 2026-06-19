@@ -6,6 +6,29 @@ All notable changes to SFA-Bench will be documented in this file.
 
 No unreleased changes.
 
+## v0.9.0 - 2026-06-19
+
+### Added
+
+- Deterministic policy-guided retry from sealed recurrence profiles.
+- Versioned `count >= 2` recurrence threshold and fixed compose-all family order.
+- Generator-side directives for `fabricated_entity`, `contradicts_evidence`,
+  `unsupported_claim`, and `missing_required_field`.
+- Deterministic level-2 constraints and level-3 stop/human-review termination.
+- Sealed policy input, recurrence-profile, config, and decision hashes.
+- Illustrative single-family, multi-family, escalation, and termination fixtures.
+- Offline `policy_demo.py`, policy determinism/composition/escalation invariants,
+  and policy mutation/contamination tamper checks.
+- Minimal SFA-Agent integration that sends policy output only to the retry adapter.
+
+### Not Added
+
+- No production provider results or live-model repair claims.
+- No API, model, or network calls.
+- No stochastic or LLM-selected policy.
+- No verifier changes.
+- No taxonomy changes.
+
 ## v0.8.0 - 2026-06-19
 
 ### Added

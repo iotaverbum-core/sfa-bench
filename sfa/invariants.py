@@ -47,6 +47,13 @@ FORBIDDEN_VERIFIER_REFERENCES = (
     "prior_failures",
     "sampling_params",
     "policy_decisions",
+    "policy",
+    "policy_input",
+    "policy_decision",
+    "directive",
+    "directives",
+    "retry_count",
+    "remediation",
     "caution",
 )
 
@@ -69,6 +76,13 @@ FORBIDDEN_VERIFIER_CALL_ARGUMENTS = (
     "prior_failures",
     "sampling_params",
     "policy_decisions",
+    "policy",
+    "policy_input",
+    "policy_decision",
+    "directive",
+    "directives",
+    "retry_count",
+    "remediation",
     "caution",
 )
 
@@ -385,6 +399,76 @@ def assert_fingerprint_fixed_condition_guard(repo_root: str | Path) -> None:
         except fingerprints.FingerprintError:
             continue
         raise InvariantFailure(f"fingerprint comparison accepted mismatched {field}")
+
+
+def run_policy_metadata_blindness_case(
+    *,
+    input_obj: dict[str, Any],
+    evidence_obj: dict[str, Any],
+    candidate_obj: dict[str, Any],
+    rules_obj: dict[str, Any],
+    repo_root: str | Path,
+) -> HistoryBlindnessResult:
+    """Prove generator guidance is removed before the verifier boundary."""
+    from sfa import policy as policy_mod
+    from sfa import verifier
+
+    fixture = Path(repo_root) / "examples" / "policy" / "multiple_recurring_families.json"
+    sealed_input = policy_mod.load_policy_fixture(fixture)
+    decision_a = policy_mod.decide_policy(sealed_input)
+    decision_b = deepcopy(decision_a)
+    decision_b["generated_caution"] = "different generator-only caution"
+    envelope_a = {"candidate": deepcopy(candidate_obj), "guidance": decision_a}
+    envelope_b = {"candidate": deepcopy(candidate_obj), "guidance": decision_b}
+    candidate_a = envelope_a["candidate"]
+    candidate_b = envelope_b["candidate"]
+    output_a = verifier.verify(input_obj, evidence_obj, candidate_a, rules_obj).to_dict()
+    output_b = verifier.verify(input_obj, evidence_obj, candidate_b, rules_obj).to_dict()
+    result = HistoryBlindnessResult("policy metadata blindness", output_a, output_b)
+    if not result.matched:
+        raise InvariantFailure("verifier output changed with generator-only policy metadata")
+    return result
+
+
+def assert_policy_determinism(repo_root: str | Path) -> None:
+    from sfa import policy as policy_mod
+
+    fixture = Path(repo_root) / "examples" / "policy" / "single_recurring_family.json"
+    sealed_input = policy_mod.load_policy_fixture(fixture)
+    decision_a = policy_mod.decide_policy(sealed_input)
+    decision_b = policy_mod.decide_policy(sealed_input)
+    if policy_mod.decision_bytes(decision_a) != policy_mod.decision_bytes(decision_b):
+        raise InvariantFailure("same sealed policy input produced different decision bytes")
+
+
+def assert_policy_composition_determinism(repo_root: str | Path) -> None:
+    from sfa import policy as policy_mod
+
+    fixture = Path(repo_root) / "examples" / "policy" / "multiple_recurring_families.json"
+    sealed_input = policy_mod.load_policy_fixture(fixture)
+    decision = policy_mod.decide_policy(sealed_input)
+    selected = [item["directive_id"] for item in decision["directives"]]
+    expected = ["closed_world_entity", "claim_by_claim_evidence_check"]
+    if selected != expected:
+        raise InvariantFailure(f"policy composition order changed: {selected!r}")
+
+
+def assert_policy_escalation_determinism(repo_root: str | Path) -> None:
+    from sfa import policy as policy_mod
+
+    base = Path(repo_root) / "examples" / "policy"
+    level_2_input = policy_mod.load_policy_fixture(base / "escalation_after_recurrence.json")
+    level_2_a = policy_mod.decide_policy(level_2_input)
+    level_2_b = policy_mod.decide_policy(level_2_input)
+    stop_input = policy_mod.load_policy_fixture(base / "termination.json")
+    stop_a = policy_mod.decide_policy(stop_input)
+    stop_b = policy_mod.decide_policy(stop_input)
+    if level_2_a != level_2_b or level_2_a["escalation_level"] != 2:
+        raise InvariantFailure("level-2 escalation is not deterministic")
+    if stop_a != stop_b or stop_a["escalation_level"] != 3:
+        raise InvariantFailure("level-3 escalation is not deterministic")
+    if stop_a["termination_recommended"] is not True:
+        raise InvariantFailure("level-3 policy did not fail closed")
 
 
 def assert_ci_live_adapter_unreachable() -> None:

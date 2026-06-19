@@ -1,4 +1,4 @@
-# SFA-Agent v0.7
+# SFA-Agent v0.9
 
 SFA-Agent is a minimal proof of concept that places SFA-Bench around a
 swappable model adapter. It is not an agent framework.
@@ -9,8 +9,9 @@ The loop is intentionally small:
 2. Ask the adapter for a `candidate_answer.json`-compatible object.
 3. Run the existing deterministic verifier.
 4. Return the answer immediately on `PASS`.
-5. On `FAIL`, seal the failure artifact, append the occurrence ledger, query
-   prior failures in the same family, write a short warning, and retry once.
+5. On `FAIL`, seal the failure artifact, append the occurrence ledger, derive a
+   sealed policy decision from recurrence counts, and retry only through the
+   generator-side warning path.
 6. Preserve both attempts in `agent_runs/<run_id>/`.
 
 The verifier is unchanged. It receives only the task input, evidence, candidate,
@@ -19,7 +20,7 @@ v0.5 also writes provenance for every attempt, but provenance remains outside
 the verifier boundary.
 
 The current adapter and transcript demos are offline and deterministic.
-SFA-Bench v0.7 introduces an optional adapter boundary with an offline fixture
+SFA-Bench v0.7 introduced an optional adapter boundary with an offline fixture
 adapter default. A future production live model may sit behind that adapter
 boundary, but it must remain outside the sealed deterministic core and disabled
 in CI. The verifier must still receive only input, evidence, normalized
@@ -47,6 +48,8 @@ agent_runs/<run_id>/
   attempt_001_candidate.json
   attempt_001_provenance.json
   attempt_001_verdict.json
+  attempt_001_policy_input.json
+  attempt_001_policy_decision.json
   attempt_001_warning.json
   attempt_001_failure_artifact.json
   attempt_002_raw_source.json
@@ -66,8 +69,10 @@ fails instead of overwriting records.
 - No hidden repair.
 - No mutation of sealed artifacts.
 - No mutation of previous run records.
-- The warning is input to the next adapter call only.
+- The policy warning is input to the next adapter call only.
 - The verifier remains deterministic and warning-blind.
 - Provenance and adapter metadata are never verifier inputs.
-- Policy-guided retry is not implemented; future policy logic must remain
-  generator-side only.
+- Policy input and decision artifacts are sealed and replayable.
+- The default recurrence threshold is `count >= 2`; directives compose in a
+  fixed order and escalation/termination is deterministic.
+- No live model repair or policy effectiveness claim is made.
