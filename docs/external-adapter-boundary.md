@@ -1,6 +1,7 @@
 # External Candidate Provenance Boundary
 
-SFA-Agent v0.7 can evaluate candidate answers produced outside this repository
+The external boundary, introduced in v0.5-v0.7 and retained in v1.0.0, can
+evaluate candidate answers produced outside this repository
 without letting external metadata contaminate the verifier.
 
 This keeps the benchmark model-free: external candidates or transcripts can be
@@ -15,6 +16,9 @@ The verifier still receives only:
 
 It remains blind to history, ledgers, artifacts, agent run folders, warnings,
 provenance, adapter metadata, and gold labels.
+
+The verifier invariants remain the architectural spine. Adapters may shape or
+transport proposals; adapter state may never shape verifier judgment.
 
 ## Manual JSON Adapter
 
@@ -92,6 +96,6 @@ a history warning, and retries once with
 
 Both attempts are preserved under `agent_runs/<run_id>/`.
 
-See [Architecture Stack](architecture-stack.md) for the release boundary between
-the deterministic offline instrument, the optional adapter boundary, and the
-live-model roadmap.
+See [Architecture Stack](architecture-stack.md) for the boundary between the
+deterministic offline instrument and the optional adapter surface. v1.0.0 adds
+no provider integration or live-model roadmap work.

@@ -1,9 +1,9 @@
-# SFA-Bench v0.9 Tamper & Contamination Suite
+# SFA-Bench v1.0.0 Tamper & Contamination Suite
 
 SFA-Bench preserves failure history as sealed artifacts plus an append-only
-occurrence ledger. The tamper suite exists to prove that this history cannot be
-silently falsified by editing artifacts, laundering case inputs, rewriting the
-ledger, drifting taxonomy, or leaking gold labels into the verifier path.
+occurrence ledger. The tamper suite tests whether covered mutations are detected:
+editing artifacts, laundering case inputs, rewriting the ledger, drifting
+taxonomy, or leaking gold labels into the verifier path.
 
 Run it with:
 
@@ -67,13 +67,13 @@ The suite is intentionally destructive, but only inside temporary workspaces.
 Each test copies the repository state, performs one corruption, runs validation,
 and discards the copy.
 
-This keeps the production failure record append-only and immutable while still
-proving that attempted edits would be detected.
+This keeps the checked-out failure record unchanged while demonstrating that the
+covered attempted edits are detected by the implemented checks.
 
 ## Stranger Trust
 
 The suite supports stranger-trust: a reviewer who did not create the benchmark
-can run one command and observe that falsification attempts fail visibly. The
+can run one command and observe that covered falsification attempts fail visibly. The
 claim is not based on reputation or a hidden service. It is based on local,
 deterministic, stdlib-only checks over JSON files.
 
@@ -88,3 +88,6 @@ The invariant remains:
 ```text
 Evidence -> verdict -> artifact -> ledger -> replay -> history -> tamper detection
 ```
+
+This is tamper evidence within an explicit test scope, not a universal security
+or cryptographic proof. See [Claims and Limitations](claims-and-limitations.md).

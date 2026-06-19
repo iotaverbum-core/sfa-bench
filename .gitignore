@@ -6,3 +6,5 @@ agent_runs/
 transcript_runs/
 adapter_runs/
 fingerprint_runs/
+policy_runs/
+.verify-all-*/

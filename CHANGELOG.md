@@ -6,6 +6,33 @@ All notable changes to SFA-Bench will be documented in this file.
 
 No unreleased changes.
 
+## v1.0.0 - 2026-06-19
+
+### Added
+
+- Researcher-readiness and clean-clone reproducibility release.
+- Stdlib-only `release_gate.py` with explicit untracked-file, protected-path,
+  staged-runtime, generated-artifact, CI-coverage, and command-header checks.
+- Stdlib-only `verify_all.py` full offline verification runner using an isolated
+  temporary worktree so checked-out history is not mutated.
+- Researcher guide, claims and limitations, and Prior State development note.
+- Consolidated offline CI commands and a canonical human verification command.
+
+### Changed
+
+- Reworked the README quickstart, architecture, guarantees, limitations, and
+  citation guidance for a fresh researcher.
+- Clarified supported and unsupported claims across the documentation.
+- Updated project and user-facing command labels to v1.0.0.
+
+### Not Changed
+
+- No verifier behaviour or verifier version change.
+- No taxonomy or taxonomy version change.
+- No live model, API, provider, or network calls.
+- No required secrets or live adapters in CI.
+- No new research-layer capability beyond hardening and documentation.
+
 ## v0.9.0 - 2026-06-19
 
 ### Added

@@ -1,11 +1,11 @@
 cff-version: 1.2.0
-title: SFA-Bench v0.9.0
+title: "SFA-Bench v1.0.0: Researcher Readiness & Reproducibility"
 message: "If you use SFA-Bench, please cite this repository."
 type: software
 authors:
   - family-names: Neal
     given-names: Matthew
-version: "0.9.0"
+version: "1.0.0"
 date-released: "2026-06-19"
 repository-code: "https://github.com/iotaverbum-core/sfa-bench"
 url: "https://github.com/iotaverbum-core/sfa-bench"
@@ -19,10 +19,8 @@ keywords:
   - failure-analysis
   - replayability
 abstract: >
-  SFA-Bench is a model-agnostic benchmark for sealed, replayable AI reasoning
-  failures and tamper-evident failure history. It preserves failure artifacts,
-  verifies replayability, tracks recurrence, and supports offline transcript
-  normalization, re-derivation, an optional live adapter boundary, and
-  deterministic fixed-condition failure-family fingerprinting over illustrative
-  model-labelled fixtures, and deterministic generator-side policy-guided retry
-  from sealed recurrence profiles without live model calls in CI.
+  SFA-Bench is a deterministic, model-agnostic benchmark harness for preserving
+  AI reasoning failures as replayable, tamper-evident historical records. It
+  supports offline artifact and ledger attestation, transcript re-derivation,
+  fixed-condition fixture fingerprinting, and deterministic generator-side
+  policy guidance without live model, API, provider, or network calls in CI.

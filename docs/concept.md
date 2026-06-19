@@ -69,7 +69,7 @@ The verifier must never read `expected_verdict.json` during verification. Gold v
 
 A stranger should be able to clone the repo, run the benchmark, and inspect the output without trusting the author personally.
 
-The repo should prove its own basic claims:
+The repo should provide executable evidence for its bounded claims:
 
 ```bash
 python run_benchmark.py
@@ -79,16 +79,22 @@ python report.py
 
 If those commands pass, the repository demonstrates the first trust layer: failure preservation, replayability, and tamper-evident history.
 
-As of v0.9, the stable implementation is the deterministic offline instrument:
+As of v1.0.0, the stable implementation is the deterministic offline instrument:
 benchmark, failure archive, tamper-evident history, verifier invariants,
 generator-side runtime memory, external provenance, transcript replay /
 re-derivation, optional live adapter boundary, offline fixture adapter, and
 fixed-condition failure fingerprinting over illustrative fixtures, plus
 deterministic generator-side policy-guided retry from sealed recurrence data.
 
-SFA-Bench v0.9 does not run live models in CI, include production provider API
+SFA-Bench v1.0.0 does not run live models in CI, include production provider API
 calls or observed provider results, claim absolute model behaviour, or
 claim that policy improves live provider outputs.
+
+The architecture remains cumulative: benchmark, failure archive,
+tamper-evident history, verifier invariants, external provenance, offline
+transcript replay, optional live adapter boundary, failure fingerprinting, and
+policy-guided retry. The verifier invariants are the spine throughout. Memory
+and policy may shape generator proposals; they never shape verifier judgment.
 
 ## What SFA-Bench is not
 

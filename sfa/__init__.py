@@ -1,4 +1,4 @@
-"""SFA-Bench v0.9: Deterministic generator-side policy-guided retry.
+"""SFA-Bench v1.0.0: Researcher readiness and reproducibility.
 
 Reasoning failures are preserved, replayable, classified, hash-chained, and
 analyzable as historical events. The trust layer can also detect attempts to

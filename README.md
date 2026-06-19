@@ -1,596 +1,211 @@
-# SFA-Bench v0.9.0
+# SFA-Bench v1.0.0
 
 ![SFA-Bench](https://github.com/iotaverbum-core/sfa-bench/actions/workflows/test.yml/badge.svg)
 
-**Sealed Failure Artifacts** — a small, deterministic benchmark for preserving
-AI reasoning failures as replayable, tamper-evident historical records.
+SFA-Bench is a deterministic benchmark harness for preserving AI reasoning failures as replayable, tamper-evident historical records.
 
-v0.1 proved that a failure could be sealed and replayed.
+## What SFA-Bench is
 
-v0.2 adds the next layer:
+SFA-Bench is a small, model-agnostic, offline research instrument. It evaluates
+fixture candidate answers against explicit evidence and rules, seals failures,
+records occurrences in a hash-chained ledger, and replays those records to test
+whether the evidence, candidate, verdict, taxonomy assignment, and history remain
+consistent.
 
-> Not merely failure storage. Failure history.
+The repository also demonstrates isolated transcript normalization, an optional
+and disabled-by-default adapter boundary, deterministic failure fingerprints, and
+generator-side retry policy. These layers preserve a fixed, history-blind
+verifier boundary.
 
-v0.3 adds deterministic tamper and contamination checks for that history.
+## What this is not
 
-v0.4 adds a minimal SFA-Agent loop around the verifier and failure history.
+- Not a live model leaderboard.
+- Not a production provider integration.
+- Not a claim that fixture data represents real model behaviour.
+- Not a replacement for human evaluation.
+- Not a verifier that learns from history.
+- Not a claim that every possible form of tampering is impossible.
 
-v0.5 adds an external candidate provenance boundary for local/manual candidate
-files.
+See [Claims and Limitations](docs/claims-and-limitations.md) before interpreting
+results.
 
-v0.6 adds offline transcript fixtures, deterministic transcript normalization,
-and re-derivation of supported transcript verdicts from sealed normalized
-inputs.
+## Requirements and installation
 
-v0.7 introduces the optional live adapter boundary: an adapter interface and
-registry, a deterministic offline fixture adapter, CI guards proving live
-adapters are unreachable in CI, and an offline adapter demo.
+- Python 3.11 or later.
+- Git, for the release gate.
+- No third-party Python packages.
+- No API keys, provider credentials, network access, or live adapter.
 
-v0.8 adds deterministic, replayable failure fingerprinting by fixture
-`model_id`. Failure fingerprints describe the distribution of observed failure
-families under a fixed pack, prompt condition, and taxonomy.
-
-v0.9 adds deterministic policy-guided retry. SFA-Bench v0.9 can
-deterministically choose generator-side remediation directives from sealed
-recurrence profiles. The verifier remains fixed and policy-blind.
-
-Most AI evaluation compresses failure into a score. SFA-Bench keeps the failure
-record itself: what failed, why it failed, what family of failure it belongs to,
-when it recurred, whether it declined, and whether it went extinct.
-
-**Core rule:** No hidden repair. No gold leakage. No rewritten history.
-Evidence → verdict → artifact → ledger → replay → history.
-
-stdlib only · no network · no LLM calls · no repair step.
-
----
-
-## Public explanation
-
-Read: [Why AI Needs a Memory of Its Own Failed Reasoning](docs/why-ai-needs-failure-memory.md)
-
-Core claim:
-
-> SFA-Bench is not trying to make models smarter. It is trying to make reasoning history harder to falsify.
-
-For the current implementation boundary and roadmap, see
-[Architecture Stack](docs/architecture-stack.md).
-
----
-
-## Current Scope vs Roadmap
-
-SFA-Bench v0.9 is a deterministic offline instrument with an optional adapter
-boundary, fixture-based fingerprint reporting, and generator-side policy-guided
-retry. It is not a production live-provider integration.
-
-Current sealed core:
-
-- benchmark
-- failure archive
-- tamper-evident history
-- verifier invariants
-- deterministic policy-guided retry on the generator side only
-- external provenance for local/manual candidates
-- transcript replay / re-derivation for supported offline fixtures
-- optional live adapter boundary with offline fixture adapter default
-- CI guard proving live adapters are unreachable in CI
-- sealed, fixture-derived occurrences carrying reporting-only `model_id`
-- deterministic per-model failure-family fingerprints under fixed conditions
-- fingerprint input seals and reassignment/drop tamper checks
-- versioned family-to-directive mapping with `count >= 2` recurrence threshold
-- compose-all ordering, deterministic escalation, and fail-closed termination
-- sealed policy inputs/decisions and policy-blind verifier checks
-- replay and attestation of sealed artifacts and the ledger chain
-
-Release roadmap:
-
-- v0.5 — external candidate provenance boundary
-- v0.6 — offline transcript replay boundary
-- v0.7 — optional live adapter boundary
-- v0.8 — failure fingerprinting
-- v0.9 — policy-guided retry
-
-Everything in the sealed core must remain deterministic, offline, replayable,
-and CI-safe. Live adapters must be optional, disabled in CI, and kept outside
-the verifier boundary.
-
-SFA-Bench v0.9 does not run live models in CI, include production provider API
-calls or results, or claim that models improve under policy. Its model IDs,
-reported distributions, and policy fixtures are explicitly illustrative.
-
----
-
-## Quick start
+From a clean clone:
 
 ```bash
-python invariant_suite.py # prove verifier history-blindness invariants
-python run_benchmark.py    # verify all cases, seal FAIL artifacts, append ledger observations
-python replay.py           # re-attest artifacts and the hash-chained ledger
-python rederive.py         # re-derive supported transcript fixture verdicts
-python report.py           # inspect recurrence, growth, extinction, and lineage
-python tamper_suite.py     # prove corruption attempts are detected in temp copies
-python agent_demo.py       # run the deterministic SFA-Agent demo
-python external_candidate_demo.py # run the external candidate provenance demo
-python transcript_demo.py  # run the offline transcript normalization demo
-python adapter_demo.py     # run the optional adapter boundary demo with the offline fixture adapter
-python fingerprint_report.py # re-derive illustrative fixed-condition fingerprints
-python policy_demo.py      # choose and seal generator-side remediation directives
+git clone https://github.com/iotaverbum-core/sfa-bench.git
+cd sfa-bench
+python verify_all.py
 ```
 
-Optional demo history:
+There is no package-install step. Run commands from the repository root.
+
+## Quickstart
+
+Run the benchmark, attest the generated records, and inspect history:
 
 ```bash
-python seed_history.py     # seed synthetic 2026-2029 history + a lineage chain
+python run_benchmark.py
+python replay.py
 python report.py
 ```
 
-The seeder is clearly marked synthetic. It exists so the historical reporting
-subsystem has a multi-year dataset to demonstrate growth, decline, extinction,
-and lineage without relying on external model calls.
+`run_benchmark.py` may create ignored sealed artifacts and append observations to
+`history/occurrences.jsonl`. For reproducible full verification without changing
+the checked-out ledger, use the isolated runner below.
 
----
-
-## Tamper & Contamination Suite
+## Run everything offline
 
 ```bash
-python tamper_suite.py
+python verify_all.py
 ```
 
-The tamper suite deliberately corrupts temporary copies of artifacts, cases,
-taxonomy, and ledger entries, then confirms SFA-Bench detects the corruption
-without repairing it.
-
-See [docs/tamper-suite.md](docs/tamper-suite.md).
-
----
-
-## What changed
-
-### v0.1
-
-- sealed artifacts
-- replayability
-- artifact hashes
-- gold-verdict isolation
-- basic failure categories
-
-### v0.2
-
-- hierarchical failure families
-- leaf-family classification
-- parent/child lineage on artifacts
-- append-only occurrence ledger
-- ledger hash-chain attestation
-- recurrence metrics
-- extinction status
-- historical reports
-- non-destructive v0.1 migration
-
-### v0.3
-
-- deterministic tamper and contamination suite
-- edited artifact detection
-- edited input, evidence, and candidate detection
-- deleted, edited, and reordered ledger-entry detection
-- fake lineage parent detection
-- taxonomy drift detection
-- gold leakage guard
-- hidden repair guard
-- CI execution of the full trust-layer command set
-
-### v0.4
-
-- minimal SFA-Agent proof of concept
-- deterministic fake model adapter
-- warning-guided single retry from failure history
-- append-only agent run folders
-
-### v0.5
-
-- local/manual external candidate adapter
-- raw source preservation
-- per-attempt provenance records
-- raw source and normalized candidate hashes
-- external candidate provenance demo
-
-### v0.6
-
-- offline transcript fixtures
-- deterministic transcript normalization from exactly one fenced JSON candidate
-- transcript replay records with raw-source, normalized-candidate, evidence,
-  rules, and verifier-input hashes
-- re-derivation of supported transcript verdicts without model calls
-- normalization-isolation invariant
-- targeted transcript/provenance tamper checks
-
-### v0.7.0
-
-- optional live adapter boundary at the proposer side
-- `sfa.adapters` interface and registry
-- deterministic offline fixture transcript adapter
-- fail-closed live adapter placeholder disabled by default and unavailable in CI
-- CI live-adapter unreachability invariant
-- adapter-airlock and adapter-metadata-blindness invariants
-- offline adapter boundary demo
-
-Not added in v0.7.0:
-
-- production model provider calls
-- live model results
-- model fingerprinting
-- policy-guided retry
-- verifier or taxonomy changes
-
-### v0.8.0
-
-- deterministic fingerprint computation over sealed fixture-derived occurrences
-- model identity as a reporting/provenance grouping dimension
-- fixed evidence-pack, case-set, prompt/adapter, fixture-set, and taxonomy metadata
-- per-model family counts, rates, dominant family, and recurrence summary
-- offline `fingerprint_report.py` re-derivation
-- model reassignment and dropped-occurrence tamper checks
-- fingerprint-blind verifier and fixed-condition comparison invariants
-
-Not added in v0.8.0:
-
-- production provider results or default live benchmarking
-- API, model, or network calls
-- policy-guided retry
-- verifier or taxonomy changes
-
-### v0.9.0
-
-- deterministic policy-guided retry from sealed recurrence profiles
-- first-order directives for fabrication, contradiction, unsupported claims,
-  and missing required fields
-- explicit `count >= 2` recurrence threshold
-- compose-all directive ordering: fabrication, contradiction, unsupported
-  claims, then missing fields
-- deterministic level-1 directive, level-2 strict constraint, and level-3
-  stop/human-review behavior
-- sealed policy input and decision hashes
-- offline policy fixtures and `policy_demo.py`
-- policy-blind verifier invariants and policy tamper/contamination checks
-
-Not added in v0.9.0:
-
-- production provider integration or live model repair results
-- API, model, or network calls
-- LLM-selected or stochastic policy
-- verifier or taxonomy changes
-
-The benchmark begins answering:
-
-- Is this failure new?
-- Has this failure happened before?
-- What family does it belong to?
-- What descendants emerged from it?
-- Is it growing, declining, or extinct?
-- Can corruption or contamination attempts be detected?
-- How has this reasoning system changed over time?
-
----
-
-## Repository layout
-
-v0.9 adds `policy_demo.py`, `sfa/policy.py`, and illustrative policy fixtures
-under `examples/policy/` on top of the v0.8 fingerprint layer.
-
-```text
-sfa-bench/
-├── README.md
-├── run_benchmark.py
-├── replay.py
-├── report.py
-├── migrate.py
-├── seed_history.py
-├── tamper_suite.py
-├── families.json
-├── history_config.json
-├── artifacts/
-│   └── .gitkeep
-├── history/
-│   └── .gitkeep
-├── cases/
-│   ├── case_001_grounded_pass/
-│   ├── case_002_contradicts_evidence/
-│   ├── case_003_fabricated_citation/
-│   ├── case_004_unsupported_claim/
-│   └── case_005_missing_field/
-├── docs/
-│   ├── concept.md
-│   ├── tamper-suite.md
-│   └── why-ai-needs-failure-memory.md
-└── sfa/
-    ├── __init__.py
-    ├── artifact.py
-    ├── case.py
-    ├── categories.py
-    ├── families.py
-    ├── hashing.py
-    ├── history.py
-    ├── ledger.py
-    ├── tamper.py
-    ├── validation.py
-    └── verifier.py
-```
-
----
-
-## Case boundary: no gold leakage
-
-Each directory under `cases/` contains five files:
-
-| file | role | who may read it |
-|---|---|---|
-| `input.json` | the task / question | verifier |
-| `evidence.json` | the facts the answer must be grounded in | verifier |
-| `candidate_answer.json` | the model answer under test | verifier |
-| `verifier_rules.json` | the rules + verifier version | verifier |
-| `expected_verdict.json` | gold label | **scoring only — never the verifier** |
-
-`run_benchmark.py` calls `load_verification_inputs()` first, produces a verdict,
-seals failures, appends ledger observations, and only then calls
-`load_expected_verdict()` for scoring.
-
-The verifier signature has no gold parameter:
-
-```python
-verify(input_obj, evidence_obj, candidate_obj, rules_obj)
-```
-
-Gold leakage therefore requires a visible code change.
-
----
-
-## Failure categories vs failure families
-
-A **category** is the verifier's primary rejection reason:
-
-- `CONTRADICTS_EVIDENCE`
-- `UNSUPPORTED_CLAIM`
-- `FABRICATED_ENTITY`
-- `MISSING_REQUIRED_FIELD`
-- `SCHEMA_VIOLATION`
-
-A **family** is the historical grouping used for recurrence and evolution.
-
-`families.json` defines the taxonomy:
-
-```text
-unsupported_claim
-├── unsupported_number
-├── unsupported_attribution
-├── unsupported_date
-└── unsupported_citation
-contradicts_evidence
-fabricated_entity
-missing_required_field
-schema_violation
-uncategorized
-```
-
-Artifacts store only the leaf family. Parentage and depth are derived from the
-taxonomy so the hierarchy does not get duplicated across records.
-
----
-
-## Sealed artifact v0.2
-
-A failure artifact is written to `artifacts/<case_id>.sealed.json` for every
-FAIL. It includes:
-
-```text
-schema
-case_id
-sealed_at
-input_hash
-evidence_hash
-candidate_hash
-verifier_version
-failure_category
-failure_family
-failure_explanation
-parent_artifact_id
-lineage_depth
-artifact_hash
-```
-
-`artifact_hash` seals every other field. Change the artifact and `replay.py`
-reports tampering.
-
-Artifacts are append-only. Re-running the benchmark confirms an existing artifact
-instead of overwriting it. If the case changed underneath the artifact, the runner
-reports `DIVERGENCE`.
-
----
-
-## Occurrence ledger
-
-Artifacts record distinct failures. The ledger records observations of failures
-over time.
-
-`history/occurrences.jsonl` is append-only and hash-chained. Each line contains:
-
-```text
-seq
-observed_at
-period
-run_id
-artifact_hash
-case_id
-category
-family
-synthetic
-prev_hash
-entry_hash
-```
-
-New transcript-derived occurrences may also include `model_id`. Existing
-entries are not rewritten; reporting code treats a missing identity as
-`unknown`.
-
-This means SFA-Bench can distinguish:
-
-- the sealed identity of a failure artifact, and
-- the historical recurrence of that failure across runs.
-
-`replay.py` verifies the whole ledger chain. Deleting, inserting, reordering, or
-editing a ledger entry breaks the chain.
-
----
-
-## Failure fingerprinting
-
-`fingerprint_report.py` loads the illustrative transcript fixture set,
-normalizes each candidate, runs the unchanged verifier, seals occurrence inputs,
-and aggregates pass/fail and failure-family distributions by `model_id`.
-
-The fixture set fixes the evidence pack, case set, prompt/adapter condition, and
-taxonomy. A separate expected record seals the fixture set, derived occurrence
-input, and model summaries. Reassigning a sample to another model or dropping a
-sample changes those hashes and fails integrity checks.
-
-The demo uses only `fixture-model-a`, `fixture-model-b`, and
-`fixture-model-c`. These are illustrative fixtures, not real provider results
-or model rankings. See [Failure Fingerprinting](docs/failure-fingerprinting.md).
-
----
-
-## Policy-guided retry
-
-Policy-guided retry means: use recurring failure-family evidence to shape the
-next proposal. It does not change verifier judgment. The default versioned
-threshold is `count >= 2` in the relevant recurrence scope.
-
-All recurring mapped families compose in this fixed order:
-
-1. `fabricated_entity`
-2. `contradicts_evidence`
-3. `unsupported_claim`
-4. `missing_required_field`
-
-Level 1 applies the family directive. Level 2 adds a stricter output constraint
-after the same directive was already applied. Level 3 stops automated retry and
-requires human review; retry attempts beyond the configured maximum also stop.
-Policy-guided retry is replayable because the policy decision is derived from
-sealed inputs.
-
-The directive may enter a generator prompt, adapter input, or generator-side
-warning. The verifier receives only the normalized candidate, evidence, task,
-and fixed rules. See [Policy-Guided Retry](docs/policy-guided-retry.md).
-
----
-
-## Historical reporting
-
-`report.py` derives history from the ledger. It writes nothing.
-
-Reports include:
-
-- family status table
-- top recurring failures
-- fastest growing failures
-- longest surviving failures
-- extinct failures
-- newest failure families
-- lineage chains
-
-The key question changes from:
-
-> Did this run pass?
-
-To:
-
-> How has this system's reasoning changed over time?
-
----
-
-## Extinction rules
-
-`history_config.json` controls period bucketing and extinction logic.
-
-Default:
-
-```json
-{
-  "period_granularity": "year",
-  "extinction": {
-    "silent_periods_for_extinct": 1,
-    "decline_window": 3
-  }
-}
-```
-
-A family is:
-
-- `active` if it appears in the latest period,
-- `declining` if its latest window strictly decreases and remains nonzero,
-- `extinct` if it existed before but is silent in the latest period.
-
----
-
-## What counts as contamination
-
-A run is contaminated if any of these happen:
-
-- **Gold leakage** — `expected_verdict.json` reaches the verifier.
-- **Hidden repair** — the candidate answer or evidence is changed so a failed
-  answer passes instead of being recorded as a failure.
-- **Rewritten history** — sealed artifacts or ledger entries are edited after
-  the fact.
-- **Verifier laundering** — the verifier is allowed to learn from gold labels or
-  expected outcomes and then pretend it judged only evidence.
-- **Non-determinism** — network calls, LLM calls, or non-canonical hashing inside
-  the verifier path.
-
-v0.3 makes these easier to detect:
-
-- gold is structurally outside the verifier path,
-- artifacts are content-sealed,
-- the ledger is hash-chained,
-- replay recomputes both record-level and history-level integrity,
-- the tamper suite deliberately corrupts temporary copies and confirms detection.
-
----
-
-## Learning without rewriting history
-
-SFA-Bench does not repair answers. It preserves failure.
-
-A future learner may read artifacts and ledger entries, cluster failure families,
-and improve future candidates. But it may not rewrite the artifact that recorded
-the original failure.
-
-That is the standard:
-
-> AI may learn from failure, but it may not launder failure.
-
----
-
-## Migration from v0.1
-
-If you have v0.1 artifacts in `artifacts/`, run:
+`verify_all.py` copies the current source into a temporary isolated worktree,
+runs all twelve commands in release order, stops on the first failure, and then
+removes the temporary worktree. The checked-out occurrence ledger and runtime
+directories are not modified. The environment forces CI mode and disables
+adapter-selection environment variables. If operating-system permissions prevent
+cleanup, the retained `.verify-all-*` runtime path is printed explicitly and can
+be removed after inspection.
+
+The command covers:
+
+1. benchmark execution;
+2. artifact and ledger replay;
+3. history reporting;
+4. tamper and contamination checks;
+5. verifier invariants;
+6. the SFA-Agent demo;
+7. external candidate provenance;
+8. transcript normalization;
+9. transcript verdict re-derivation;
+10. the offline adapter boundary;
+11. failure fingerprint re-derivation; and
+12. policy-guided retry.
+
+For individual non-mutating checks:
 
 ```bash
-python migrate.py
+python replay.py
+python rederive.py
+python invariant_suite.py
+python fingerprint_report.py
+python policy_demo.py
 ```
 
-Migration is additive and non-destructive. v0.1 artifacts are not rewritten. The
-script only backfills ledger entries so old sealed failures become part of the
-v0.2 historical record.
+## Release gate
 
----
+```bash
+python release_gate.py
+python release_gate.py --ci
+python release_gate.py --release v1.0.0
+```
 
-## Philosophy
+The gate explicitly runs `git status --short --untracked-files=all`; it never
+treats `git diff --name-only` as release clearance. It fails for untracked files,
+changes to protected history/verifier/taxonomy paths, staged runtime or generated
+sealed output, incomplete CI command coverage, and stale command headers. See
+[Prior State](docs/prior-state.md).
 
-SFA-Bench is not trying to make a model smarter.
+## Architecture and release stack
 
-It is trying to give AI a preserved history of failed reasoning.
+```text
+benchmark
+↓
+failure archive
+↓
+tamper-evident history
+↓
+verifier invariants
+↓
+external provenance
+↓
+offline transcript replay
+↓
+optional live adapter boundary
+↓
+failure fingerprinting
+↓
+policy-guided retry
+```
 
-That matters because intelligence without history keeps rediscovering the same
-mistakes. Intelligence with preserved history can accumulate disciplined
-self-correction.
+- v0.1 — deterministic benchmark and failure archive
+- v0.2 — sealed artifacts and occurrence history
+- v0.3 — tamper and contamination checks
+- v0.4 — minimal SFA-Agent loop and invariant spine
+- v0.5 — external candidate provenance boundary
+- v0.6 — offline transcript replay boundary
+- v0.7 — optional live adapter boundary
+- v0.8 — deterministic failure fingerprinting
+- v0.9 — deterministic generator-side policy-guided retry
+- v1.0 — researcher readiness, reproducibility, release automation, and claims discipline
 
-The failure record is the product.
+v1.0 adds no research capability layer. The verifier invariants remain the spine
+through every layer: generator-side memory and policy may shape proposals, but
+verifier-side judgment remains fixed and blind. Policy may shape the next answer;
+it may never shape the judgment.
+
+See [Architecture Stack](docs/architecture-stack.md) for data-flow and trust
+boundaries.
+
+## Core guarantees
+
+Under the checked-in fixtures and implemented checks:
+
+- sealed artifacts replay against current inputs, evidence, candidates, and rules;
+- the occurrence ledger is verified as a hash chain;
+- covered artifact, ledger, lineage, taxonomy, and contamination mutations are detected;
+- verifier history-blindness and metadata isolation are tested;
+- transcript normalization is isolated from verifier inputs;
+- live adapters are optional, disabled by default, and blocked in CI;
+- failure fingerprints are deterministic under fixed fixture conditions; and
+- policy decisions are deterministic, generator-side, and excluded from verifier judgment.
+
+## Interpreting fixtures
+
+Cases and transcript packs are deterministic test fixtures. Model labels in the
+fingerprint demo are illustrative identifiers, not observations of production
+models. Passing the suite establishes reproducibility of the repository's
+implemented checks; it does not establish external model quality or semantic
+completeness.
+
+The [Researcher Guide](docs/researcher-guide.md) explains outputs, fixture scope,
+and supported interpretations.
+
+## Limitations
+
+SFA-Bench does not call live models, rank real providers, prove that a retry
+policy improves models, inspect hidden chain-of-thought, or provide security
+guarantees beyond its implemented canonical hashing, sealing, replay, and test
+checks. The rule-based verifier is intentionally narrow and is not semantically
+complete.
+
+## Documentation
+
+- [Researcher Guide](docs/researcher-guide.md)
+- [Claims and Limitations](docs/claims-and-limitations.md)
+- [Architecture Stack](docs/architecture-stack.md)
+- [Concept](docs/concept.md)
+- [Verifier Invariants](docs/invariants.md)
+- [SFA-Agent](docs/sfa-agent.md)
+- [External Adapter Boundary](docs/external-adapter-boundary.md)
+- [Failure Fingerprinting](docs/failure-fingerprinting.md)
+- [Policy-Guided Retry](docs/policy-guided-retry.md)
+- [Tamper Suite](docs/tamper-suite.md)
+- [Prior State](docs/prior-state.md)
+
+## Citation
+
+Use the repository metadata in [`CITATION.cff`](CITATION.cff). A plain-text form:
+
+> Neal, Matthew. (2026). SFA-Bench v1.0.0: Researcher Readiness & Reproducibility. https://github.com/iotaverbum-core/sfa-bench
+
+## License
+
+See [LICENSE](LICENSE).

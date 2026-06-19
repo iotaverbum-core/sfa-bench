@@ -1,4 +1,4 @@
-# SFA-Bench v0.9 Verifier, Fingerprint, and Policy Invariants
+# SFA-Bench v1.0.0 Verifier, Fingerprint, and Policy Invariants
 
 `invariant_suite.py` protects the verifier's history-blindness, adapter
 airlock, and fingerprint-blindness boundaries.
@@ -6,7 +6,7 @@ airlock, and fingerprint-blindness boundaries.
 These invariants are a continuing spine for the architecture, not a completed
 one-time rung. Every future layer must preserve the same boundary.
 
-The suite proves these properties:
+The suite tests these properties under the checked-in implementation and fixtures:
 
 1. `sfa/verifier.py` does not import or reference history-adjacent or
    adapter-adjacent symbols.

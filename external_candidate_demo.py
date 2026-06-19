@@ -40,7 +40,7 @@ def main():
         retry_adapter=ExternalCandidateAdapter(GOOD_CANDIDATE),
     )
 
-    print("SFA-Agent v0.9 external candidate demo")
+    print("SFA-Agent v1.0.0 external candidate demo")
     print("=" * 56)
     print(f"external candidate loaded: {os.path.relpath(BAD_CANDIDATE, ROOT)}")
     print(f"run_id: {result.run_id}")

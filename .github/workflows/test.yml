@@ -16,38 +16,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run benchmark
-        run: python run_benchmark.py
+      - name: Run full offline verification
+        run: python verify_all.py
 
-      - name: Replay sealed artifacts and ledger
-        run: python replay.py
-
-      - name: Generate history report
-        run: python report.py
-
-      - name: Run tamper and contamination suite
-        run: python tamper_suite.py
-
-      - name: Run verifier invariant suite
-        run: python invariant_suite.py
-
-      - name: Run SFA-Agent demo
-        run: python agent_demo.py
-
-      - name: Run external candidate demo
-        run: python external_candidate_demo.py
-
-      - name: Run transcript replay demo
-        run: python transcript_demo.py
-
-      - name: Re-derive transcript fixture verdicts
-        run: python rederive.py
-
-      - name: Run adapter boundary demo
-        run: python adapter_demo.py
-
-      - name: Re-derive failure fingerprint report
-        run: python fingerprint_report.py
-
-      - name: Run policy-guided retry demo
-        run: python policy_demo.py
+      - name: Run repository release gate
+        run: python release_gate.py --ci

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v0.9 verifier, fingerprint, and policy invariant suite.
+"""SFA-Bench v1.0.0 verifier, fingerprint, and policy invariant suite.
 
 Run: python invariant_suite.py
 """
@@ -48,7 +48,7 @@ def _summarize_verdict(output):
 def main() -> int:
     invariants = _load_invariants_module()
 
-    print("SFA-Bench v0.9 Verifier, Fingerprint & Policy Invariant Suite")
+    print("SFA-Bench v1.0.0 Verifier, Fingerprint & Policy Invariant Suite")
     print("=" * 74)
 
     invariants.assert_verifier_static_guard(VERIFIER_PATH)

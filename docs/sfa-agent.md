@@ -1,6 +1,6 @@
-# SFA-Agent v0.9
+# SFA-Agent in SFA-Bench v1.0.0
 
-SFA-Agent is a minimal proof of concept that places SFA-Bench around a
+SFA-Agent is a minimal offline proof of concept that places SFA-Bench around a
 swappable model adapter. It is not an agent framework.
 
 The loop is intentionally small:
@@ -18,6 +18,10 @@ The verifier is unchanged. It receives only the task input, evidence, candidate,
 and verifier rules. It never receives the warning and never reads gold labels.
 v0.5 also writes provenance for every attempt, but provenance remains outside
 the verifier boundary.
+
+Generator-side memory may shape the retry proposal. The sealed policy decision
+may shape the next adapter input. Neither history nor policy may shape the
+verifier's judgment.
 
 The current adapter and transcript demos are offline and deterministic.
 SFA-Bench v0.7 introduced an optional adapter boundary with an offline fixture

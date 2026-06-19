@@ -8,6 +8,9 @@ Failure fingerprints describe the distribution of observed failure families
 under a fixed pack, prompt condition, and taxonomy. They do not describe
 absolute model behaviour.
 
+In the v1.0.0 architecture this remains a reporting layer above the continuing
+verifier-invariant spine; it is not a new verifier input.
+
 ## Derivation
 
 `fingerprint_report.py` performs this offline pipeline:
@@ -59,3 +62,6 @@ In v0.9, a separate generator-side policy layer may consume a sealed recurrence
 profile derived from this reporting data. It does not change fingerprint
 meaning, fingerprint derivation, taxonomy, or verifier inputs. See
 [Policy-Guided Retry](policy-guided-retry.md).
+
+Policy may use this reporting data to shape a next proposal. It may never shape
+the verifier's judgment.

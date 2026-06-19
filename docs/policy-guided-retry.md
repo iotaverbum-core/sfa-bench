@@ -1,12 +1,17 @@
 # Policy-Guided Retry
 
-SFA-Bench v0.9 can deterministically choose generator-side remediation
-directives from sealed recurrence profiles.
+The policy layer, introduced in v0.9 and retained unchanged in v1.0.0, can
+deterministically choose generator-side remediation directives from sealed
+recurrence profiles.
 
 Policy-guided retry means: use recurring failure-family evidence to shape the
 next proposal. It does not mean using recurrence evidence to change the
 verifier's judgment. A directive may be supplied to a generator prompt, adapter
 input, or generator-side warning only.
+
+In v1.0.0 this remains the top research layer. The release adds reproducibility
+hardening only. Generator-side memory may shape proposals; verifier-side
+judgment remains fixed and blind.
 
 ## Deterministic policy
 
