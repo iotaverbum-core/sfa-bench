@@ -4,3 +4,4 @@ artifacts/*.sealed.json
 .tamper-tmp/
 agent_runs/
 transcript_runs/
+adapter_runs/

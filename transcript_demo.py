@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the v0.6 offline transcript normalization demo."""
+"""Run the v0.7 offline transcript normalization demo."""
 from datetime import datetime, timezone
 import json
 import os
@@ -100,7 +100,7 @@ def main():
     verifier_normalized_only = _verifier_normalized_only(input_obj, evidence_obj, normalized.candidate, rules_obj, verdict.to_dict())
 
     metadata = raw_source["metadata"]
-    print("SFA-Bench v0.6 transcript demo")
+    print("SFA-Bench v0.7 transcript demo")
     print("=" * 56)
     print(f"transcript loaded: {os.path.relpath(TRANSCRIPT_PATH, ROOT)}")
     print(f"model_id: {metadata['model_id']}")

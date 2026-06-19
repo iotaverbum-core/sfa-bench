@@ -10,7 +10,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 def main():
-    print("SFA-Bench v0.6 transcript replay / re-derivation")
+    print("SFA-Bench v0.7 transcript replay / re-derivation")
     print("=" * 74)
     records = rederive_mod.discover_records(ROOT)
     if not records:

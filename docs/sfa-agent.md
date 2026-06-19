@@ -1,4 +1,4 @@
-# SFA-Agent v0.6
+# SFA-Agent v0.7
 
 SFA-Agent is a minimal proof of concept that places SFA-Bench around a
 swappable model adapter. It is not an agent framework.
@@ -18,9 +18,11 @@ and verifier rules. It never receives the warning and never reads gold labels.
 v0.5 also writes provenance for every attempt, but provenance remains outside
 the verifier boundary.
 
-The current adapter and transcript demos are offline and deterministic. A future live model may
-sit behind an adapter, but it must remain outside the sealed deterministic core
-and disabled in CI. The verifier must still receive only input, evidence,
+The current adapter and transcript demos are offline and deterministic.
+SFA-Bench v0.7 introduces an optional adapter boundary with an offline fixture
+adapter default. A future production live model may sit behind that adapter
+boundary, but it must remain outside the sealed deterministic core and disabled
+in CI. The verifier must still receive only input, evidence, normalized
 candidate, and verifier rules.
 
 ## Demo
@@ -60,7 +62,7 @@ fails instead of overwriting records.
 ## Boundaries
 
 - No network calls.
-- No real LLM adapter yet.
+- No production LLM provider adapter.
 - No hidden repair.
 - No mutation of sealed artifacts.
 - No mutation of previous run records.

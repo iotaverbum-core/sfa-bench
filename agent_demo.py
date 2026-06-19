@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the deterministic v0.6 SFA-Agent proof of concept."""
+"""Run the deterministic v0.7 SFA-Agent proof of concept."""
 import json
 import os
 import sys
@@ -31,7 +31,7 @@ def main():
     agent = SFAAgent(ROOT)
     result = agent.run(task, evidence_pack, DeterministicFakeAdapter())
 
-    print("SFA-Agent v0.6 demo")
+    print("SFA-Agent v0.7 demo")
     print("=" * 48)
     print(f"run_id: {result.run_id}")
     print(f"run_dir: {os.path.relpath(result.run_dir, ROOT)}")

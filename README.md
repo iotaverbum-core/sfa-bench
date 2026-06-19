@@ -1,4 +1,4 @@
-# SFA-Bench v0.6
+# SFA-Bench v0.7
 
 ![SFA-Bench](https://github.com/iotaverbum-core/sfa-bench/actions/workflows/test.yml/badge.svg)
 
@@ -21,6 +21,10 @@ files.
 v0.6 adds offline transcript fixtures, deterministic transcript normalization,
 and re-derivation of supported transcript verdicts from sealed normalized
 inputs.
+
+v0.7 introduces the optional live adapter boundary: an adapter interface and
+registry, a deterministic offline fixture adapter, CI guards proving live
+adapters are unreachable in CI, and an offline adapter demo.
 
 Most AI evaluation compresses failure into a score. SFA-Bench keeps the failure
 record itself: what failed, why it failed, what family of failure it belongs to,
@@ -48,8 +52,8 @@ For the current implementation boundary and roadmap, see
 
 ## Current Scope vs Roadmap
 
-SFA-Bench v0.6 is stable as a deterministic offline instrument. It is not yet a
-full live-agent system.
+SFA-Bench v0.7 is stable as a deterministic offline instrument with an optional
+adapter boundary. It is not a production live-provider integration.
 
 Current sealed core:
 
@@ -60,11 +64,12 @@ Current sealed core:
 - runtime memory and warning generation on the generator side only
 - external provenance for local/manual candidates
 - transcript replay / re-derivation for supported offline fixtures
+- optional live adapter boundary with offline fixture adapter default
+- CI guard proving live adapters are unreachable in CI
 - replay and attestation of sealed artifacts and the ledger chain
 
-Roadmap beyond the offline deterministic airlock:
+Roadmap beyond the v0.7 adapter airlock:
 
-- live model boundary
 - failure fingerprinting across models
 - policy-guided retry based on recurring failure families
 
@@ -72,8 +77,9 @@ Everything in the sealed core must remain deterministic, offline, replayable,
 and CI-safe. Live adapters must be optional, disabled in CI, and kept outside
 the verifier boundary.
 
-SFA-Bench can ingest sealed transcript fixtures offline. It does not run LLMs,
-call model APIs, fingerprint models, or perform policy-guided retry in v0.6.
+SFA-Bench v0.7 introduces the optional live adapter boundary. It does not run
+live models in CI, include production provider API calls, fingerprint models, or
+perform policy-guided retry.
 
 ---
 
@@ -89,6 +95,7 @@ python tamper_suite.py     # prove corruption attempts are detected in temp copi
 python agent_demo.py       # run the deterministic SFA-Agent demo
 python external_candidate_demo.py # run the external candidate provenance demo
 python transcript_demo.py  # run the offline transcript normalization demo
+python adapter_demo.py     # run the optional adapter boundary demo with the offline fixture adapter
 ```
 
 Optional demo history:
@@ -177,6 +184,24 @@ See [docs/tamper-suite.md](docs/tamper-suite.md).
 - normalization-isolation invariant
 - targeted transcript/provenance tamper checks
 
+### v0.7.0
+
+- optional live adapter boundary at the proposer side
+- `sfa.adapters` interface and registry
+- deterministic offline fixture transcript adapter
+- fail-closed live adapter placeholder disabled by default and unavailable in CI
+- CI live-adapter unreachability invariant
+- adapter-airlock and adapter-metadata-blindness invariants
+- offline adapter boundary demo
+
+Not added in v0.7.0:
+
+- production model provider calls
+- live model results
+- model fingerprinting
+- policy-guided retry
+- verifier or taxonomy changes
+
 The benchmark begins answering:
 
 - Is this failure new?
@@ -191,7 +216,8 @@ The benchmark begins answering:
 
 ## Repository layout
 
-v0.6 adds `rederive.py`, `transcript_demo.py`, transcript fixtures under
+v0.7 adds `adapter_demo.py` and `sfa/adapters.py` on top of the v0.6
+`rederive.py`, `transcript_demo.py`, transcript fixtures under
 `examples/external_transcripts/`, and transcript normalization / re-derivation
 helpers under `sfa/`.
 

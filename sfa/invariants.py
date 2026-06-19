@@ -6,6 +6,7 @@ directory can vary while the fixed verification payload stays identical.
 """
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 import ast
 import io
@@ -26,6 +27,7 @@ FORBIDDEN_VERIFIER_REFERENCES = (
     "ledger",
     "artifacts",
     "agent_runs",
+    "adapter_runs",
     "provenance",
     "warnings",
     "warning",
@@ -55,6 +57,7 @@ FORBIDDEN_VERIFIER_CALL_ARGUMENTS = (
     "warning",
     "history",
     "provenance",
+    "adapter_runs",
 )
 
 
@@ -218,6 +221,132 @@ def run_normalization_isolation_case(
     return result
 
 
+def run_adapter_airlock_case(
+    *,
+    input_obj: dict[str, Any],
+    evidence_obj: dict[str, Any],
+    rules_obj: dict[str, Any],
+    repo_root: str | Path,
+) -> HistoryBlindnessResult:
+    from sfa import adapters
+    from sfa import transcript as transcript_mod
+    from sfa import verifier
+
+    adapter = adapters.select_adapter(env={})
+    if adapter.spec.is_live:
+        raise InvariantFailure("default adapter must not be live")
+
+    raw = adapter.produce_transcript(adapters.AdapterRequest(case_id="external_candidate_001"))
+    adapters.assert_transcript_raw_source(raw)
+    norm_a = transcript_mod.normalize_transcript(raw, input_obj=input_obj, evidence_obj=evidence_obj, rules_obj=rules_obj)
+
+    changed = deepcopy(raw)
+    changed["metadata"]["adapter_id"] = "tampered-adapter-metadata"
+    changed["metadata"]["provider"] = "tampered-provider"
+    changed["metadata"]["model_id"] = "tampered-model"
+    changed["metadata"]["parameters"] = {"temperature": 0.99, "top_p": 0.5, "seed": 999}
+    norm_b = transcript_mod.normalize_transcript(changed, input_obj=input_obj, evidence_obj=evidence_obj, rules_obj=rules_obj)
+    if norm_a.candidate_bytes != norm_b.candidate_bytes:
+        raise InvariantFailure("adapter metadata changed normalized candidate bytes")
+
+    output_a = verifier.verify(input_obj, evidence_obj, norm_a.candidate, rules_obj).to_dict()
+    output_b = verifier.verify(input_obj, evidence_obj, norm_b.candidate, rules_obj).to_dict()
+    result = HistoryBlindnessResult("adapter airlock", output_a, output_b)
+    if not result.matched:
+        raise InvariantFailure("verifier output changed with adapter metadata")
+    assert_verifier_callsite_guard(repo_root)
+    return result
+
+
+def run_adapter_metadata_blindness_case(
+    *,
+    input_obj: dict[str, Any],
+    evidence_obj: dict[str, Any],
+    rules_obj: dict[str, Any],
+) -> HistoryBlindnessResult:
+    from sfa import transcript as transcript_mod
+    from sfa import verifier
+
+    candidate_block = (
+        "```json\n"
+        "{\n"
+        "  \"conclusion\": \"The contract has been approved.\",\n"
+        "  \"cited_evidence\": [\"f2\"],\n"
+        "  \"claims\": [{\"subject\": \"approval_status\", \"value\": \"approved\"}]\n"
+        "}\n"
+        "```"
+    )
+    transcript_a = _isolation_transcript(
+        provider="fixture-provider-a",
+        model_id="fixture-model-a",
+        temperature=0,
+        raw_response="Candidate follows.\n" + candidate_block,
+        adapter_id="fixture-transcript-adapter-v0",
+    )
+    transcript_b = _isolation_transcript(
+        provider="fixture-provider-b",
+        model_id="fixture-model-b",
+        temperature=0.75,
+        raw_response="Different wrapper.\n" + candidate_block,
+        adapter_id="different-adapter-v0",
+    )
+    norm_a = transcript_mod.normalize_transcript(transcript_a, input_obj=input_obj, evidence_obj=evidence_obj, rules_obj=rules_obj)
+    norm_b = transcript_mod.normalize_transcript(transcript_b, input_obj=input_obj, evidence_obj=evidence_obj, rules_obj=rules_obj)
+    if norm_a.candidate_bytes != norm_b.candidate_bytes:
+        raise InvariantFailure("adapter metadata blindness fixtures did not produce byte-identical candidates")
+    output_a = verifier.verify(input_obj, evidence_obj, norm_a.candidate, rules_obj).to_dict()
+    output_b = verifier.verify(input_obj, evidence_obj, norm_b.candidate, rules_obj).to_dict()
+    result = HistoryBlindnessResult("adapter metadata blindness", output_a, output_b)
+    if not result.matched:
+        raise InvariantFailure("verifier output changed with adapter/model metadata")
+    return result
+
+
+def assert_ci_live_adapter_unreachable() -> None:
+    from sfa import adapters
+
+    for spec in adapters.all_adapter_specs():
+        if spec.is_live and spec.ci_allowed:
+            raise InvariantFailure(f"live adapter {spec.adapter_id} is marked CI-safe")
+
+    ci_specs = adapters.list_adapter_specs(env={"CI": "true"})
+    live_specs = [spec.adapter_id for spec in ci_specs if spec.is_live]
+    if live_specs:
+        raise InvariantFailure("CI registry exposed live adapters: " + ", ".join(live_specs))
+
+    default_adapter = adapters.select_adapter(env={"CI": "true"})
+    if default_adapter.spec.is_live:
+        raise InvariantFailure("CI default adapter is live")
+
+    try:
+        adapters.select_adapter(
+            env={
+                "CI": "true",
+                "SFA_ADAPTER": adapters.LIVE_PLACEHOLDER_ADAPTER_ID,
+            }
+        )
+    except adapters.AdapterUnavailableError:
+        pass
+    else:
+        raise InvariantFailure("CI selected a live adapter")
+
+    try:
+        adapters.list_adapter_specs(env={"CI": "true", "SFA_ENABLE_LIVE_ADAPTERS": "1"})
+    except adapters.AdapterUnavailableError:
+        pass
+    else:
+        raise InvariantFailure("CI allowed live adapter enablement")
+
+    try:
+        adapters.LiveAdapterPlaceholder().produce_transcript(
+            adapters.AdapterRequest(case_id="external_candidate_001")
+        )
+    except adapters.AdapterUnavailableError:
+        pass
+    else:
+        raise InvariantFailure("live placeholder did not fail closed")
+
+
 def run_history_blindness_case(
     *,
     name: str,
@@ -259,7 +388,7 @@ def run_history_blindness_case(
 
 
 def _python_files(root: Path):
-    skip_dirs = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".tamper-tmp", "agent_runs", "transcript_runs"}
+    skip_dirs = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".tamper-tmp", "agent_runs", "transcript_runs", "adapter_runs"}
     for path in root.rglob("*.py"):
         if any(part in skip_dirs for part in path.relative_to(root).parts):
             continue
@@ -276,12 +405,12 @@ def _is_verifier_call(node: ast.Call) -> bool:
     )
 
 
-def _isolation_transcript(provider: str, model_id: str, temperature: float, raw_response: str) -> dict[str, Any]:
+def _isolation_transcript(provider: str, model_id: str, temperature: float, raw_response: str, adapter_id: str = "isolation-adapter") -> dict[str, Any]:
     return {
         "schema": "sfa.transcript.v0.1",
         "case_id": "external_candidate_001",
         "metadata": {
-            "adapter_id": "isolation-adapter",
+            "adapter_id": adapter_id,
             "prompt_template_id": "isolation-template",
             "provider": provider,
             "model_id": model_id,

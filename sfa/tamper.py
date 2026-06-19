@@ -10,12 +10,13 @@ import builtins
 import json
 import os
 import shutil
-import tempfile
+import uuid
 
 from . import artifact as artifact_mod
 from . import case as case_mod
 from . import families as fam_mod
 from . import hashing
+from . import invariants as invariants_mod
 from . import ledger as ledger_mod
 from . import rederive as rederive_mod
 from . import validation
@@ -100,11 +101,26 @@ _IGNORE_NAMES = (
 @contextmanager
 def temp_workspace(source_root):
     """Copy repository state into a temporary workspace and clean it up."""
-    with tempfile.TemporaryDirectory(prefix="sfa-tamper-") as tmp:
+    temp_parent = os.path.join(source_root, ".tamper-tmp")
+    os.makedirs(temp_parent, exist_ok=True)
+    tmp = os.path.join(temp_parent, "sfa-tamper-" + uuid.uuid4().hex)
+    os.makedirs(tmp, exist_ok=False)
+    try:
         dest = os.path.join(tmp, "workspace")
         _copy_benchmark_state(source_root, dest)
         ensure_valid_state(dest)
         yield dest
+    finally:
+        _remove_owned_temp_tree(tmp, temp_parent)
+
+
+def _remove_owned_temp_tree(target, temp_parent):
+    target_resolved = os.path.abspath(target)
+    parent_resolved = os.path.abspath(temp_parent)
+    if not target_resolved.startswith(parent_resolved + os.sep):
+        raise RuntimeError(f"refusing to remove temp tree outside {parent_resolved}: {target_resolved}")
+    if os.path.basename(target_resolved).startswith("sfa-tamper-") and os.path.exists(target_resolved):
+        shutil.rmtree(target_resolved, ignore_errors=True)
 
 
 def _copy_benchmark_state(source_root, dest):
@@ -367,6 +383,23 @@ def edited_transcript_normalized_hash_detected(source_root):
         return _result_from_rederive_issues(name, result.issues, "normalized_candidate_hash_mismatch")
 
 
+def live_adapter_ci_guard_passed(source_root):
+    name = "live adapter CI guard passed"
+    invariants_mod.assert_ci_live_adapter_unreachable()
+    return TamperResult(name, True)
+
+
+def adapter_metadata_blindness_guard_passed(source_root):
+    name = "adapter metadata blindness guard passed"
+    case_dir = os.path.join(_cases_dir(source_root), "external_candidate_001")
+    result = invariants_mod.run_adapter_metadata_blindness_case(
+        input_obj=_read_json(os.path.join(case_dir, "input.json")),
+        evidence_obj=_read_json(os.path.join(case_dir, "evidence.json")),
+        rules_obj=_read_json(os.path.join(case_dir, "verifier_rules.json")),
+    )
+    return TamperResult(name, result.matched)
+
+
 def gold_leakage_guard_passed(source_root):
     name = "gold leakage guard passed"
     with temp_workspace(source_root) as root:
@@ -485,6 +518,8 @@ CHECKS = (
     taxonomy_drift_detected,
     edited_transcript_raw_source_detected,
     edited_transcript_normalized_hash_detected,
+    live_adapter_ci_guard_passed,
+    adapter_metadata_blindness_guard_passed,
     gold_leakage_guard_passed,
     hidden_repair_guard_passed,
 )

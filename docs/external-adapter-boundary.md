@@ -1,6 +1,6 @@
 # External Candidate Provenance Boundary
 
-SFA-Agent v0.6 can evaluate candidate answers produced outside this repository
+SFA-Agent v0.7 can evaluate candidate answers produced outside this repository
 without letting external metadata contaminate the verifier.
 
 This keeps the benchmark model-free: external candidates or transcripts can be
@@ -37,8 +37,23 @@ Supported raw source shapes include the canonical candidate shape, a nested
 `claims_by_subject`.
 
 The v0.5 raw source is local JSON and is still candidate-shaped. For offline
-model-style transcript fixtures, use the v0.6 transcript replay path documented
-in [Architecture Stack](architecture-stack.md).
+model-style transcript fixtures, use the v0.6 transcript replay path or the
+v0.7 optional adapter boundary documented in [Architecture Stack](architecture-stack.md).
+
+## Optional Adapter Boundary
+
+SFA-Bench v0.7 introduces `sfa.adapters`, a proposer-side adapter interface and
+registry. The default adapter is `fixture-transcript-adapter-v0`, an offline
+fixture adapter that returns transcript-shaped raw source compatible with the
+v0.6 transcript normalizer.
+
+Live adapters are disabled by default. When `CI=true`, the registry exposes only
+offline adapters and rejects live adapter opt-in even if
+`SFA_ENABLE_LIVE_ADAPTERS=1` is set.
+
+The adapter returns a transcript. The transcript normalizer extracts the
+candidate. The verifier receives only the normalized candidate, evidence, input,
+and verifier rules.
 
 ## Provenance
 
@@ -47,9 +62,9 @@ record includes adapter identity, source location, raw source hash, normalized
 candidate hash, input hash, evidence hash, creation time, whether a warning was
 used, and `verifier_blind_to_provenance: true`.
 
-Future live attempts, if implemented, must be sealed immediately as raw source
-before normalization and verification. Live adapter metadata may be recorded in
-provenance, but must not be passed to the verifier.
+Future production live attempts, if implemented, must be sealed immediately as
+raw source before normalization and verification. Live adapter metadata may be
+recorded in provenance, but must not be passed to the verifier.
 
 `sfa.provenance.verify_attempt_files()` compares the stored hashes to the run
 folder files. If the raw source or normalized candidate is edited after the run,
@@ -72,4 +87,5 @@ a history warning, and retries once with
 Both attempts are preserved under `agent_runs/<run_id>/`.
 
 See [Architecture Stack](architecture-stack.md) for the release boundary between
-the deterministic offline instrument and the live-model roadmap.
+the deterministic offline instrument, the optional adapter boundary, and the
+live-model roadmap.

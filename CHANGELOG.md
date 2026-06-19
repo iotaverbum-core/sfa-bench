@@ -4,16 +4,32 @@ All notable changes to SFA-Bench will be documented in this file.
 
 ## Unreleased
 
-### Documentation
+No unreleased changes.
 
-- Clarified the current deterministic sealed core versus the live/frontier
-  roadmap.
-- Documented that live adapters, cross-model failure fingerprinting, and
-  policy-guided retry are not implemented in v0.5.
-- Clarified that verifier invariants remain an ongoing architecture spine.
-- Clarified current replay and provenance limitations.
+## v0.7.0 - 2026-06-19
 
-No behavior changes.
+### Added
+
+- Optional live adapter boundary at the proposer side.
+- `sfa.adapters` interface and registry for transcript-producing adapters.
+- Deterministic offline fixture adapter, `fixture-transcript-adapter-v0`.
+- Fail-closed live adapter placeholder that is disabled by default and
+  unavailable in CI.
+- CI live-adapter unreachability invariant.
+- Adapter-airlock and adapter-metadata-blindness invariant coverage.
+- `adapter_demo.py`, which uses the offline fixture adapter and v0.6 transcript
+  normalization / re-derivation flow.
+- CI execution of `adapter_demo.py`.
+
+### Not Added
+
+- No production provider integration.
+- No live model calls in CI.
+- No API key requirement.
+- No model fingerprinting.
+- No policy-guided retry.
+- No verifier changes.
+- No taxonomy changes.
 
 ## v0.6.0 - 2026-06-19
 

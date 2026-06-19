@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v0.6 verifier invariant suite.
+"""SFA-Bench v0.7 verifier invariant suite.
 
 Run: python invariant_suite.py
 """
@@ -48,7 +48,7 @@ def _summarize_verdict(output):
 def main() -> int:
     invariants = _load_invariants_module()
 
-    print("SFA-Bench v0.6 Verifier Invariant Suite")
+    print("SFA-Bench v0.7 Verifier Invariant Suite")
     print("=" * 74)
 
     invariants.assert_verifier_static_guard(VERIFIER_PATH)
@@ -85,8 +85,34 @@ def main() -> int:
     print(f"    transcript A: {_summarize_verdict(isolation.empty_output)}")
     print(f"    transcript B: {_summarize_verdict(isolation.populated_output)}")
 
+    airlock = invariants.run_adapter_airlock_case(
+        input_obj=external_case["input_obj"],
+        evidence_obj=external_case["evidence_obj"],
+        rules_obj=external_case["rules_obj"],
+        repo_root=ROOT,
+    )
+    print("adapter-airlock:")
+    print("  fixture adapter returns transcript-shaped raw_source: PASS")
+    print("  verifier receives normalized candidate only: PASS")
+    print(f"    baseline: {_summarize_verdict(airlock.empty_output)}")
+    print(f"    metadata changed: {_summarize_verdict(airlock.populated_output)}")
+
+    metadata = invariants.run_adapter_metadata_blindness_case(
+        input_obj=external_case["input_obj"],
+        evidence_obj=external_case["evidence_obj"],
+        rules_obj=external_case["rules_obj"],
+    )
+    print("adapter-metadata-blindness:")
+    print("  adapter/model metadata differential: PASS")
+    print(f"    adapter A: {_summarize_verdict(metadata.empty_output)}")
+    print(f"    adapter B: {_summarize_verdict(metadata.populated_output)}")
+
+    invariants.assert_ci_live_adapter_unreachable()
+    print("CI live-adapter unreachability: PASS")
+    print("  CI registry exposes no live adapters and rejects live opt-in")
+
     print("=" * 74)
-    print("PASS: verifier output is stable across history and transcript metadata changes")
+    print("PASS: verifier output is stable across history, transcript metadata, and adapter metadata changes")
     return 0
 
 
