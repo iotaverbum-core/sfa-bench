@@ -6,6 +6,20 @@ All notable changes to SFA-Bench will be documented in this file.
 
 No unreleased changes.
 
+## v1.0.2 — Zenodo DOI Bootstrap (2026-06-19)
+
+### Purpose
+
+- Documentation/metadata-only release created to trigger Zenodo DOI archiving
+  now that the Zenodo GitHub integration is enabled.
+
+### Not Changed
+
+- No verifier change.
+- No taxonomy change.
+- No runtime behaviour change.
+- No live provider integration.
+
 ## v1.0.1 — Prior State Memory (2026-06-19)
 
 ### Added
