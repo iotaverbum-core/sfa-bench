@@ -42,6 +42,12 @@ FORBIDDEN_VERIFIER_REFERENCES = (
     "temperature",
     "top_p",
     "adapter",
+    "fingerprint",
+    "recurrence",
+    "prior_failures",
+    "sampling_params",
+    "policy_decisions",
+    "caution",
 )
 
 FORBIDDEN_VERIFIER_CALL_ARGUMENTS = (
@@ -58,6 +64,12 @@ FORBIDDEN_VERIFIER_CALL_ARGUMENTS = (
     "history",
     "provenance",
     "adapter_runs",
+    "fingerprint",
+    "recurrence",
+    "prior_failures",
+    "sampling_params",
+    "policy_decisions",
+    "caution",
 )
 
 
@@ -302,6 +314,79 @@ def run_adapter_metadata_blindness_case(
     return result
 
 
+def run_fingerprint_metadata_blindness_case(
+    *,
+    input_obj: dict[str, Any],
+    evidence_obj: dict[str, Any],
+    rules_obj: dict[str, Any],
+) -> HistoryBlindnessResult:
+    """Prove reporting metadata changes cannot change verifier judgment."""
+    from sfa import transcript as transcript_mod
+    from sfa import verifier
+
+    candidate_block = (
+        "```json\n"
+        "{\"conclusion\":\"The contract approval status is pending.\","
+        "\"cited_evidence\":[\"f2\"],"
+        "\"claims\":[{\"subject\":\"approval_status\",\"value\":\"pending\"}]}\n"
+        "```"
+    )
+    transcript_a = _isolation_transcript(
+        "fixture-provider", "fixture-model-a", 0, candidate_block
+    )
+    transcript_b = deepcopy(transcript_a)
+    transcript_b["metadata"].update(
+        {
+            "model_id": "fixture-model-b",
+            "fingerprint_summary": {"dominant_family": "fabricated_entity"},
+            "recurrence_profile": {"fabricated_entity": 99},
+            "prior_failures": ["sealed-failure-placeholder"],
+            "sampling_params": {"temperature": 1},
+            "policy_decisions": ["do-not-pass-to-verifier"],
+            "caution": "reporting-only fixture metadata",
+        }
+    )
+    norm_a = transcript_mod.normalize_transcript(
+        transcript_a, input_obj=input_obj, evidence_obj=evidence_obj, rules_obj=rules_obj
+    )
+    norm_b = transcript_mod.normalize_transcript(
+        transcript_b, input_obj=input_obj, evidence_obj=evidence_obj, rules_obj=rules_obj
+    )
+    if norm_a.candidate_bytes != norm_b.candidate_bytes:
+        raise InvariantFailure("fingerprint metadata changed normalized candidate bytes")
+    output_a = verifier.verify(input_obj, evidence_obj, norm_a.candidate, rules_obj).to_dict()
+    output_b = verifier.verify(input_obj, evidence_obj, norm_b.candidate, rules_obj).to_dict()
+    result = HistoryBlindnessResult("fingerprint metadata blindness", output_a, output_b)
+    if not result.matched:
+        raise InvariantFailure("verifier output changed with fingerprint metadata")
+    return result
+
+
+def assert_fingerprint_determinism(repo_root: str | Path) -> None:
+    from sfa import fingerprints
+
+    fixture = Path(repo_root) / "examples" / "fingerprints" / "demo_pack" / "fixture_set.json"
+    report_a, occurrences_a = fingerprints.derive_fixture_set(fixture, repo_root)
+    report_b, occurrences_b = fingerprints.derive_fixture_set(fixture, repo_root)
+    if report_a != report_b or occurrences_a != occurrences_b:
+        raise InvariantFailure("same sealed fingerprint inputs produced different output")
+
+
+def assert_fingerprint_fixed_condition_guard(repo_root: str | Path) -> None:
+    from sfa import fingerprints
+
+    fixture = Path(repo_root) / "examples" / "fingerprints" / "demo_pack" / "fixture_set.json"
+    report, _occurrences = fingerprints.derive_fixture_set(fixture, repo_root)
+    for field in ("taxonomy_version", "evidence_pack_id", "prompt_condition_id"):
+        changed = deepcopy(report)
+        changed["conditions"][field] = changed["conditions"][field] + "-changed"
+        try:
+            fingerprints.assert_comparable(report, changed)
+        except fingerprints.FingerprintError:
+            continue
+        raise InvariantFailure(f"fingerprint comparison accepted mismatched {field}")
+
+
 def assert_ci_live_adapter_unreachable() -> None:
     from sfa import adapters
 
@@ -388,7 +473,7 @@ def run_history_blindness_case(
 
 
 def _python_files(root: Path):
-    skip_dirs = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".tamper-tmp", "agent_runs", "transcript_runs", "adapter_runs"}
+    skip_dirs = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".tamper-tmp", "agent_runs", "transcript_runs", "adapter_runs", "fingerprint_runs"}
     for path in root.rglob("*.py"):
         if any(part in skip_dirs for part in path.relative_to(root).parts):
             continue

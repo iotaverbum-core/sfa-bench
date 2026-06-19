@@ -1,4 +1,4 @@
-# SFA-Bench v0.7
+# SFA-Bench v0.8
 
 ![SFA-Bench](https://github.com/iotaverbum-core/sfa-bench/actions/workflows/test.yml/badge.svg)
 
@@ -26,6 +26,10 @@ v0.7 introduces the optional live adapter boundary: an adapter interface and
 registry, a deterministic offline fixture adapter, CI guards proving live
 adapters are unreachable in CI, and an offline adapter demo.
 
+v0.8 adds deterministic, replayable failure fingerprinting by fixture
+`model_id`. Failure fingerprints describe the distribution of observed failure
+families under a fixed pack, prompt condition, and taxonomy.
+
 Most AI evaluation compresses failure into a score. SFA-Bench keeps the failure
 record itself: what failed, why it failed, what family of failure it belongs to,
 when it recurred, whether it declined, and whether it went extinct.
@@ -52,8 +56,9 @@ For the current implementation boundary and roadmap, see
 
 ## Current Scope vs Roadmap
 
-SFA-Bench v0.7 is stable as a deterministic offline instrument with an optional
-adapter boundary. It is not a production live-provider integration.
+SFA-Bench v0.8 is stable as a deterministic offline instrument with an optional
+adapter boundary and a fixture-based fingerprint reporting layer. It is not a
+production live-provider integration.
 
 Current sealed core:
 
@@ -66,20 +71,27 @@ Current sealed core:
 - transcript replay / re-derivation for supported offline fixtures
 - optional live adapter boundary with offline fixture adapter default
 - CI guard proving live adapters are unreachable in CI
+- sealed, fixture-derived occurrences carrying reporting-only `model_id`
+- deterministic per-model failure-family fingerprints under fixed conditions
+- fingerprint input seals and reassignment/drop tamper checks
 - replay and attestation of sealed artifacts and the ledger chain
 
-Roadmap beyond the v0.7 adapter airlock:
+Release roadmap:
 
-- failure fingerprinting across models
-- policy-guided retry based on recurring failure families
+- v0.5 - external candidate provenance boundary
+- v0.6 - offline transcript replay boundary
+- v0.7 - optional live adapter boundary
+- v0.8 - failure fingerprinting
+- v0.9 - policy-guided retry
 
 Everything in the sealed core must remain deterministic, offline, replayable,
 and CI-safe. Live adapters must be optional, disabled in CI, and kept outside
 the verifier boundary.
 
-SFA-Bench v0.7 introduces the optional live adapter boundary. It does not run
-live models in CI, include production provider API calls, fingerprint models, or
-perform policy-guided retry.
+SFA-Bench v0.8 does not run live models in CI, include production provider API
+calls or results, claim absolute model behaviour, or perform policy-guided
+retry. Its model IDs and reported distributions are explicitly illustrative
+fixture data.
 
 ---
 
@@ -96,6 +108,7 @@ python agent_demo.py       # run the deterministic SFA-Agent demo
 python external_candidate_demo.py # run the external candidate provenance demo
 python transcript_demo.py  # run the offline transcript normalization demo
 python adapter_demo.py     # run the optional adapter boundary demo with the offline fixture adapter
+python fingerprint_report.py # re-derive illustrative fixed-condition fingerprints
 ```
 
 Optional demo history:
@@ -202,6 +215,23 @@ Not added in v0.7.0:
 - policy-guided retry
 - verifier or taxonomy changes
 
+### v0.8.0
+
+- deterministic fingerprint computation over sealed fixture-derived occurrences
+- model identity as a reporting/provenance grouping dimension
+- fixed evidence-pack, case-set, prompt/adapter, fixture-set, and taxonomy metadata
+- per-model family counts, rates, dominant family, and recurrence summary
+- offline `fingerprint_report.py` re-derivation
+- model reassignment and dropped-occurrence tamper checks
+- fingerprint-blind verifier and fixed-condition comparison invariants
+
+Not added in v0.8.0:
+
+- production provider results or default live benchmarking
+- API, model, or network calls
+- policy-guided retry
+- verifier or taxonomy changes
+
 The benchmark begins answering:
 
 - Is this failure new?
@@ -216,10 +246,9 @@ The benchmark begins answering:
 
 ## Repository layout
 
-v0.7 adds `adapter_demo.py` and `sfa/adapters.py` on top of the v0.6
-`rederive.py`, `transcript_demo.py`, transcript fixtures under
-`examples/external_transcripts/`, and transcript normalization / re-derivation
-helpers under `sfa/`.
+v0.8 adds `fingerprint_report.py`, `sfa/fingerprints.py`, and illustrative
+fixtures under `examples/fingerprints/demo_pack/` on top of the v0.7 adapter
+boundary.
 
 ```text
 sfa-bench/
@@ -371,6 +400,10 @@ prev_hash
 entry_hash
 ```
 
+New transcript-derived occurrences may also include `model_id`. Existing
+entries are not rewritten; reporting code treats a missing identity as
+`unknown`.
+
 This means SFA-Bench can distinguish:
 
 - the sealed identity of a failure artifact, and
@@ -378,6 +411,23 @@ This means SFA-Bench can distinguish:
 
 `replay.py` verifies the whole ledger chain. Deleting, inserting, reordering, or
 editing a ledger entry breaks the chain.
+
+---
+
+## Failure fingerprinting
+
+`fingerprint_report.py` loads the illustrative transcript fixture set,
+normalizes each candidate, runs the unchanged verifier, seals occurrence inputs,
+and aggregates pass/fail and failure-family distributions by `model_id`.
+
+The fixture set fixes the evidence pack, case set, prompt/adapter condition, and
+taxonomy. A separate expected record seals the fixture set, derived occurrence
+input, and model summaries. Reassigning a sample to another model or dropping a
+sample changes those hashes and fails integrity checks.
+
+The demo uses only `fixture-model-a`, `fixture-model-b`, and
+`fixture-model-c`. These are illustrative fixtures, not real provider results
+or model rankings. See [Failure Fingerprinting](docs/failure-fingerprinting.md).
 
 ---
 

@@ -92,6 +92,7 @@ class SFAAgent:
                 "raw_source_path": raw_source_path,
                 "source_hash": provenance["source_hash"],
                 "normalized_candidate_hash": provenance["normalized_candidate_hash"],
+                "model_id": provenance["model_id"],
             }
 
             if verdict.status == "PASS":
@@ -122,7 +123,14 @@ class SFAAgent:
             )
             artifact_path = os.path.join(run_dir, f"attempt_{attempt_no:03d}_failure_artifact.json")
             _write_json_new(artifact_path, failure_artifact)
-            ledger_entry = self._append_occurrence(failure_artifact, verdict, family, observed_at, run_id)
+            ledger_entry = self._append_occurrence(
+                failure_artifact,
+                verdict,
+                family,
+                observed_at,
+                run_id,
+                provenance["model_id"],
+            )
             prior_entries = _prior_family_entries(self.ledger_path, family, exclude_entry_hash=ledger_entry["entry_hash"])
 
             attempt_record.update(
@@ -152,7 +160,7 @@ class SFAAgent:
         _write_json_new(os.path.join(run_dir, "summary.json"), summary)
         return AgentResult(run_id, run_dir, summary["status"], attempts, None)
 
-    def _append_occurrence(self, failure_artifact: dict, verdict, family: str, observed_at: str, run_id: str) -> dict:
+    def _append_occurrence(self, failure_artifact: dict, verdict, family: str, observed_at: str, run_id: str, model_id: str) -> dict:
         with open(self.config_path, "r", encoding="utf-8") as fh:
             config = json.load(fh)
         granularity = config.get("period_granularity", "year")
@@ -166,6 +174,7 @@ class SFAAgent:
             period=history_mod.period_of(observed_at, granularity),
             run_id=run_id,
             synthetic=False,
+            model_id=model_id,
         )
 
 

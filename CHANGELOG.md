@@ -6,6 +6,35 @@ All notable changes to SFA-Bench will be documented in this file.
 
 No unreleased changes.
 
+## v0.8.0 - 2026-06-19
+
+### Added
+
+- Deterministic failure-family fingerprinting grouped by transcript provenance
+  `model_id`.
+- Fixed-condition metadata for evidence pack, case set, prompt/adapter framing,
+  transcript fixture set, and taxonomy version.
+- Fifteen clearly illustrative transcript fixtures for three fake model IDs,
+  all evaluated against the same fixed case and evidence pack.
+- Per-model attempts, pass/fail counts, pass rates, family counts and rates,
+  dominant family, recurrence summary, and sealed fingerprint input hashes.
+- `fingerprint_report.py` for offline fixture normalization, verification,
+  occurrence sealing, deterministic aggregation, and report re-derivation.
+- Fingerprint tamper checks for model reassignment and dropped occurrences.
+- Invariants for fingerprint-blind verification, deterministic derivation, and
+  refusal to compare mismatched fixed conditions.
+- Backward-compatible `unknown` reporting identity for legacy occurrences that
+  have no `model_id`.
+
+### Not Added
+
+- No production provider results or default live-model benchmarking.
+- No API, model, or network calls.
+- No live calls in CI.
+- No policy-guided retry.
+- No verifier changes.
+- No taxonomy changes.
+
 ## v0.7.0 - 2026-06-19
 
 ### Added

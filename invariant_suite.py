@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v0.7 verifier invariant suite.
+"""SFA-Bench v0.8 verifier and fingerprint invariant suite.
 
 Run: python invariant_suite.py
 """
@@ -48,7 +48,7 @@ def _summarize_verdict(output):
 def main() -> int:
     invariants = _load_invariants_module()
 
-    print("SFA-Bench v0.7 Verifier Invariant Suite")
+    print("SFA-Bench v0.8 Verifier & Fingerprint Invariant Suite")
     print("=" * 74)
 
     invariants.assert_verifier_static_guard(VERIFIER_PATH)
@@ -107,12 +107,30 @@ def main() -> int:
     print(f"    adapter A: {_summarize_verdict(metadata.empty_output)}")
     print(f"    adapter B: {_summarize_verdict(metadata.populated_output)}")
 
+    fingerprint_blind = invariants.run_fingerprint_metadata_blindness_case(
+        input_obj=external_case["input_obj"],
+        evidence_obj=external_case["evidence_obj"],
+        rules_obj=external_case["rules_obj"],
+    )
+    print("fingerprint-blindness:")
+    print("  model/fingerprint/recurrence metadata differential: PASS")
+    print(f"    baseline: {_summarize_verdict(fingerprint_blind.empty_output)}")
+    print(f"    metadata changed: {_summarize_verdict(fingerprint_blind.populated_output)}")
+
+    invariants.assert_fingerprint_determinism(ROOT)
+    print("fingerprint determinism: PASS")
+    print("  same sealed fixture inputs produce the same occurrences and fingerprint")
+
+    invariants.assert_fingerprint_fixed_condition_guard(ROOT)
+    print("fixed-condition comparison guard: PASS")
+    print("  taxonomy, evidence-pack, and prompt-condition mismatches are refused")
+
     invariants.assert_ci_live_adapter_unreachable()
     print("CI live-adapter unreachability: PASS")
     print("  CI registry exposes no live adapters and rejects live opt-in")
 
     print("=" * 74)
-    print("PASS: verifier output is stable across history, transcript metadata, and adapter metadata changes")
+    print("PASS: verifier blindness and deterministic fixed-condition fingerprinting hold")
     return 0
 
 

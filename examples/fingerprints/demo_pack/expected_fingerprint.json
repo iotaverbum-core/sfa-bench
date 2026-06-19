@@ -1,0 +1,9 @@
+{
+  "schema": "sfa.fingerprint_expected.v0.1",
+  "fixture_set_id": "illustrative-fingerprint-demo-v0",
+  "fixture_set_hash": "8acc9a4aa1da4c0e45aee54dcacceedd9693ef3b5ba3355f8096414379611a36",
+  "conditions_hash": "bd367ac3525a6ca19a9fed9291aa13a18927e3fca0feadd256f198247051af7b",
+  "fingerprint_input_hash": "61544efc37719fd85ef14de680238bc48eb88293668a9937703d05205b262649",
+  "fingerprint_hash": "7cf5b66ff7034ff4e04caba38a92924f1133fded2128e291b679e96b7734cff1",
+  "model_summaries_hash": "8f18aec162326d18ad51b4e7e2a6a46593faa69de4349ea6099f521beb13179b"
+}

@@ -4,9 +4,10 @@ Artifacts identify distinct sealed failures. The ledger records each observation
 of a failure over time. Recurrence, growth, decline, and extinction are derived
 from this ledger without mutating artifacts.
 
-Every entry carries prev_hash and entry_hash. This hash chain makes the entire
-history tamper-evident: deleting, inserting, reordering, or editing an entry
-breaks replay.
+Every entry carries prev_hash and entry_hash. New transcript-derived entries
+may also carry model_id for reporting; legacy entries resolve to ``unknown``.
+This hash chain makes the entire history tamper-evident: deleting, inserting,
+reordering, or editing an entry breaks replay.
 """
 import json
 import os
@@ -36,7 +37,7 @@ def read_ledger(path):
     return out
 
 
-def append_occurrence(path, *, artifact_hash, case_id, category, family, observed_at, period, run_id, synthetic=False):
+def append_occurrence(path, *, artifact_hash, case_id, category, family, observed_at, period, run_id, synthetic=False, model_id=None):
     """Append one occurrence. This is the only write operation the ledger permits."""
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     entries = read_ledger(path)
@@ -54,10 +55,18 @@ def append_occurrence(path, *, artifact_hash, case_id, category, family, observe
         "synthetic": bool(synthetic),
         "prev_hash": prev,
     }
+    if model_id is not None:
+        entry["model_id"] = model_id or "unknown"
     entry["entry_hash"] = _entry_hash(entry)
     with open(path, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(entry, sort_keys=True, ensure_ascii=False) + "\n")
     return entry
+
+
+def occurrence_model_id(entry):
+    """Return the reporting identity for new or backward-compatible entries."""
+    value = entry.get("model_id")
+    return value if isinstance(value, str) and value.strip() else "unknown"
 
 
 def verify_chain(path):

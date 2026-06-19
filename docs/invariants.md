@@ -1,7 +1,7 @@
-# SFA-Bench v0.7 Verifier Invariants
+# SFA-Bench v0.8 Verifier and Fingerprint Invariants
 
-`invariant_suite.py` protects the verifier's history-blindness and adapter
-airlock boundaries.
+`invariant_suite.py` protects the verifier's history-blindness, adapter
+airlock, and fingerprint-blindness boundaries.
 
 These invariants are a continuing spine for the architecture, not a completed
 one-time rung. Every future layer must preserve the same boundary.
@@ -26,6 +26,13 @@ The suite proves these properties:
    invoked through the registry.
 7. Verifier call-site arguments exclude raw transcript, provenance, warning,
    adapter state, and model metadata fields.
+8. Model identity, recurrence profiles, fingerprint summaries, sampling
+   parameters, cautions, prior failures, and policy fields do not affect
+   verifier output and do not reach verifier call sites.
+9. The same sealed fixture inputs produce identical occurrences and the same
+   fingerprint report.
+10. Fingerprints with different taxonomy, evidence-pack, or prompt-condition
+    metadata are refused as incomparable.
 
 The dynamic check runs:
 
@@ -37,6 +44,9 @@ The dynamic check runs:
 - an adapter metadata differential using different adapter/provider/model
   metadata
 - CI live-adapter unreachability checks
+- a fingerprint-metadata differential
+- repeated fingerprint derivation from the same sealed inputs
+- taxonomy, pack, and prompt-condition comparison mismatches
 
 Run it directly:
 
@@ -47,6 +57,6 @@ python invariant_suite.py
 This suite is intentionally separate from verifier behavior. It must fail before
 any verifier change is made to justify touching `sfa/verifier.py`.
 
-Warnings, prior-attempt context, provenance, adapter metadata, and future policy
-guidance may shape generator prompts only. They must never shape verifier
-judgment.
+Warnings, prior-attempt context, provenance, adapter metadata, fingerprint
+summaries, recurrence data, and future policy guidance may shape reporting or
+generator inputs only. They must never shape verifier judgment.

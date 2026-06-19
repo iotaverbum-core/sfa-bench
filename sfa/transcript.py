@@ -127,7 +127,7 @@ def build_transcript_provenance(
         "extraction_method": "single_fenced_json_block",
         "candidate_byte_length": len(candidate_bytes),
         "case_id": transcript.get("case_id"),
-        "model_id": metadata.get("model_id"),
+        "model_id": metadata.get("model_id") or "unknown",
         "adapter_id": metadata.get("adapter_id"),
         "prompt_template_id": metadata.get("prompt_template_id"),
         "verifier_blind_to_transcript": True,

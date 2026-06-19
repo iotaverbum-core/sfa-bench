@@ -22,6 +22,11 @@ def build_provenance(
     created_at: str | None = None,
 ) -> dict[str, Any]:
     """Build a provenance record for one attempt."""
+    metadata = (
+        adapter_output.raw_source.get("metadata", {})
+        if isinstance(adapter_output.raw_source, dict)
+        else {}
+    )
     return {
         "adapter_name": adapter_output.adapter_name,
         "adapter_kind": adapter_output.adapter_kind,
@@ -34,6 +39,7 @@ def build_provenance(
         "evidence_hash": sha256_hex(evidence_obj),
         "created_at": created_at or datetime.now(timezone.utc).isoformat(),
         "warning_used": bool(warning_used),
+        "model_id": metadata.get("model_id") or "unknown",
         "verifier_blind_to_provenance": True,
     }
 

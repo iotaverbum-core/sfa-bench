@@ -1,8 +1,8 @@
 # Architecture Stack
 
-SFA-Bench v0.7 introduces the optional live adapter boundary while keeping the
-deterministic core offline, replayable, and CI-safe. It is not a production
-live-provider integration.
+SFA-Bench v0.8 adds failure fingerprinting above the optional live adapter
+boundary while keeping the deterministic core offline, replayable, and CI-safe.
+It is not a production live-provider integration.
 
 The current repository implements the sealed core through local files,
 deterministic verification, tamper-evident records, transcript normalization,
@@ -18,8 +18,8 @@ Benchmark
 -> External provenance
 -> Transcript replay / re-derivation
 -> Optional live adapter boundary
---- offline deterministic airlock ---
 -> Failure fingerprinting
+--- current v0.8 boundary ---
 -> Policy-guided retry
 ```
 
@@ -40,15 +40,23 @@ The current deterministic sealed instrument includes:
 - deterministic offline fixture adapter
 - CI guard proving live adapters are unreachable in CI
 - adapter boundary demo using the offline transcript flow
+- model identity carried as reporting-only transcript/occurrence provenance
+- illustrative fixed-condition multi-model transcript fixtures
+- sealed occurrence derivation and deterministic per-model fingerprints
+- fingerprint reassignment/drop tamper checks and comparison guards
 - replay and attestation of sealed artifacts and the ledger chain
 
-Roadmap layers beyond v0.7:
+Release sequence:
 
-- v0.8 - failure fingerprinting across models
-- v0.9 - policy-guided retry based on recurring failure families
+- v0.5 - external candidate provenance boundary
+- v0.6 - offline transcript replay boundary
+- v0.7 - optional live adapter boundary
+- v0.8 - failure fingerprinting
+- v0.9 - policy-guided retry
 
 The repo is stable as the deterministic offline instrument with an optional
-adapter airlock, not as the full future live-agent system.
+adapter airlock and fixture fingerprint analysis, not as a live benchmark or
+the full future live-agent system.
 
 ## Core Boundary
 
@@ -93,11 +101,14 @@ No production provider integration is implemented in v0.7. The live adapter
 placeholder fails closed unless explicitly enabled and still performs no API,
 model, or network call.
 
-Failure history in this repository is seeded/demo fixture history and local
-run observations. It is not yet a corpus of observed multi-model live runs.
+Failure history in this repository is seeded/demo fixture history and local run
+observations. The v0.8 fingerprint examples are explicitly illustrative
+model-labelled fixtures, not observed multi-model live runs.
 
-Failure fingerprinting across models is not implemented. That extension needs
-`model_id` or equivalent model identity as a first-class grouping axis.
+Failure fingerprints describe the distribution of observed failure families
+under a fixed pack, prompt condition, and taxonomy. `model_id` is a first-class
+provenance/reporting grouping axis, but is never a verifier input. Legacy
+occurrences without `model_id` resolve to `unknown` and are not rewritten.
 
 Policy-guided retry is not implemented. Any future policy guidance must remain
 generator-side only. Warnings and prior-attempt context may shape the next
@@ -105,7 +116,7 @@ generation prompt, but must never shape verifier judgment.
 
 ## Roadmap Constraints
 
-Live adapters must be optional and disabled in CI. The v0.7 invariant suite
+Live adapters must be optional and disabled in CI. The v0.8 invariant suite
 fails if a live adapter is reachable in CI. The benchmark can remain model-free
 by ingesting external candidates or transcripts produced elsewhere.
 

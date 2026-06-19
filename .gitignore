@@ -5,3 +5,4 @@ artifacts/*.sealed.json
 agent_runs/
 transcript_runs/
 adapter_runs/
+fingerprint_runs/

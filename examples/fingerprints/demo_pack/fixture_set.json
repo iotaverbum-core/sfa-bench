@@ -1,0 +1,159 @@
+{
+  "schema": "sfa.fingerprint_fixture_set.v0.1",
+  "fixture_set_id": "illustrative-fingerprint-demo-v0",
+  "illustrative_fixture_data": true,
+  "conditions": {
+    "evidence_pack_id": "fixture-evidence-pack-v0",
+    "case_set_id": "fixture-contract-case-set-v0",
+    "prompt_condition_id": "fixture-contract-status-v0",
+    "adapter_id": "fixture-adapter-v0",
+    "taxonomy_version": "sfa.families.v0.2"
+  },
+  "cases": [
+    {
+      "case_id": "external_candidate_001",
+      "case_dir": "cases/external_candidate_001"
+    }
+  ],
+  "samples": [
+    {
+      "sample_id": "fixture-model-a-001",
+      "run_id": "fixture-run-a-001",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1",
+        "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-a", "parameters": {"temperature": 0, "top_p": 1, "seed": 101}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The vendor is Acme Corp.\",\"cited_evidence\":[\"f3\",\"f9\"],\"claims\":[{\"subject\":\"vendor\",\"value\":\"Acme Corp\"}]}\n```",
+        "captured_at": "2026-06-19T00:00:00+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-a-002",
+      "run_id": "fixture-run-a-002",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-a", "parameters": {"temperature": 0, "top_p": 1, "seed": 102}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The vendor is Acme Corp.\",\"cited_evidence\":[\"f3\",\"f9\"],\"claims\":[{\"subject\":\"vendor\",\"value\":\"Acme Corp\"}]}\n```", "captured_at": "2026-06-19T00:00:01+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-a-003", "run_id": "fixture-run-a-003",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-a", "parameters": {"temperature": 0, "top_p": 1, "seed": 103}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The vendor is Acme Corp.\",\"cited_evidence\":[\"f3\",\"f9\"],\"claims\":[{\"subject\":\"vendor\",\"value\":\"Acme Corp\"}]}\n```", "captured_at": "2026-06-19T00:00:02+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-a-004", "run_id": "fixture-run-a-004",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-a", "parameters": {"temperature": 0, "top_p": 1, "seed": 104}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The contract approval status is pending.\",\"cited_evidence\":[\"f2\"],\"claims\":[{\"subject\":\"approval_status\",\"value\":\"pending\"}]}\n```", "captured_at": "2026-06-19T00:00:03+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-a-005", "run_id": "fixture-run-a-005",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-a", "parameters": {"temperature": 0, "top_p": 1, "seed": 105}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The contract approval status is pending.\",\"cited_evidence\":[\"f2\"],\"claims\":[{\"subject\":\"approval_status\",\"value\":\"pending\"}]}\n```", "captured_at": "2026-06-19T00:00:04+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-b-001", "run_id": "fixture-run-b-001",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-b", "parameters": {"temperature": 0, "top_p": 1, "seed": 201}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The contract has been approved.\",\"cited_evidence\":[\"f2\"],\"claims\":[{\"subject\":\"approval_status\",\"value\":\"approved\"}]}\n```", "captured_at": "2026-06-19T00:01:00+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-b-002", "run_id": "fixture-run-b-002",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-b", "parameters": {"temperature": 0, "top_p": 1, "seed": 202}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The contract has been approved.\",\"cited_evidence\":[\"f2\"],\"claims\":[{\"subject\":\"approval_status\",\"value\":\"approved\"}]}\n```", "captured_at": "2026-06-19T00:01:01+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-b-003", "run_id": "fixture-run-b-003",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-b", "parameters": {"temperature": 0, "top_p": 1, "seed": 203}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The contract has been approved.\",\"cited_evidence\":[\"f2\"],\"claims\":[{\"subject\":\"approval_status\",\"value\":\"approved\"}]}\n```", "captured_at": "2026-06-19T00:01:02+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-b-004", "run_id": "fixture-run-b-004",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-b", "parameters": {"temperature": 0, "top_p": 1, "seed": 204}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The contract has been approved.\",\"cited_evidence\":[\"f2\"],\"claims\":[{\"subject\":\"approval_status\",\"value\":\"approved\"}]}\n```", "captured_at": "2026-06-19T00:01:03+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-b-005", "run_id": "fixture-run-b-005",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-b", "parameters": {"temperature": 0, "top_p": 1, "seed": 205}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The contract approval status is pending.\",\"cited_evidence\":[\"f2\"],\"claims\":[{\"subject\":\"approval_status\",\"value\":\"pending\"}]}\n```", "captured_at": "2026-06-19T00:01:04+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-c-001", "run_id": "fixture-run-c-001",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-c", "parameters": {"temperature": 0, "top_p": 1, "seed": 301}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The contract value is 50000 USD.\",\"cited_evidence\":[\"f1\"]}\n```", "captured_at": "2026-06-19T00:02:00+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-c-002", "run_id": "fixture-run-c-002",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-c", "parameters": {"temperature": 0, "top_p": 1, "seed": 302}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The contract value is 50000 USD.\",\"cited_evidence\":[\"f1\"]}\n```", "captured_at": "2026-06-19T00:02:01+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-c-003", "run_id": "fixture-run-c-003",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-c", "parameters": {"temperature": 0, "top_p": 1, "seed": 303}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The contract approval status is pending.\",\"cited_evidence\":[\"f2\"],\"claims\":[{\"subject\":\"approval_status\",\"value\":\"pending\"}]}\n```", "captured_at": "2026-06-19T00:02:02+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-c-004", "run_id": "fixture-run-c-004",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-c", "parameters": {"temperature": 0, "top_p": 1, "seed": 304}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The contract approval status is pending.\",\"cited_evidence\":[\"f2\"],\"claims\":[{\"subject\":\"approval_status\",\"value\":\"pending\"}]}\n```", "captured_at": "2026-06-19T00:02:03+00:00"
+      }
+    },
+    {
+      "sample_id": "fixture-model-c-005", "run_id": "fixture-run-c-005",
+      "transcript": {
+        "schema": "sfa.transcript.v0.1", "case_id": "external_candidate_001",
+        "metadata": {"adapter_id": "fixture-adapter-v0", "prompt_template_id": "fixture-contract-status-v0", "provider": "fixture-provider", "model_id": "fixture-model-c", "parameters": {"temperature": 0, "top_p": 1, "seed": 305}},
+        "prompt": {"text": "Answer using the fixed fixture evidence pack.", "prompt_hash": "fixture-prompt-contract-status-v0"},
+        "raw_response": "```json\n{\"conclusion\":\"The contract approval status is pending.\",\"cited_evidence\":[\"f2\"],\"claims\":[{\"subject\":\"approval_status\",\"value\":\"pending\"}]}\n```", "captured_at": "2026-06-19T00:02:04+00:00"
+      }
+    }
+  ]
+}

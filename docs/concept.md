@@ -79,15 +79,15 @@ python report.py
 
 If those commands pass, the repository demonstrates the first trust layer: failure preservation, replayability, and tamper-evident history.
 
-As of v0.7, the stable implementation is the deterministic offline instrument:
+As of v0.8, the stable implementation is the deterministic offline instrument:
 benchmark, failure archive, tamper-evident history, verifier invariants,
 generator-side runtime memory, external provenance, transcript replay /
 re-derivation, optional live adapter boundary, offline fixture adapter, and
-replay/attestation.
+fixed-condition failure fingerprinting over illustrative fixtures.
 
-SFA-Bench v0.7 introduces the optional live adapter boundary. It does not run
-live models in CI, include production provider API calls, implement model
-fingerprinting, or implement policy-guided retry.
+SFA-Bench v0.8 does not run live models in CI, include production provider API
+calls or observed provider results, claim absolute model behaviour, or
+implement policy-guided retry.
 
 ## What SFA-Bench is not
 

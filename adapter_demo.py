@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the v0.7 optional adapter boundary demo."""
+"""Run the v0.8 optional adapter boundary demo."""
 from __future__ import annotations
 
 import json
@@ -64,7 +64,7 @@ def main() -> int:
     candidate_normalized = isinstance(normalized.candidate, dict)
     verifier_received_metadata = not metadata_blind
 
-    print("SFA-Bench v0.7 adapter boundary demo")
+    print("SFA-Bench v0.8 adapter boundary demo")
     print("=" * 56)
     print(f"adapter selected: {adapter.spec.adapter_id}")
     print(f"adapter mode: {adapter.spec.mode}")

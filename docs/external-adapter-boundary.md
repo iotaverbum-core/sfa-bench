@@ -66,6 +66,12 @@ Future production live attempts, if implemented, must be sealed immediately as
 raw source before normalization and verification. Live adapter metadata may be
 recorded in provenance, but must not be passed to the verifier.
 
+As of v0.8, transcript provenance also formalizes `model_id` for grouping in
+failure fingerprint reports. New transcript-derived ledger occurrences may
+carry that field; legacy entries remain valid and resolve to `unknown`. Model
+identity, fingerprint summaries, recurrence profiles, and fixed-condition
+metadata remain outside the verifier boundary.
+
 `sfa.provenance.verify_attempt_files()` compares the stored hashes to the run
 folder files. If the raw source or normalized candidate is edited after the run,
 the corresponding hash check fails.

@@ -15,6 +15,7 @@ import uuid
 from . import artifact as artifact_mod
 from . import case as case_mod
 from . import families as fam_mod
+from . import fingerprints as fingerprints_mod
 from . import hashing
 from . import invariants as invariants_mod
 from . import ledger as ledger_mod
@@ -400,6 +401,40 @@ def adapter_metadata_blindness_guard_passed(source_root):
     return TamperResult(name, result.matched)
 
 
+def fingerprint_model_reassignment_detected(source_root):
+    name = "fingerprint model reassignment detected"
+    with temp_workspace(source_root) as root:
+        fixture_path, expected_path = _fingerprint_paths(root)
+
+        def tamper(fixture_set):
+            fixture_set["samples"][0]["transcript"]["metadata"]["model_id"] = "fixture-model-b"
+
+        _mutate_json(fixture_path, tamper)
+        _report, _occurrences, issues = fingerprints_mod.verify_fixture_set(
+            fixture_path, expected_path, root
+        )
+        return _result_from_fingerprint_issues(
+            name, issues, "fixture_set_hash_mismatch", "fingerprint_input_hash_mismatch"
+        )
+
+
+def fingerprint_dropped_occurrence_detected(source_root):
+    name = "fingerprint dropped occurrence detected"
+    with temp_workspace(source_root) as root:
+        fixture_path, expected_path = _fingerprint_paths(root)
+
+        def tamper(fixture_set):
+            del fixture_set["samples"][0]
+
+        _mutate_json(fixture_path, tamper)
+        _report, _occurrences, issues = fingerprints_mod.verify_fixture_set(
+            fixture_path, expected_path, root
+        )
+        return _result_from_fingerprint_issues(
+            name, issues, "fixture_set_hash_mismatch", "fingerprint_input_hash_mismatch"
+        )
+
+
 def gold_leakage_guard_passed(source_root):
     name = "gold leakage guard passed"
     with temp_workspace(source_root) as root:
@@ -506,6 +541,21 @@ def _result_from_rederive_issues(name, issues, *codes):
     return TamperResult(name, False, "reported " + ", ".join(sorted(present)))
 
 
+def _fingerprint_paths(root):
+    base = os.path.join(root, "examples", "fingerprints", "demo_pack")
+    return os.path.join(base, "fixture_set.json"), os.path.join(base, "expected_fingerprint.json")
+
+
+def _result_from_fingerprint_issues(name, issues, *codes):
+    present = {issue["code"] for issue in issues}
+    missing = set(codes) - present
+    if not missing:
+        return TamperResult(name, True)
+    if not issues:
+        return TamperResult(name, False, "no fingerprint integrity issue was reported")
+    return TamperResult(name, False, "missing " + ", ".join(sorted(missing)))
+
+
 CHECKS = (
     edited_artifact_detected,
     edited_evidence_detected,
@@ -520,6 +570,8 @@ CHECKS = (
     edited_transcript_normalized_hash_detected,
     live_adapter_ci_guard_passed,
     adapter_metadata_blindness_guard_passed,
+    fingerprint_model_reassignment_detected,
+    fingerprint_dropped_occurrence_detected,
     gold_leakage_guard_passed,
     hidden_repair_guard_passed,
 )

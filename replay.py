@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v0.7 replay / attestation.
+"""SFA-Bench v0.8 replay / attestation.
 
 Two layers are re-attested independently:
 
@@ -64,7 +64,7 @@ def replay_artifact(art_path):
 def main():
     fam_mod.load_taxonomy(FAMILIES_PATH)  # validates taxonomy
 
-    print("SFA-Bench v0.7 replay / attestation")
+    print("SFA-Bench v0.8 replay / attestation")
     print("=" * 74)
 
     all_ok = True

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the v0.7 offline transcript normalization demo."""
+"""Run the v0.8 offline transcript normalization demo."""
 from datetime import datetime, timezone
 import json
 import os
@@ -90,7 +90,14 @@ def main():
             sealed_at=observed_at,
         )
         _write_json_new(os.path.join(run_dir, "failure_artifact.json"), failure_artifact)
-        _append_occurrence(failure_artifact, verdict, family, observed_at, run_id)
+        _append_occurrence(
+            failure_artifact,
+            verdict,
+            family,
+            observed_at,
+            run_id,
+            normalized.provenance["model_id"],
+        )
         failure_logged = True
 
     raw_hash_ok = normalized.provenance["raw_source_hash"] == hashing.sha256_hex(_read_json(raw_path))
@@ -100,7 +107,7 @@ def main():
     verifier_normalized_only = _verifier_normalized_only(input_obj, evidence_obj, normalized.candidate, rules_obj, verdict.to_dict())
 
     metadata = raw_source["metadata"]
-    print("SFA-Bench v0.7 transcript demo")
+    print("SFA-Bench v0.8 transcript demo")
     print("=" * 56)
     print(f"transcript loaded: {os.path.relpath(TRANSCRIPT_PATH, ROOT)}")
     print(f"model_id: {metadata['model_id']}")
@@ -123,7 +130,7 @@ def main():
     return 0 if final_ok else 2
 
 
-def _append_occurrence(failure_artifact, verdict, family, observed_at, run_id):
+def _append_occurrence(failure_artifact, verdict, family, observed_at, run_id, model_id):
     config = _read_json(CONFIG_PATH)
     granularity = config.get("period_granularity", "year")
     return ledger_mod.append_occurrence(
@@ -136,6 +143,7 @@ def _append_occurrence(failure_artifact, verdict, family, observed_at, run_id):
         period=history_mod.period_of(observed_at, granularity),
         run_id=run_id,
         synthetic=False,
+        model_id=model_id,
     )
 
 

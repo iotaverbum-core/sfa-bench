@@ -45,3 +45,6 @@ jobs:
 
       - name: Run adapter boundary demo
         run: python adapter_demo.py
+
+      - name: Re-derive failure fingerprint report
+        run: python fingerprint_report.py

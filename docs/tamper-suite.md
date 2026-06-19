@@ -1,4 +1,4 @@
-# SFA-Bench v0.7 Tamper & Contamination Suite
+# SFA-Bench v0.8 Tamper & Contamination Suite
 
 SFA-Bench preserves failure history as sealed artifacts plus an append-only
 occurrence ledger. The tamper suite exists to prove that this history cannot be
@@ -32,6 +32,8 @@ The checks cover:
 - edited transcript normalized-candidate replay hash
 - live adapter CI guard
 - adapter metadata blindness guard
+- fingerprint model reassignment
+- dropped fingerprint occurrence
 - gold leakage into the verifier path
 - hidden repair of failing candidates
 
@@ -50,6 +52,8 @@ Examples include:
 - removing or moving taxonomy families that existing records reference
 - making a live adapter reachable in CI
 - letting adapter/model metadata alter verifier output
+- reassigning a sealed fixture failure to another `model_id`
+- dropping a failed fixture sample to improve a reported fingerprint
 - allowing `expected_verdict.json` to influence verification
 - changing a failing candidate so the original failure is not preserved
 
