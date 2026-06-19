@@ -5,7 +5,7 @@ type: software
 authors:
   - family-names: Neal
     given-names: Matthew
-version: "1.0.0"
+version: "1.0.1"
 date-released: "2026-06-19"
 repository-code: "https://github.com/iotaverbum-core/sfa-bench"
 url: "https://github.com/iotaverbum-core/sfa-bench"

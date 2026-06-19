@@ -4,6 +4,9 @@ Prior State is the project's lightweight run-start reminder: before beginning a
 release gate, name the previous procedural failure, the correction, and the rule
 that prevents recurrence.
 
+See [Prior State Memory: Why AI Needs Memory Before the Next Mistake](prior-state-memory.md)
+for the public conceptual framing of Prior State.
+
 ## Recorded release lesson
 
 Earlier release runs created new implementation files but left them untracked.

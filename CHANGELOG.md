@@ -6,6 +6,21 @@ All notable changes to SFA-Bench will be documented in this file.
 
 No unreleased changes.
 
+## v1.0.1 — Prior State Memory (2026-06-19)
+
+### Added
+
+- Prior State Memory article naming and explaining the run-start discipline of
+  surfacing a previous failure, its correction, and its prevention rule before
+  the next action begins.
+
+### Not Changed
+
+- Documentation-only release with no verifier change.
+- No taxonomy change.
+- No runtime behaviour change.
+- No API, model, provider, or network calls.
+
 ## v1.0.0 - 2026-06-19
 
 ### Added
