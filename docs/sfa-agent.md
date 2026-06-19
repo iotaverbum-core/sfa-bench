@@ -1,4 +1,4 @@
-# SFA-Agent v0.5
+# SFA-Agent v0.6
 
 SFA-Agent is a minimal proof of concept that places SFA-Bench around a
 swappable model adapter. It is not an agent framework.
@@ -17,6 +17,11 @@ The verifier is unchanged. It receives only the task input, evidence, candidate,
 and verifier rules. It never receives the warning and never reads gold labels.
 v0.5 also writes provenance for every attempt, but provenance remains outside
 the verifier boundary.
+
+The current adapter and transcript demos are offline and deterministic. A future live model may
+sit behind an adapter, but it must remain outside the sealed deterministic core
+and disabled in CI. The verifier must still receive only input, evidence,
+candidate, and verifier rules.
 
 ## Demo
 
@@ -62,3 +67,5 @@ fails instead of overwriting records.
 - The warning is input to the next adapter call only.
 - The verifier remains deterministic and warning-blind.
 - Provenance and adapter metadata are never verifier inputs.
+- Policy-guided retry is not implemented; future policy logic must remain
+  generator-side only.

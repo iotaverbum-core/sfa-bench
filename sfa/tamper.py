@@ -17,6 +17,7 @@ from . import case as case_mod
 from . import families as fam_mod
 from . import hashing
 from . import ledger as ledger_mod
+from . import rederive as rederive_mod
 from . import validation
 from . import verifier as verifier_mod
 
@@ -74,7 +75,7 @@ def _ledger_path(root):
     return os.path.join(root, "history", "occurrences.jsonl")
 
 
-_COPY_DIRS = ("cases", "artifacts", "history", "sfa")
+_COPY_DIRS = ("cases", "artifacts", "history", "sfa", "examples")
 _COPY_FILES = (
     "families.json",
     "history_config.json",
@@ -338,6 +339,34 @@ def taxonomy_drift_detected(source_root):
         )
 
 
+def edited_transcript_raw_source_detected(source_root):
+    name = "edited transcript raw source detected"
+    with temp_workspace(source_root) as root:
+        record_path = _first_transcript_replay_record(root)
+        record = _read_json(record_path)
+        transcript_path = os.path.join(root, record["transcript_path"])
+
+        def tamper(transcript):
+            transcript["raw_response"] = transcript["raw_response"] + "\nTampered wrapper text."
+
+        _mutate_json(transcript_path, tamper)
+        result = rederive_mod.rederive_record(record_path, root)
+        return _result_from_rederive_issues(name, result.issues, "raw_source_hash_mismatch")
+
+
+def edited_transcript_normalized_hash_detected(source_root):
+    name = "edited transcript normalized hash detected"
+    with temp_workspace(source_root) as root:
+        record_path = _first_transcript_replay_record(root)
+
+        def tamper(record):
+            record["expected"]["normalized_candidate_hash"] = "0" * 64
+
+        _mutate_json(record_path, tamper)
+        result = rederive_mod.rederive_record(record_path, root)
+        return _result_from_rederive_issues(name, result.issues, "normalized_candidate_hash_mismatch")
+
+
 def gold_leakage_guard_passed(source_root):
     name = "gold leakage guard passed"
     with temp_workspace(source_root) as root:
@@ -427,6 +456,23 @@ def _relative_files(root):
     return sorted(out)
 
 
+def _first_transcript_replay_record(root):
+    base = os.path.join(root, "examples", "external_transcripts")
+    for name in sorted(os.listdir(base)):
+        if name.endswith(".replay.json"):
+            return os.path.join(base, name)
+    raise RuntimeError("no transcript replay record available for tamper check")
+
+
+def _result_from_rederive_issues(name, issues, *codes):
+    present = {issue["code"] for issue in issues}
+    if present.intersection(codes):
+        return TamperResult(name, True)
+    if not issues:
+        return TamperResult(name, False, "no re-derivation issue was reported")
+    return TamperResult(name, False, "reported " + ", ".join(sorted(present)))
+
+
 CHECKS = (
     edited_artifact_detected,
     edited_evidence_detected,
@@ -437,6 +483,8 @@ CHECKS = (
     edited_ledger_entry_detected,
     fake_lineage_parent_detected,
     taxonomy_drift_detected,
+    edited_transcript_raw_source_detected,
+    edited_transcript_normalized_hash_detected,
     gold_leakage_guard_passed,
     hidden_repair_guard_passed,
 )

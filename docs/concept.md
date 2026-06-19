@@ -79,6 +79,13 @@ python report.py
 
 If those commands pass, the repository demonstrates the first trust layer: failure preservation, replayability, and tamper-evident history.
 
+As of v0.6, the stable implementation is the deterministic offline instrument:
+benchmark, failure archive, tamper-evident history, verifier invariants,
+generator-side runtime memory, external provenance, transcript replay /
+re-derivation, and replay/attestation.
+Live model adapters, cross-model failure fingerprinting, and policy-guided retry
+remain roadmap work beyond the offline deterministic airlock.
+
 ## What SFA-Bench is not
 
 SFA-Bench is not a larger model.

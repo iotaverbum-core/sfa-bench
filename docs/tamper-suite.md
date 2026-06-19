@@ -1,4 +1,4 @@
-# SFA-Bench v0.3 Tamper & Contamination Suite
+# SFA-Bench v0.6 Tamper & Contamination Suite
 
 SFA-Bench preserves failure history as sealed artifacts plus an append-only
 occurrence ledger. The tamper suite exists to prove that this history cannot be
@@ -28,6 +28,8 @@ The checks cover:
 - edited ledger entries
 - fake lineage parents
 - taxonomy drift or missing families
+- edited transcript raw source
+- edited transcript normalized-candidate replay hash
 - gold leakage into the verifier path
 - hidden repair of failing candidates
 

@@ -1,0 +1,12 @@
+{
+  "cited_evidence": [
+    "f2"
+  ],
+  "claims": [
+    {
+      "subject": "approval_status",
+      "value": "pending"
+    }
+  ],
+  "conclusion": "The contract approval status is pending."
+}

@@ -1,4 +1,4 @@
-# SFA-Bench v0.3
+# SFA-Bench v0.6
 
 ![SFA-Bench](https://github.com/iotaverbum-core/sfa-bench/actions/workflows/test.yml/badge.svg)
 
@@ -12,6 +12,15 @@ v0.2 adds the next layer:
 > Not merely failure storage. Failure history.
 
 v0.3 adds deterministic tamper and contamination checks for that history.
+
+v0.4 adds a minimal SFA-Agent loop around the verifier and failure history.
+
+v0.5 adds an external candidate provenance boundary for local/manual candidate
+files.
+
+v0.6 adds offline transcript fixtures, deterministic transcript normalization,
+and re-derivation of supported transcript verdicts from sealed normalized
+inputs.
 
 Most AI evaluation compresses failure into a score. SFA-Bench keeps the failure
 record itself: what failed, why it failed, what family of failure it belongs to,
@@ -32,6 +41,40 @@ Core claim:
 
 > SFA-Bench is not trying to make models smarter. It is trying to make reasoning history harder to falsify.
 
+For the current implementation boundary and roadmap, see
+[Architecture Stack](docs/architecture-stack.md).
+
+---
+
+## Current Scope vs Roadmap
+
+SFA-Bench v0.6 is stable as a deterministic offline instrument. It is not yet a
+full live-agent system.
+
+Current sealed core:
+
+- benchmark
+- failure archive
+- tamper-evident history
+- verifier invariants
+- runtime memory and warning generation on the generator side only
+- external provenance for local/manual candidates
+- transcript replay / re-derivation for supported offline fixtures
+- replay and attestation of sealed artifacts and the ledger chain
+
+Roadmap beyond the offline deterministic airlock:
+
+- live model boundary
+- failure fingerprinting across models
+- policy-guided retry based on recurring failure families
+
+Everything in the sealed core must remain deterministic, offline, replayable,
+and CI-safe. Live adapters must be optional, disabled in CI, and kept outside
+the verifier boundary.
+
+SFA-Bench can ingest sealed transcript fixtures offline. It does not run LLMs,
+call model APIs, fingerprint models, or perform policy-guided retry in v0.6.
+
 ---
 
 ## Quick start
@@ -40,8 +83,12 @@ Core claim:
 python invariant_suite.py # prove verifier history-blindness invariants
 python run_benchmark.py    # verify all cases, seal FAIL artifacts, append ledger observations
 python replay.py           # re-attest artifacts and the hash-chained ledger
+python rederive.py         # re-derive supported transcript fixture verdicts
 python report.py           # inspect recurrence, growth, extinction, and lineage
 python tamper_suite.py     # prove corruption attempts are detected in temp copies
+python agent_demo.py       # run the deterministic SFA-Agent demo
+python external_candidate_demo.py # run the external candidate provenance demo
+python transcript_demo.py  # run the offline transcript normalization demo
 ```
 
 Optional demo history:
@@ -105,6 +152,31 @@ See [docs/tamper-suite.md](docs/tamper-suite.md).
 - hidden repair guard
 - CI execution of the full trust-layer command set
 
+### v0.4
+
+- minimal SFA-Agent proof of concept
+- deterministic fake model adapter
+- warning-guided single retry from failure history
+- append-only agent run folders
+
+### v0.5
+
+- local/manual external candidate adapter
+- raw source preservation
+- per-attempt provenance records
+- raw source and normalized candidate hashes
+- external candidate provenance demo
+
+### v0.6
+
+- offline transcript fixtures
+- deterministic transcript normalization from exactly one fenced JSON candidate
+- transcript replay records with raw-source, normalized-candidate, evidence,
+  rules, and verifier-input hashes
+- re-derivation of supported transcript verdicts without model calls
+- normalization-isolation invariant
+- targeted transcript/provenance tamper checks
+
 The benchmark begins answering:
 
 - Is this failure new?
@@ -118,6 +190,10 @@ The benchmark begins answering:
 ---
 
 ## Repository layout
+
+v0.6 adds `rederive.py`, `transcript_demo.py`, transcript fixtures under
+`examples/external_transcripts/`, and transcript normalization / re-derivation
+helpers under `sfa/`.
 
 ```text
 sfa-bench/

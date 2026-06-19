@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v0.2 runner.
+"""SFA-Bench v0.6 runner.
 
 Pipeline per case, enforced structurally:
   1. Load verification inputs ONLY (no expected verdict).
@@ -118,7 +118,7 @@ def main():
     observed_at = datetime.now(timezone.utc).isoformat()
     run_id = "RUN-" + observed_at
 
-    print("SFA-Bench v0.2   verifier:", verifier_mod.VERIFIER_VERSION)
+    print("SFA-Bench v0.6   verifier:", verifier_mod.VERIFIER_VERSION)
     print("taxonomy:", taxonomy_version)
     print("run_id:", run_id)
     print("=" * 74)

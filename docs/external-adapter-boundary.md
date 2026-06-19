@@ -1,7 +1,10 @@
 # External Candidate Provenance Boundary
 
-SFA-Agent v0.5 can evaluate candidate answers produced outside this repository
+SFA-Agent v0.6 can evaluate candidate answers produced outside this repository
 without letting external metadata contaminate the verifier.
+
+This keeps the benchmark model-free: external candidates or transcripts can be
+produced elsewhere and ingested locally without adding live model calls to CI.
 
 The verifier still receives only:
 
@@ -33,12 +36,20 @@ Supported raw source shapes include the canonical candidate shape, a nested
 `candidate` object, or a compact manual form with `answer`, `evidence_ids`, and
 `claims_by_subject`.
 
+The v0.5 raw source is local JSON and is still candidate-shaped. For offline
+model-style transcript fixtures, use the v0.6 transcript replay path documented
+in [Architecture Stack](architecture-stack.md).
+
 ## Provenance
 
 Every attempt writes `attempt_NNN_provenance.json` beside the attempt files. The
 record includes adapter identity, source location, raw source hash, normalized
 candidate hash, input hash, evidence hash, creation time, whether a warning was
 used, and `verifier_blind_to_provenance: true`.
+
+Future live attempts, if implemented, must be sealed immediately as raw source
+before normalization and verification. Live adapter metadata may be recorded in
+provenance, but must not be passed to the verifier.
 
 `sfa.provenance.verify_attempt_files()` compares the stored hashes to the run
 folder files. If the raw source or normalized candidate is edited after the run,
@@ -59,3 +70,6 @@ a history warning, and retries once with
 `examples/external_candidates/good_candidate.json`.
 
 Both attempts are preserved under `agent_runs/<run_id>/`.
+
+See [Architecture Stack](architecture-stack.md) for the release boundary between
+the deterministic offline instrument and the live-model roadmap.

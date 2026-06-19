@@ -22,6 +22,9 @@ jobs:
       - name: Replay sealed artifacts and ledger
         run: python replay.py
 
+      - name: Re-derive transcript fixture verdicts
+        run: python rederive.py
+
       - name: Generate history report
         run: python report.py
 
@@ -36,3 +39,6 @@ jobs:
 
       - name: Run external candidate demo
         run: python external_candidate_demo.py
+
+      - name: Run transcript replay demo
+        run: python transcript_demo.py

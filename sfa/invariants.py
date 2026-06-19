@@ -28,8 +28,33 @@ FORBIDDEN_VERIFIER_REFERENCES = (
     "agent_runs",
     "provenance",
     "warnings",
+    "warning",
     "agent",
     "model_adapter",
+    "raw_source",
+    "raw_response",
+    "transcript",
+    "prompt",
+    "model_id",
+    "provider",
+    "temperature",
+    "top_p",
+    "adapter",
+)
+
+FORBIDDEN_VERIFIER_CALL_ARGUMENTS = (
+    "raw_source",
+    "raw_response",
+    "transcript",
+    "prompt",
+    "model_id",
+    "provider",
+    "temperature",
+    "top_p",
+    "adapter",
+    "warning",
+    "history",
+    "provenance",
 )
 
 
@@ -113,6 +138,86 @@ def assert_verifier_static_guard(verifier_path: str | Path) -> None:
         )
 
 
+def assert_verifier_callsite_guard(repo_root: str | Path) -> None:
+    hits = find_forbidden_verifier_call_arguments(repo_root)
+    if hits:
+        detail = "\n".join(
+            f"{hit.line}: {hit.kind} reference to '{hit.term}': {hit.text}"
+            for hit in hits
+        )
+        raise InvariantFailure(
+            "verifier call sites pass forbidden transcript-adjacent symbols:\n" + detail
+        )
+
+
+def find_forbidden_verifier_call_arguments(repo_root: str | Path) -> list[ForbiddenReference]:
+    root = Path(repo_root)
+    hits: list[ForbiddenReference] = []
+    forbidden = {term.lower() for term in FORBIDDEN_VERIFIER_CALL_ARGUMENTS}
+    for path in _python_files(root):
+        source = path.read_text(encoding="utf-8")
+        lines = source.splitlines()
+        try:
+            tree = ast.parse(source, filename=str(path))
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call) or not _is_verifier_call(node):
+                continue
+            segments = []
+            for arg in node.args:
+                segments.append(ast.get_source_segment(source, arg) or "")
+            for keyword in node.keywords:
+                segments.append(ast.get_source_segment(source, keyword.value) or "")
+            for segment in segments:
+                for term in forbidden:
+                    if re.search(rf"(?<![A-Za-z0-9_]){re.escape(term)}(?![A-Za-z0-9_])", segment, re.IGNORECASE):
+                        hits.append(_hit(term, "verify-call-argument", node.lineno, lines))
+    return _dedupe_hits(hits)
+
+
+def run_normalization_isolation_case(
+    *,
+    input_obj: dict[str, Any],
+    evidence_obj: dict[str, Any],
+    rules_obj: dict[str, Any],
+) -> HistoryBlindnessResult:
+    from sfa import transcript as transcript_mod
+    from sfa import verifier
+
+    candidate_block = (
+        "```json\n"
+        "{\n"
+        "  \"conclusion\": \"The contract approval status is pending.\",\n"
+        "  \"cited_evidence\": [\"f2\"],\n"
+        "  \"claims\": [{\"subject\": \"approval_status\", \"value\": \"pending\"}]\n"
+        "}\n"
+        "```"
+    )
+    transcript_a = _isolation_transcript(
+        provider="fixture-provider-a",
+        model_id="fixture-model-a",
+        temperature=0,
+        raw_response="Candidate follows.\n" + candidate_block + "\nEnd.",
+    )
+    transcript_b = _isolation_transcript(
+        provider="fixture-provider-b",
+        model_id="fixture-model-b",
+        temperature=0.9,
+        raw_response="Different wrapper text.\n" + candidate_block + "\nDifferent ending.",
+    )
+    norm_a = transcript_mod.normalize_transcript(transcript_a, input_obj=input_obj, evidence_obj=evidence_obj, rules_obj=rules_obj)
+    norm_b = transcript_mod.normalize_transcript(transcript_b, input_obj=input_obj, evidence_obj=evidence_obj, rules_obj=rules_obj)
+    if norm_a.candidate_bytes != norm_b.candidate_bytes:
+        raise InvariantFailure("normalization isolation fixtures did not produce byte-identical candidates")
+    output_a = verifier.verify(input_obj, evidence_obj, norm_a.candidate, rules_obj).to_dict()
+    output_b = verifier.verify(input_obj, evidence_obj, norm_b.candidate, rules_obj).to_dict()
+    result = HistoryBlindnessResult("normalization isolation", output_a, output_b)
+    if not result.matched:
+        raise InvariantFailure("verifier output changed with transcript metadata")
+    return result
+
+
 def run_history_blindness_case(
     *,
     name: str,
@@ -151,6 +256,48 @@ def run_history_blindness_case(
             f"{name} changed verifier output when surrounding history was populated"
         )
     return result
+
+
+def _python_files(root: Path):
+    skip_dirs = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".tamper-tmp", "agent_runs", "transcript_runs"}
+    for path in root.rglob("*.py"):
+        if any(part in skip_dirs for part in path.relative_to(root).parts):
+            continue
+        yield path
+
+
+def _is_verifier_call(node: ast.Call) -> bool:
+    func = node.func
+    return (
+        isinstance(func, ast.Attribute)
+        and func.attr == "verify"
+        or isinstance(func, ast.Name)
+        and func.id == "verify"
+    )
+
+
+def _isolation_transcript(provider: str, model_id: str, temperature: float, raw_response: str) -> dict[str, Any]:
+    return {
+        "schema": "sfa.transcript.v0.1",
+        "case_id": "external_candidate_001",
+        "metadata": {
+            "adapter_id": "isolation-adapter",
+            "prompt_template_id": "isolation-template",
+            "provider": provider,
+            "model_id": model_id,
+            "parameters": {
+                "temperature": temperature,
+                "top_p": 1,
+                "seed": 7,
+            },
+        },
+        "prompt": {
+            "text": "Different prompt wrapper should not affect verifier judgment.",
+            "prompt_hash": provider + "-prompt-hash",
+        },
+        "raw_response": raw_response,
+        "captured_at": "2026-06-18T00:00:00+00:00",
+    }
 
 
 def _remove_owned_temp_tree(target: Path, temp_parent: Path) -> None:

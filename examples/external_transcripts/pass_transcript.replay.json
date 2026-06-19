@@ -1,0 +1,22 @@
+{
+  "case_dir": "cases/external_candidate_001",
+  "expected": {
+    "evidence_hash": "ffca70e87722a41ed26372e854b442f301faf6e1e08e9070f5c300bdbc0bbc77",
+    "family": null,
+    "input_hash": "ea32b602b8347e47d291d9325131d895599780938ac79256770eda4f4e47911d",
+    "normalized_candidate_hash": "30496bac997e2293c249c2c757ac5440ec250d978ce13fc8776a06fb4dd2084a",
+    "raw_source_hash": "f17bb9296b4d8610dd5414bedb7429c6008b679bf030695a264dac41e20a4bad",
+    "rules_hash": "68b2634be77a7f19b71eaceb05da3a51667faf001bc3b0c49e42bd6b23f7385c",
+    "verdict": {
+      "category": null,
+      "explanation": "candidate is consistent with evidence under all rules",
+      "status": "PASS",
+      "violations": []
+    },
+    "verifier_input_hash": "e05df875d6831d9991e964d36ea2003b1c37e0b8c8aa0b5f05dcc5e6e526ea36"
+  },
+  "name": "pass_transcript",
+  "normalized_candidate_path": "examples/external_transcripts/pass_transcript.candidate.json",
+  "schema": "sfa.transcript_replay.v0.1",
+  "transcript_path": "examples/external_transcripts/pass_transcript.json"
+}

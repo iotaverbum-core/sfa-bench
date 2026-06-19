@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run SFA-Bench v0.3 tamper and contamination checks."""
+"""Run SFA-Bench v0.6 tamper and contamination checks."""
 import os
 import sys
 
@@ -10,7 +10,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 def main():
-    print("SFA-Bench v0.3 Tamper & Contamination Suite")
+    print("SFA-Bench v0.6 Tamper & Contamination Suite")
     print("=" * 48)
     results = []
     total = len(tamper.CHECKS)

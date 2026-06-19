@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verifier invariant suite.
+"""SFA-Bench v0.6 verifier invariant suite.
 
 Run: python invariant_suite.py
 """
@@ -48,12 +48,15 @@ def _summarize_verdict(output):
 def main() -> int:
     invariants = _load_invariants_module()
 
-    print("SFA verifier invariant suite")
+    print("SFA-Bench v0.6 Verifier Invariant Suite")
     print("=" * 74)
 
     invariants.assert_verifier_static_guard(VERIFIER_PATH)
     print("static guard: PASS")
     print("  sfa/verifier.py has no forbidden history-adjacent references")
+    invariants.assert_verifier_callsite_guard(ROOT)
+    print("call-site guard: PASS")
+    print("  verifier call arguments exclude transcript/provenance/model metadata")
 
     cases = [
         ("PASS candidate", "case_001_grounded_pass"),
@@ -71,8 +74,19 @@ def main() -> int:
         print(f"    empty:     {_summarize_verdict(result.empty_output)}")
         print(f"    populated: {_summarize_verdict(result.populated_output)}")
 
+    external_case = _load_case("external_candidate_001")
+    isolation = invariants.run_normalization_isolation_case(
+        input_obj=external_case["input_obj"],
+        evidence_obj=external_case["evidence_obj"],
+        rules_obj=external_case["rules_obj"],
+    )
+    print("normalization-isolation:")
+    print("  transcript metadata differential: PASS")
+    print(f"    transcript A: {_summarize_verdict(isolation.empty_output)}")
+    print(f"    transcript B: {_summarize_verdict(isolation.populated_output)}")
+
     print("=" * 74)
-    print("PASS: fixed verifier inputs produced identical output with empty and populated surrounding history")
+    print("PASS: verifier output is stable across history and transcript metadata changes")
     return 0
 
 

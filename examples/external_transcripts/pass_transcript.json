@@ -1,0 +1,21 @@
+{
+  "schema": "sfa.transcript.v0.1",
+  "case_id": "external_candidate_001",
+  "metadata": {
+    "adapter_id": "fixture-adapter-v0",
+    "prompt_template_id": "fixture-contract-status-v0",
+    "provider": "fixture-provider",
+    "model_id": "fixture-model-a",
+    "parameters": {
+      "temperature": 0,
+      "top_p": 1,
+      "seed": 102
+    }
+  },
+  "prompt": {
+    "text": "Answer the contract approval question using the supplied facts.",
+    "prompt_hash": "fixture-prompt-hash-contract-status-v0"
+  },
+  "raw_response": "The answer is below.\n```json\n{\n  \"conclusion\": \"The contract approval status is pending.\",\n  \"cited_evidence\": [\"f2\"],\n  \"claims\": [\n    {\"subject\": \"approval_status\", \"value\": \"pending\"}\n  ]\n}\n```\nNo additional candidate objects are provided.",
+  "captured_at": "2026-06-18T00:00:00+00:00"
+}

@@ -1,0 +1,28 @@
+{
+  "case_dir": "cases/external_candidate_001",
+  "expected": {
+    "evidence_hash": "ffca70e87722a41ed26372e854b442f301faf6e1e08e9070f5c300bdbc0bbc77",
+    "family": "contradicts_evidence",
+    "input_hash": "ea32b602b8347e47d291d9325131d895599780938ac79256770eda4f4e47911d",
+    "normalized_candidate_hash": "441fed6ed96223ee9df316b27dcfe3bfb5513570526a2808e5a086d0825eee65",
+    "raw_source_hash": "f8274526b29407f137a8309719aaaa7fc20faa95631bc506971ba582b8135d35",
+    "rules_hash": "68b2634be77a7f19b71eaceb05da3a51667faf001bc3b0c49e42bd6b23f7385c",
+    "verdict": {
+      "category": "CONTRADICTS_EVIDENCE",
+      "explanation": "claim 'approval_status=approved' contradicts evidence 'approval_status=pending'",
+      "status": "FAIL",
+      "violations": [
+        {
+          "category": "CONTRADICTS_EVIDENCE",
+          "detail": "claim 'approval_status=approved' contradicts evidence 'approval_status=pending'",
+          "rule_id": "grounding"
+        }
+      ]
+    },
+    "verifier_input_hash": "a7ffeecf0d8d8bb0f2e90a2a3b2a6094903be370d7e4b5eebbfa437404ac3d15"
+  },
+  "name": "bad_transcript",
+  "normalized_candidate_path": "examples/external_transcripts/bad_transcript.candidate.json",
+  "schema": "sfa.transcript_replay.v0.1",
+  "transcript_path": "examples/external_transcripts/bad_transcript.json"
+}
