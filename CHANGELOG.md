@@ -4,7 +4,26 @@ All notable changes to SFA-Bench will be documented in this file.
 
 ## Unreleased
 
-No unreleased changes.
+### Fixed
+
+- Corrected the package version of record: `sfa.__version__` was left at `0.9.0`
+  while the README, changelog, command headers, and the release gate's
+  `EXPECTED_RELEASE` all declared `v1.0.0`. It now declares `1.0.0`.
+
+### Added
+
+- Release-gate enforcement that the package version of record (`sfa.__version__`)
+  matches `EXPECTED_RELEASE`, and that every command header declares that same
+  release. Replaces the prior v0-only stale-header check with a release-aware one.
+- `assert_repository_version_consistency` invariant, run by `invariant_suite.py`,
+  so the same drift fails closed on the offline CI path and not only at the gate.
+
+### Not Changed
+
+- No verifier change.
+- No taxonomy change.
+- No runtime verdict, fingerprint, or policy behaviour change.
+- No API, model, provider, or network calls.
 
 ## v1.0.3 — DOI and Citation Update (2026-06-19)
 
