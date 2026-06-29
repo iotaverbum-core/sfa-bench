@@ -23,5 +23,10 @@
     {"id": "grounding", "type": "claims_match_evidence",
      "claims_field": "claims", "evidence_collection": "facts",
      "match_on": "subject", "value_key": "value"}
-  ]
+  ],
+  "extraction": {
+    "extractor_version": "groundledger-extractor-v1",
+    "citation_patterns": ["clause_[A-Za-z0-9]+", "\\[([^\\]]+)\\]"],
+    "value_window": 70
+  }
 }

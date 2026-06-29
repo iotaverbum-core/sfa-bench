@@ -1,0 +1,14 @@
+{
+  "answer_id": "txt_fabricated_002",
+  "rule_pack": "insurance_v1",
+  "task_input": {"question": "What is my deductible?"},
+  "answer_text": "Good news - your deductible is only $500 per claim, per clause_3a and clause_9z of your policy.",
+  "evidence": {
+    "documents": [
+      {"id": "clause_3a", "title": "Deductible", "text": "The deductible is $1,000 per claim."}
+    ],
+    "facts": [
+      {"id": "f_deductible", "subject": "deductible", "value": "$1,000"}
+    ]
+  }
+}

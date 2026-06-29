@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 from typing import Any, Callable
 
-from . import engine, ledger as ledger_mod, rulepacks
+from . import engine, extraction as extraction_mod, ledger as ledger_mod, rulepacks
 from .store import TenantStore
 
 _VERDICT_FIELDS = (
@@ -94,6 +94,25 @@ def attest_records(
                 {"answer_id": answer_id, "code": "verdict_mismatch",
                  "detail": "re-derived verdict differs on: " + ", ".join(mismatched)}
             )
+
+        # For text answers, re-run the deterministic extraction and confirm the
+        # sealed candidate still follows from the original answer text.
+        sealed_extraction = receipt.get("extraction")
+        if sealed_extraction and submission.get("answer_text") is not None:
+            re_extracted = extraction_mod.extract_candidate(
+                submission["answer_text"], submission.get("evidence", {}),
+                config=rule_pack.get("extraction"),
+            )["provenance"]
+            if re_extracted.get("answer_text_hash") != sealed_extraction.get("answer_text_hash"):
+                issues.append(
+                    {"answer_id": answer_id, "code": "extraction_text_mismatch",
+                     "detail": "answer text differs from the sealed extraction"}
+                )
+            if re_extracted.get("candidate_hash") != sealed_extraction.get("candidate_hash"):
+                issues.append(
+                    {"answer_id": answer_id, "code": "extraction_mismatch",
+                     "detail": "re-extracted candidate differs from the sealed extraction"}
+                )
 
     return {
         "attested": not issues,

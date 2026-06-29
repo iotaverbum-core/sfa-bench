@@ -7,6 +7,7 @@ high-scale server; it is the smallest honest "SaaS surface" over the engine.
 Endpoints (all JSON, header ``X-API-Key`` selects the tenant):
 
   POST /v1/verify         body = submission        -> { receipt }
+  POST /v1/verify-text    body = text submission   -> { receipt }
   GET  /v1/receipts                                 -> { receipts: [...] }
   GET  /v1/audit-report                             -> audit report
   GET  /v1/audit-export                             -> self-contained signed bundle
@@ -112,6 +113,13 @@ def make_handler(
                     rule_pack = rulepacks.load_rule_pack(pack_id, packs_dir=packs_dir)
                     receipt = engine.verify_submission(submission, rule_pack)
                     store.record(submission, receipt)
+                    self._send(200, {"receipt": receipt})
+                elif self.path == "/v1/verify-text":
+                    submission = self._body()
+                    pack_id = submission.get("rule_pack", "insurance_v1")
+                    rule_pack = rulepacks.load_rule_pack(pack_id, packs_dir=packs_dir)
+                    receipt, stored = engine.verify_text_submission(submission, rule_pack)
+                    store.record(stored, receipt)
                     self._send(200, {"receipt": receipt})
                 elif self.path == "/v1/replay":
                     self._send(200, replay.attest(store, self._resolver()))

@@ -30,6 +30,13 @@ class _EmbeddedTransport:
         self.store.record(submission, receipt)
         return receipt
 
+    def submit_text(self, submission: dict[str, Any]) -> dict[str, Any]:
+        pack_id = submission.get("rule_pack", "insurance_v1")
+        rule_pack = rulepacks.load_rule_pack(pack_id, packs_dir=self.packs_dir)
+        receipt, stored = engine.verify_text_submission(submission, rule_pack)
+        self.store.record(stored, receipt)
+        return receipt
+
     def receipts(self) -> list[dict[str, Any]]:
         return self.store.list_receipts()
 
@@ -72,6 +79,9 @@ class _HttpTransport:
 
     def submit(self, submission: dict[str, Any]) -> dict[str, Any]:
         return self._request("POST", "/v1/verify", submission)["receipt"]
+
+    def submit_text(self, submission: dict[str, Any]) -> dict[str, Any]:
+        return self._request("POST", "/v1/verify-text", submission)["receipt"]
 
     def receipts(self) -> list[dict[str, Any]]:
         return self._request("GET", "/v1/receipts")["receipts"]
@@ -116,6 +126,19 @@ class GroundLedgerClient:
         if task_input is not None:
             submission["task_input"] = task_input
         return self._t.submit(submission)
+
+    def verify_text(self, *, answer_id: str, answer_text: str, evidence: dict[str, Any],
+                    task_input: dict[str, Any] | None = None, rule_pack: str | None = None) -> dict[str, Any]:
+        """Verify a free-text answer: extract a structured candidate, then judge it."""
+        submission = {
+            "answer_id": answer_id,
+            "rule_pack": rule_pack or self.default_rule_pack,
+            "answer_text": answer_text,
+            "evidence": evidence,
+        }
+        if task_input is not None:
+            submission["task_input"] = task_input
+        return self._t.submit_text(submission)
 
     def submit(self, submission: dict[str, Any]) -> dict[str, Any]:
         """Verify a fully-formed submission dict."""
