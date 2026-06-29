@@ -9,6 +9,7 @@ Endpoints (all JSON, header ``X-API-Key`` selects the tenant):
   POST /v1/verify         body = submission        -> { receipt }
   GET  /v1/receipts                                 -> { receipts: [...] }
   GET  /v1/audit-report                             -> audit report
+  GET  /v1/audit-export                             -> self-contained signed bundle
   POST /v1/replay                                   -> attestation
   GET  /v1/rule-packs                               -> available packs
   GET  /healthz                                     -> { ok: true }
@@ -16,17 +17,37 @@ Endpoints (all JSON, header ``X-API-Key`` selects the tenant):
 from __future__ import annotations
 
 import json
+import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-from . import engine, report as report_mod, replay, rulepacks
+from . import engine, export as export_mod, report as report_mod, replay, rulepacks
 from .store import TenantStore
 
 DEFAULT_KEYS = {"demo-key": "demo-tenant"}
 
 
-def make_handler(*, data_root: str, api_keys: dict[str, str], packs_dir: str | None = None):
+def _parse_pairs(raw: str) -> dict[str, str]:
+    """Parse a 'k1:v1,k2:v2' env string into a dict."""
+    out: dict[str, str] = {}
+    for item in raw.split(","):
+        item = item.strip()
+        if not item or ":" not in item:
+            continue
+        key, value = item.split(":", 1)
+        out[key.strip()] = value.strip()
+    return out
+
+
+def make_handler(
+    *,
+    data_root: str,
+    api_keys: dict[str, str],
+    packs_dir: str | None = None,
+    signing_keys: dict[str, str] | None = None,
+):
+    signing_keys = signing_keys or {}
     class Handler(BaseHTTPRequestHandler):
         server_version = "GroundLedger/0.1"
 
@@ -70,6 +91,11 @@ def make_handler(*, data_root: str, api_keys: dict[str, str], packs_dir: str | N
                 self._send(200, {"receipts": store.list_receipts()})
             elif self.path == "/v1/audit-report":
                 self._send(200, report_mod.build_report(store, packs_dir=packs_dir))
+            elif self.path == "/v1/audit-export":
+                bundle = export_mod.build_export_bundle(
+                    store, packs_dir=packs_dir, signing_key=signing_keys.get(tenant)
+                )
+                self._send(200, bundle)
             else:
                 self._send(404, {"error": "not found"})
 
@@ -98,18 +124,32 @@ def make_handler(*, data_root: str, api_keys: dict[str, str], packs_dir: str | N
 
 
 def serve(host: str = "127.0.0.1", port: int = 8000, *, data_root: str = "product/data",
-          api_keys: dict[str, str] | None = None, packs_dir: str | None = None) -> ThreadingHTTPServer:
+          api_keys: dict[str, str] | None = None, packs_dir: str | None = None,
+          signing_keys: dict[str, str] | None = None) -> ThreadingHTTPServer:
     handler = make_handler(
-        data_root=data_root, api_keys=api_keys or DEFAULT_KEYS, packs_dir=packs_dir
+        data_root=data_root,
+        api_keys=api_keys or DEFAULT_KEYS,
+        packs_dir=packs_dir,
+        signing_keys=signing_keys,
     )
     return ThreadingHTTPServer((host, port), handler)
 
 
+def _serve_from_env() -> ThreadingHTTPServer:
+    host = os.environ.get("GROUNDLEDGER_HOST", "127.0.0.1")
+    port = int(os.environ.get("GROUNDLEDGER_PORT", "8000"))
+    data_root = os.environ.get("GROUNDLEDGER_DATA", "product/data")
+    api_keys = _parse_pairs(os.environ.get("GROUNDLEDGER_API_KEYS", "")) or DEFAULT_KEYS
+    signing_keys = _parse_pairs(os.environ.get("GROUNDLEDGER_SIGNING_KEYS", ""))
+    Path(data_root).mkdir(parents=True, exist_ok=True)
+    httpd = serve(host, port, data_root=data_root, api_keys=api_keys, signing_keys=signing_keys)
+    print(f"GroundLedger API on http://{host}:{port}  (data: {data_root})")
+    return httpd
+
+
 if __name__ == "__main__":
-    Path("product/data").mkdir(parents=True, exist_ok=True)
-    httpd = serve()
-    print("GroundLedger API on http://127.0.0.1:8000  (X-API-Key: demo-key)")
+    server = _serve_from_env()
     try:
-        httpd.serve_forever()
+        server.serve_forever()
     except KeyboardInterrupt:
-        httpd.shutdown()
+        server.shutdown()

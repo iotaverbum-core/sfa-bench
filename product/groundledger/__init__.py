@@ -4,6 +4,7 @@ Stdlib-only. Reuses ``sfa`` for the deterministic verifier, canonical hashing,
 and failure-family classification. Designed to run inside a customer VPC with no
 network egress.
 """
-from . import engine, ledger, replay, report, rulepacks, store  # noqa: F401
+# Submodules are imported explicitly where used (engine, store, ledger, replay,
+# report, export, rulepacks, api). They are intentionally not eagerly imported
+# here so that `python -m product.groundledger.<module>` entry points run cleanly.
 
-__all__ = ["engine", "ledger", "replay", "report", "rulepacks", "store"]

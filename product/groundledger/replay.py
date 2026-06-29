@@ -32,31 +32,34 @@ _VERDICT_FIELDS = (
 )
 
 
-def attest(
-    store: TenantStore,
-    resolve_rule_pack: Callable[[str], dict[str, Any]] | None = None,
+def attest_records(
+    *,
+    ledger_entries: list[dict[str, Any]],
+    receipts: dict[str, Any],
+    submissions: dict[str, Any],
+    rule_packs: dict[str, Any],
 ) -> dict[str, Any]:
-    """Re-derive and re-check every record for one tenant."""
-    resolver = resolve_rule_pack or (lambda pack_id: rulepacks.load_rule_pack(pack_id))
-    issues: list[dict[str, Any]] = []
+    """Filesystem-free attestation over in-memory records.
 
-    chain_ok, chain_errors, count = ledger_mod.verify_chain(str(store.ledger_path))
+    ``receipts``/``submissions`` are keyed by ``answer_id`` (value ``None`` means
+    the record is missing). ``rule_packs`` is keyed by ``rule_pack_id`` (value
+    ``None`` means unavailable). This is the shared core behind both store-based
+    attestation and self-contained audit-export verification.
+    """
+    issues: list[dict[str, Any]] = []
+    chain_ok, chain_errors, count = ledger_mod.verify_chain_entries(ledger_entries)
     for seq, detail in chain_errors:
         issues.append({"seq": seq, "code": "ledger_chain_broken", "detail": detail})
 
-    entries = []
-    try:
-        entries = store.read_ledger()
-    except ValueError as exc:
-        issues.append({"seq": -1, "code": "ledger_unreadable", "detail": str(exc)})
-
-    for entry in entries:
+    for entry in ledger_entries:
         answer_id = entry.get("answer_id")
-        try:
-            receipt = store.read_receipt(answer_id)
-            submission = store.read_submission(answer_id)
-        except Exception as exc:  # noqa: BLE001 - surfaced as an attestation issue
-            issues.append({"answer_id": answer_id, "code": "missing_record", "detail": str(exc)})
+        receipt = receipts.get(answer_id)
+        submission = submissions.get(answer_id)
+        if receipt is None or submission is None:
+            issues.append(
+                {"answer_id": answer_id, "code": "missing_record",
+                 "detail": "receipt or submission not found"}
+            )
             continue
 
         if engine.seal_hash(receipt) != receipt.get("receipt_hash"):
@@ -70,11 +73,11 @@ def attest(
                  "detail": "ledger entry points at a different receipt hash"}
             )
 
-        try:
-            rule_pack = resolver(receipt["rule_pack_id"])
-        except Exception as exc:  # noqa: BLE001
+        rule_pack = rule_packs.get(receipt.get("rule_pack_id"))
+        if rule_pack is None:
             issues.append(
-                {"answer_id": answer_id, "code": "rule_pack_unavailable", "detail": str(exc)}
+                {"answer_id": answer_id, "code": "rule_pack_unavailable",
+                 "detail": f"rule pack {receipt.get('rule_pack_id')!r} not available"}
             )
             continue
         if rule_pack.get("version") != receipt.get("rule_pack_version"):
@@ -94,11 +97,61 @@ def attest(
 
     return {
         "attested": not issues,
-        "tenant": store.tenant,
         "entries_checked": count,
         "chain_ok": chain_ok,
         "issues": issues,
     }
+
+
+def attest(
+    store: TenantStore,
+    resolve_rule_pack: Callable[[str], dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Re-derive and re-check every record for one tenant from its store."""
+    resolver = resolve_rule_pack or (lambda pack_id: rulepacks.load_rule_pack(pack_id))
+    try:
+        entries = store.read_ledger()
+    except ValueError as exc:
+        return {
+            "attested": False,
+            "tenant": store.tenant,
+            "entries_checked": 0,
+            "chain_ok": False,
+            "issues": [{"seq": -1, "code": "ledger_unreadable", "detail": str(exc)}],
+        }
+
+    receipts: dict[str, Any] = {}
+    submissions: dict[str, Any] = {}
+    for entry in entries:
+        answer_id = entry.get("answer_id")
+        try:
+            receipts[answer_id] = store.read_receipt(answer_id)
+        except Exception:  # noqa: BLE001 - surfaced as missing_record
+            receipts[answer_id] = None
+        try:
+            submissions[answer_id] = store.read_submission(answer_id)
+        except Exception:  # noqa: BLE001
+            submissions[answer_id] = None
+
+    rule_packs: dict[str, Any] = {}
+    for receipt in receipts.values():
+        if not receipt:
+            continue
+        pack_id = receipt.get("rule_pack_id")
+        if pack_id and pack_id not in rule_packs:
+            try:
+                rule_packs[pack_id] = resolver(pack_id)
+            except Exception:  # noqa: BLE001 - surfaced as rule_pack_unavailable
+                rule_packs[pack_id] = None
+
+    result = attest_records(
+        ledger_entries=entries,
+        receipts=receipts,
+        submissions=submissions,
+        rule_packs=rule_packs,
+    )
+    result["tenant"] = store.tenant
+    return result
 
 
 def _main(argv: list[str] | None = None) -> int:

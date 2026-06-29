@@ -185,19 +185,19 @@ spot once the pilot proves value.
 - **Reports/exports** ✅ — `report.py`. *AC:* groundedness rate + attestation.
 - **Authentication** ✅(v1) — API-key→tenant in `api.py`. *AC:* missing key → 401.
 - **Billing** ⬜ later — Stripe link for pilots.
-- **Tests** ✅ — `tests/test_groundledger.py` (13 passing).
-- **Deployment** ⬜ next — Dockerfile + in-VPC quickstart.
+- **Reports/exports** ✅✅ — `report.py` + `export.py` (signed, self-verifying
+  bundle + printable HTML). *Validate:* `ExportTests`.
+- **Tests** ✅ — `tests/test_groundledger.py` (19 passing).
+- **Deployment** ✅ — `product/Dockerfile` + env-config API + `.dockerignore`.
 - **Documentation** ✅ — `product/README.md`, this plan.
 
 Follow-on backlog (each: goal / files / AC / validation):
-1. **PDF + signed export** — `report.py`, new `export.py` — AC: deterministic PDF
-   + detached signature — `test_export`.
-2. **Python SDK** — `product/sdk/` — AC: `client.verify(...)` returns receipt —
-   `test_sdk`.
-3. **Free-text claim extraction** — `extract.py` — AC: text→{claims,citations}
+1. **Python SDK** — `product/sdk/` — AC: `client.verify(...)` returns receipt —
+   `test_sdk`. (next)
+2. **Free-text claim extraction** — `extract.py` — AC: text→{claims,citations}
    sealed + replayable; verifier stays deterministic — `test_extract`.
-4. **Dockerfile / in-VPC** — `product/Dockerfile` — AC: `docker run` serves API —
-   smoke test.
+3. **Stripe billing + usage metering** — `billing.py` — AC: plan limits enforced.
+4. **Dashboard / report view UI** — `product/web/` — AC: renders audit report.
 
 ---
 
@@ -212,7 +212,8 @@ Follow-on backlog (each: goal / files / AC / validation):
 7. HTTP API + API-key tenancy (done).
 8. Insurance rule pack + examples + demo (done).
 9. Tests across all of the above (done).
-10. Landing page + pilot CTA (done). **Next:** PDF export → Python SDK → Docker.
+10. Landing page + pilot CTA (done). Signed self-verifying audit export +
+    in-VPC Dockerfile (done). **Next:** Python SDK → free-text claim extraction.
 
 ---
 
@@ -269,10 +270,10 @@ build, keep the customer.
 
 ## 14. Founder instruction
 
-- **First thing to build:** ✅ already built — the input→verdict→sealed
-  ledger→audit report→replay path (`product/`). **Next:** PDF/signed export + a
-  one-command in-VPC Docker image, because those are what a pilot buyer shows
-  their auditor.
+- **First thing to build:** ✅ built — the input→verdict→sealed ledger→audit
+  report→replay path, plus the signed self-verifying export bundle and the
+  one-command in-VPC Docker image a pilot buyer shows their auditor (`product/`).
+  **Next:** a thin Python SDK so a design partner integrates in an afternoon.
 - **First thing to sell:** the **$1,500 2-week Audit Pilot** to one insurance-AI
   startup whose deal is stuck in security review.
 - **First thing to measure:** does one customer's **buyer/auditor accept the

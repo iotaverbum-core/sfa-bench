@@ -57,12 +57,8 @@ def append_receipt(path: str, receipt: dict[str, Any]) -> dict[str, Any]:
     return entry
 
 
-def verify_chain(path: str) -> tuple[bool, list[tuple[int, str]], int]:
-    """Return (ok, errors, count). Detects deletion, insertion, reorder, or edit."""
-    try:
-        entries = read_ledger(path)
-    except ValueError as exc:
-        return False, [(-1, str(exc))], 0
+def verify_chain_entries(entries: list[dict[str, Any]]) -> tuple[bool, list[tuple[int, str]], int]:
+    """Pure chain check over an in-memory entry list (no filesystem)."""
     errors: list[tuple[int, str]] = []
     prev = GENESIS
     for i, entry in enumerate(entries):
@@ -74,3 +70,12 @@ def verify_chain(path: str) -> tuple[bool, list[tuple[int, str]], int]:
             errors.append((i, "entry hash mismatch: ledger entry was edited"))
         prev = entry.get("entry_hash")
     return len(errors) == 0, errors, len(entries)
+
+
+def verify_chain(path: str) -> tuple[bool, list[tuple[int, str]], int]:
+    """Return (ok, errors, count). Detects deletion, insertion, reorder, or edit."""
+    try:
+        entries = read_ledger(path)
+    except ValueError as exc:
+        return False, [(-1, str(exc))], 0
+    return verify_chain_entries(entries)
