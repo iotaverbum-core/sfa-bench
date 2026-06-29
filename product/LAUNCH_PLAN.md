@@ -191,13 +191,13 @@ spot once the pilot proves value.
 - **Deployment** ✅ — `product/Dockerfile` + env-config API + `.dockerignore`.
 - **Documentation** ✅ — `product/README.md`, this plan.
 
+- **SDK** ✅ — `sdk/` (embedded + HTTP transports). *Validate:* `test_sdk` (4).
+
 Follow-on backlog (each: goal / files / AC / validation):
-1. **Python SDK** — `product/sdk/` — AC: `client.verify(...)` returns receipt —
-   `test_sdk`. (next)
-2. **Free-text claim extraction** — `extract.py` — AC: text→{claims,citations}
-   sealed + replayable; verifier stays deterministic — `test_extract`.
-3. **Stripe billing + usage metering** — `billing.py` — AC: plan limits enforced.
-4. **Dashboard / report view UI** — `product/web/` — AC: renders audit report.
+1. **Free-text claim extraction** — `extract.py` — AC: text→{claims,citations}
+   sealed + replayable; verifier stays deterministic — `test_extract`. (next)
+2. **Stripe billing + usage metering** — `billing.py` — AC: plan limits enforced.
+3. **Dashboard / report view UI** — `product/web/` — AC: renders audit report.
 
 ---
 
@@ -213,7 +213,8 @@ Follow-on backlog (each: goal / files / AC / validation):
 8. Insurance rule pack + examples + demo (done).
 9. Tests across all of the above (done).
 10. Landing page + pilot CTA (done). Signed self-verifying audit export +
-    in-VPC Dockerfile (done). **Next:** Python SDK → free-text claim extraction.
+    in-VPC Dockerfile (done). Python SDK (embedded + HTTP) (done).
+    **Next:** free-text claim extraction.
 
 ---
 
@@ -272,8 +273,9 @@ build, keep the customer.
 
 - **First thing to build:** ✅ built — the input→verdict→sealed ledger→audit
   report→replay path, plus the signed self-verifying export bundle and the
-  one-command in-VPC Docker image a pilot buyer shows their auditor (`product/`).
-  **Next:** a thin Python SDK so a design partner integrates in an afternoon.
+  one-command in-VPC Docker image a pilot buyer shows their auditor, and a thin
+  Python SDK (embedded + HTTP) for afternoon integration (`product/`).
+  **Next:** free-text claim extraction to widen beyond structured/cited answers.
 - **First thing to sell:** the **$1,500 2-week Audit Pilot** to one insurance-AI
   startup whose deal is stuck in security review.
 - **First thing to measure:** does one customer's **buyer/auditor accept the

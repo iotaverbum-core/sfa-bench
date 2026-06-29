@@ -40,6 +40,30 @@ catching it: **TAMPER DETECTED**.
 python -m unittest discover -s product -t . -p 'test_*.py'
 ```
 
+## Integrate with the Python SDK (an afternoon, no server needed)
+
+```python
+from product.sdk import GroundLedgerClient
+
+# Embedded: seals a tamper-evident ledger to a local directory, no server.
+gl = GroundLedgerClient.embedded(data_root="gl-data", tenant="acme",
+                                 rule_pack="insurance_v1")
+
+receipt = gl.verify(answer_id="ans_1", candidate=answer, evidence=chunks)
+if not gl.is_grounded(receipt):
+    log.warning("ungrounded: %s", receipt["explanation"])  # gate or flag
+
+report = gl.audit_report()      # groundedness rate + attestation
+bundle = gl.audit_export()      # portable, self-verifying audit bundle
+```
+
+Point the same client at an in-VPC server instead with
+`GroundLedgerClient.http(base_url=..., api_key=...)`. Runnable example:
+
+```bash
+python -m product.sdk.example
+```
+
 ## Run the API (in-VPC, zero dependencies)
 
 ```bash
@@ -102,6 +126,7 @@ egress. Data persists in the mounted volume.
 | | `report.py` — exportable audit report |
 | | `export.py` — signed, self-verifying audit bundle + HTML |
 | | `api.py` — stdlib HTTP backend |
+| | `sdk/` — embedded + HTTP Python client |
 | | `Dockerfile` — one-command in-VPC deploy |
 | | `rule_packs/insurance_v1.json` — domain rule pack |
 
