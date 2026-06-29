@@ -8,4 +8,4 @@ stdlib only by default; no network, no LLM, no hidden repair.
 """
 from . import adapters, agent, artifact, case, categories, external_adapter, families, fingerprints, hashing, history, ledger, model_adapter, policy, provenance, rederive, tamper, transcript, validation, verifier  # noqa: F401
 
-__version__ = "0.9.0"
+__version__ = "1.0.0"

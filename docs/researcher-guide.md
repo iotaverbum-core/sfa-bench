@@ -125,9 +125,10 @@ the named case to understand the scope; the suite is a set of tested corruption
 classes, not a universal security proof.
 
 The invariant suite tests history-blind verification, gold isolation, adapter and
-transcript metadata isolation, deterministic fingerprinting, and policy/verifier
-separation. A passing invariant means the checked call paths and fixtures obey
-that boundary under the test conditions.
+transcript metadata isolation, deterministic fingerprinting, policy/verifier
+separation, and repository version-of-record consistency. A passing invariant
+means the checked call paths and fixtures obey that boundary under the test
+conditions.
 
 ## Reproducibility and release checks
 
@@ -140,8 +141,10 @@ git status --short --untracked-files=all
 ```
 
 The release gate separately inspects untracked files, protected files, staged
-runtime output, generated sealed artifacts, CI command coverage, and command
-headers. `git diff --name-only` is useful for tracked changes but is insufficient
+runtime output, generated sealed artifacts, CI command coverage, command headers,
+and the package version of record (`sfa.__version__`). It fails when the package
+version, the gate's expected release, or any command header disagree on the
+release. `git diff --name-only` is useful for tracked changes but is insufficient
 because it omits untracked files.
 
 ## Supported interpretation

@@ -110,7 +110,8 @@ python release_gate.py --release v1.0.0
 The gate explicitly runs `git status --short --untracked-files=all`; it never
 treats `git diff --name-only` as release clearance. It fails for untracked files,
 changes to protected history/verifier/taxonomy paths, staged runtime or generated
-sealed output, incomplete CI command coverage, and stale command headers. See
+sealed output, incomplete CI command coverage, and command headers or a package
+version of record (`sfa.__version__`) that disagree with the declared release. See
 [Prior State](docs/prior-state.md).
 
 ## Architecture and release stack
@@ -164,8 +165,9 @@ Under the checked-in fixtures and implemented checks:
 - verifier history-blindness and metadata isolation are tested;
 - transcript normalization is isolated from verifier inputs;
 - live adapters are optional, disabled by default, and blocked in CI;
-- failure fingerprints are deterministic under fixed fixture conditions; and
-- policy decisions are deterministic, generator-side, and excluded from verifier judgment.
+- failure fingerprints are deterministic under fixed fixture conditions;
+- policy decisions are deterministic, generator-side, and excluded from verifier judgment; and
+- the package version of record, the release gate, and every command header are verified to declare a single release version.
 
 ## Interpreting fixtures
 

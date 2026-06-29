@@ -516,6 +516,93 @@ def assert_ci_live_adapter_unreachable() -> None:
         raise InvariantFailure("live placeholder did not fail closed")
 
 
+RELEASE_GATE_FILENAME = "release_gate.py"
+PACKAGE_INIT_RELATIVE = ("sfa", "__init__.py")
+_PACKAGE_VERSION_RE = re.compile(r"^__version__\s*=\s*[\"']([^\"']+)[\"']", re.MULTILINE)
+_HEADER_VERSION_RE = re.compile(
+    r"print\(\s*(?:f)?[\"']#?\s*(?:SFA-Bench|SFA-Agent)\s+v(\d+\.\d+(?:\.\d+)?)",
+    re.MULTILINE,
+)
+
+
+def _read_package_version(init_path: Path) -> str | None:
+    if not init_path.is_file():
+        return None
+    match = _PACKAGE_VERSION_RE.search(init_path.read_text(encoding="utf-8"))
+    return match.group(1) if match else None
+
+
+def _read_release_gate_constants(gate_path: Path) -> tuple[str, list[str]]:
+    tree = ast.parse(gate_path.read_text(encoding="utf-8"), filename=str(gate_path))
+    expected: Any = None
+    command_files: list[str] | None = None
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in node.targets:
+            if not isinstance(target, ast.Name):
+                continue
+            if target.id == "EXPECTED_RELEASE" and isinstance(node.value, ast.Constant):
+                expected = node.value.value
+            elif target.id == "COMMAND_FILES" and isinstance(node.value, (ast.Tuple, ast.List)):
+                command_files = [
+                    element.value
+                    for element in node.value.elts
+                    if isinstance(element, ast.Constant) and isinstance(element.value, str)
+                ]
+    if not isinstance(expected, str):
+        raise InvariantFailure("release_gate.py does not define EXPECTED_RELEASE")
+    if not command_files:
+        raise InvariantFailure("release_gate.py does not define COMMAND_FILES")
+    return expected, command_files
+
+
+def assert_repository_version_consistency(repo_root: str | Path) -> dict[str, Any]:
+    """Fail closed when the version of record drifts across the repository.
+
+    The package ``sfa.__version__``, the release gate's ``EXPECTED_RELEASE``, and
+    every user-facing command header must declare the same release. This encodes a
+    known procedural failure: a stale package version that every green check misses
+    because nothing compares it against the declared release.
+    """
+    root = Path(repo_root)
+    expected_release, command_files = _read_release_gate_constants(root / RELEASE_GATE_FILENAME)
+    package_version = _read_package_version(root.joinpath(*PACKAGE_INIT_RELATIVE))
+    if package_version is None:
+        raise InvariantFailure("sfa/__init__.py declares no __version__")
+    package_label = f"v{package_version}"
+    if package_label != expected_release:
+        raise InvariantFailure(
+            f"package __version__ {package_label!r} does not match release "
+            f"gate EXPECTED_RELEASE {expected_release!r}"
+        )
+
+    issues: list[str] = []
+    for relative in command_files:
+        path = root / relative
+        if not path.is_file():
+            issues.append(f"{relative}: command file missing")
+            continue
+        labels = {
+            f"v{version}"
+            for version in _HEADER_VERSION_RE.findall(path.read_text(encoding="utf-8"))
+        }
+        if not labels:
+            issues.append(f"{relative}: no versioned command header")
+        elif labels != {expected_release}:
+            wrong = ", ".join(sorted(labels - {expected_release}))
+            issues.append(f"{relative}: header version {wrong} != {expected_release}")
+    if issues:
+        raise InvariantFailure(
+            "command headers disagree with the release version:\n" + "\n".join(issues)
+        )
+    return {
+        "expected_release": expected_release,
+        "package_version": package_version,
+        "command_files_checked": len(command_files),
+    }
+
+
 def run_history_blindness_case(
     *,
     name: str,

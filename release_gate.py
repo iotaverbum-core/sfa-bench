@@ -43,8 +43,13 @@ COMMAND_FILES = (
     "fingerprint_report.py",
     "policy_demo.py",
 )
-STALE_HEADER = re.compile(
-    r"print\(\s*(?:f)?[\"']#?\s*(?:SFA-Bench|SFA-Agent) v0\.", re.MULTILINE
+PACKAGE_INIT = ROOT / "sfa" / "__init__.py"
+PACKAGE_VERSION_RE = re.compile(
+    r"^__version__\s*=\s*[\"']([^\"']+)[\"']", re.MULTILINE
+)
+HEADER_VERSION = re.compile(
+    r"print\(\s*(?:f)?[\"']#?\s*(?:SFA-Bench|SFA-Agent)\s+v(\d+\.\d+(?:\.\d+)?)",
+    re.MULTILINE,
 )
 
 
@@ -74,6 +79,34 @@ def is_generated_sealed_artifact(path: str) -> bool:
         or normalized.endswith(".sealed.json")
         or normalized.endswith("/failure_artifact.json")
     )
+
+
+def read_package_version() -> str | None:
+    """Return the package version of record declared in sfa/__init__.py."""
+    if not PACKAGE_INIT.is_file():
+        return None
+    match = PACKAGE_VERSION_RE.search(PACKAGE_INIT.read_text(encoding="utf-8"))
+    return match.group(1) if match else None
+
+
+def command_header_issues() -> list[str]:
+    """Report command files whose version header disagrees with the release."""
+    issues: list[str] = []
+    for relative in COMMAND_FILES:
+        path = ROOT / relative
+        if not path.is_file():
+            issues.append(f"{relative}: command file missing")
+            continue
+        labels = {
+            f"v{version}"
+            for version in HEADER_VERSION.findall(path.read_text(encoding="utf-8"))
+        }
+        if not labels:
+            issues.append(f"{relative}: no versioned command header")
+        elif labels != {EXPECTED_RELEASE}:
+            wrong = ", ".join(sorted(labels - {EXPECTED_RELEASE}))
+            issues.append(f"{relative}: header version {wrong} != {EXPECTED_RELEASE}")
+    return issues
 
 
 def main() -> int:
@@ -117,11 +150,10 @@ def main() -> int:
     workflow_text = WORKFLOW.read_text(encoding="utf-8") if WORKFLOW.is_file() else ""
     missing_ci = [cmd for cmd in REQUIRED_CI_COMMANDS if cmd not in workflow_text]
 
-    stale_headers: list[str] = []
-    for relative in COMMAND_FILES:
-        path = ROOT / relative
-        if not path.is_file() or STALE_HEADER.search(path.read_text(encoding="utf-8")):
-            stale_headers.append(relative)
+    header_issues = command_header_issues()
+    package_version = read_package_version()
+    package_label = f"v{package_version}" if package_version else None
+    package_version_ok = package_label == EXPECTED_RELEASE
 
     if untracked:
         failures.append("untracked files remain")
@@ -137,8 +169,10 @@ def main() -> int:
         failures.append("generated sealed artifacts are staged")
     if missing_ci:
         failures.append("required v1.0 CI commands are missing")
-    if stale_headers:
-        failures.append("stale version labels remain in command headers")
+    if not package_version_ok:
+        failures.append("package version of record does not match the release")
+    if header_issues:
+        failures.append("command headers are not consistent with the release version")
     if args.release and args.release != EXPECTED_RELEASE:
         failures.append(
             f"release label {args.release!r} does not match {EXPECTED_RELEASE!r}"
@@ -154,7 +188,9 @@ def main() -> int:
     print(f"runtime output staged: {'yes' if runtime_staged else 'no'}")
     print(f"generated sealed artifacts staged: {'yes' if sealed_staged else 'no'}")
     print(f"CI command coverage: {'yes' if not missing_ci else 'no'}")
-    print(f"current command headers: {'yes' if not stale_headers else 'no'}")
+    print(f"current command headers: {'yes' if not header_issues else 'no'}")
+    print(f"package version of record: {package_version or 'missing'}")
+    print(f"package version matches release: {'yes' if package_version_ok else 'no'}")
     print(f"mode: {'ci' if args.ci else 'local'}")
     if status.strip():
         print("working tree status:")
@@ -175,10 +211,16 @@ def main() -> int:
         print("missing CI commands:")
         for command in missing_ci:
             print(f"  - {command}")
-    if stale_headers:
-        print("stale or missing command headers:")
-        for path in stale_headers:
-            print(f"  - {path}")
+    if header_issues:
+        print("command header issues:")
+        for issue in header_issues:
+            print(f"  - {issue}")
+    if not package_version_ok:
+        print(
+            "package version mismatch: "
+            f"sfa/__init__.py declares {package_label or 'no __version__'}, "
+            f"release gate expects {EXPECTED_RELEASE}"
+        )
     for failure in failures:
         print(f"failure: {failure}")
     print("=" * 56)

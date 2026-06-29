@@ -151,6 +151,13 @@ def main() -> int:
     print("CI live-adapter unreachability: PASS")
     print("  CI registry exposes no live adapters and rejects live opt-in")
 
+    version_consistency = invariants.assert_repository_version_consistency(ROOT)
+    print("repository version consistency: PASS")
+    print(
+        f"  package, release gate, and {version_consistency['command_files_checked']} "
+        f"command headers all declare v{version_consistency['package_version']}"
+    )
+
     print("=" * 74)
     print("PASS: verifier blindness, fingerprints, and generator-side policy invariants hold")
     return 0
