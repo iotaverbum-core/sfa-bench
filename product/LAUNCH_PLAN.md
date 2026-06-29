@@ -192,6 +192,9 @@ spot once the pilot proves value.
 - **Documentation** ✅ — `product/README.md`, this plan.
 
 - **SDK** ✅ — `sdk/` (embedded + HTTP transports). *Validate:* `test_sdk` (4).
+- **Productised report + one-command demo** ✅ — `findings.py` (severity +
+  recommended actions), customer-facing `report.html`, `scripts/demo.sh`.
+  *Validate:* `test_phase1_demo` (8).
 
 Follow-on backlog (each: goal / files / AC / validation):
 1. **Free-text claim extraction** — `extract.py` — AC: text→{claims,citations}

@@ -24,15 +24,56 @@ into a content-addressed receipt, and **appends it** to an append-only,
 hash-chained ledger. Anyone can later **replay** the ledger and independently
 reproduce every verdict — and any edit to the record is detected.
 
-## Run the demo
+## Phase 1 demo (the sales-call path)
+
+One command runs the whole thing on bundled sample data:
 
 ```bash
-python -m product.demo
+./scripts/demo.sh          # or: python -m product.demo
 ```
 
-It verifies four insurance answers (one grounded, three not), prints the audit
-report, then quietly forges a sealed failure into a pass and shows replay
-catching it: **TAMPER DETECTED**.
+**For whom:** a Head of AI / founding engineer at an insurance or fintech company
+whose document-grounded assistant must pass AI-risk review and produce an audit
+trail.
+
+**What it does:** verifies four insurance answers against the evidence each used,
+then writes two artifacts to `product/data/demo/`:
+
+- `report.html` — a customer-facing audit report you open in a browser (or print
+  to PDF): a plain-language summary, **severity-ranked findings** (critical /
+  high / medium) each with *what we detected*, *why it matters*, and a
+  *recommended action*, the sealed ledger, and an independent **VERIFIED** badge.
+- `bundle.json` — a signed, self-verifying bundle an auditor checks offline.
+
+It then quietly forges a sealed failure into a pass and shows replay catching it:
+**TAMPER DETECTED**.
+
+**Sample input** (`product/examples/grounded_answer.json`): an answer with
+`conclusion`, `cited_evidence` ids, and `{subject, value}` claims, plus the
+`evidence` (`documents` + `facts`) it used.
+
+**Sample output** (abridged):
+
+```
+1 of 4 answers (25%) were grounded in the provided evidence. 3 answer(s) were
+flagged: 2 critical, 1 high. The audit trail is intact (independently attested).
+
+Findings (highest severity first):
+  [CRITICAL] Fabricated citation - ans_fabricated_002
+      detected: cited evidence id(s) not present in evidence: clause_9z
+      action  : Block the answer and route to human review ...
+```
+
+**What the result means:** a low groundedness rate or any *critical* finding is a
+ship-blocker; the **VERIFIED**/**TAMPER DETECTED** badge is the auditor-grade
+guarantee that the record itself wasn't edited.
+
+**Known limitations:** v1 checks **structured, cited answers** (JSON-mode /
+function-calling RAG); HMAC signing is keyed integrity, not public-key
+non-repudiation; rule packs are intentionally narrow (insurance v1 shipped).
+
+**Next product step:** free-text → structured **claim extraction** so any RAG
+answer can be checked, kept deterministic by sealing the extraction step.
 
 ## Run the tests
 

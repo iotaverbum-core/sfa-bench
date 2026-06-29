@@ -50,8 +50,8 @@ def build_export_bundle(
     submissions = [store.read_submission(e["answer_id"]) for e in entries]
     pack_ids = sorted({r["rule_pack_id"] for r in receipts})
     rule_packs = {pid: rulepacks.load_rule_pack(pid, packs_dir=packs_dir) for pid in pack_ids}
-    report = report_mod.build_report(store, packs_dir=packs_dir)
     clock = now or (lambda: datetime.now(timezone.utc).isoformat())
+    report = report_mod.build_report(store, packs_dir=packs_dir, now=clock)
 
     bundle: dict[str, Any] = {
         "schema": EXPORT_SCHEMA,
@@ -114,51 +114,92 @@ def verify_bundle(bundle: dict[str, Any], *, signing_key: str | None = None) -> 
     }
 
 
+def _esc(value: Any) -> str:
+    return (
+        str(value)
+        .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+    )
+
+
 def render_html(bundle: dict[str, Any]) -> str:
-    """Printable (print-to-PDF) audit report from an export bundle."""
+    """Printable (print-to-PDF), customer-facing audit report from a bundle."""
     report = bundle.get("report", {})
-    att = report.get("attestation", {})
     verdict = verify_bundle(bundle)
-    rows = "".join(
-        f"<tr><td>{e.get('seq')}</td><td>{e.get('answer_id')}</td>"
-        f"<td class='{ 'pass' if e.get('status') == 'PASS' else 'fail' }'>{e.get('status')}</td>"
-        f"<td>{e.get('family') or ''}</td><td class='mono'>{(e.get('receipt_hash') or '')[:16]}…</td></tr>"
-        for e in bundle.get("ledger", [])
-    )
-    fam = "".join(
-        f"<li>{k}: {v}</li>" for k, v in report.get("failure_families", {}).items()
-    )
+    meta = report.get("metadata", {})
     rate = report.get("groundedness_rate")
-    rate_txt = f"{rate * 100:.1f}%" if rate is not None else "n/a"
+    rate_txt = f"{rate * 100:.0f}%" if rate is not None else "n/a"
     status = "VERIFIED" if verdict["verified"] else "TAMPER DETECTED"
     badge = "ok" if verdict["verified"] else "bad"
+    packs = ", ".join(f"{k} v{v}" for k, v in meta.get("rule_packs", {}).items()) or "n/a"
+
+    finding_cards = ""
+    for f in report.get("findings", []):
+        finding_cards += f"""
+<div class="finding sev-{_esc(f.get('severity'))}">
+  <div class="fhead"><span class="sev">{_esc(f.get('severity','').upper())}</span>
+    <span class="ftitle">{_esc(f.get('title'))}</span>
+    <span class="muted">· {_esc(f.get('answer_id'))}</span></div>
+  {f'<div class="q">Q: {_esc(f.get("question"))}</div>' if f.get('question') else ''}
+  {f'<div class="a">Assistant said: “{_esc(f.get("assistant_answer"))}”</div>' if f.get('assistant_answer') else ''}
+  <div class="row"><b>What we detected:</b> {_esc(f.get('detected'))} ({_esc(f.get('detection'))})</div>
+  <div class="row"><b>Why it matters:</b> {_esc(f.get('why_it_matters'))}</div>
+  <div class="row"><b>Recommended action:</b> {_esc(f.get('recommended_action'))}</div>
+</div>"""
+    if not finding_cards:
+        finding_cards = '<p class="muted">No ungrounded answers found in this period.</p>'
+
+    rows = "".join(
+        f"<tr><td>{e.get('seq')}</td><td>{_esc(e.get('answer_id'))}</td>"
+        f"<td class='{ 'pass' if e.get('status') == 'PASS' else 'fail' }'>{e.get('status')}</td>"
+        f"<td>{_esc(e.get('family') or '')}</td><td class='mono'>{_esc((e.get('receipt_hash') or '')[:16])}…</td></tr>"
+        for e in bundle.get("ledger", [])
+    )
+
     return f"""<!doctype html><html><head><meta charset="utf-8">
-<title>GroundLedger Audit Report — {bundle.get('tenant')}</title>
+<title>GroundLedger Audit Report — {_esc(bundle.get('tenant'))}</title>
 <style>
-body{{font:14px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;margin:40px;}}
-h1{{font-size:24px;margin:0 0 4px;}} .muted{{color:#475569;}}
-table{{border-collapse:collapse;width:100%;margin-top:12px;}}
+body{{font:14px/1.55 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;margin:40px;max-width:860px;}}
+h1{{font-size:24px;margin:0 0 2px;}} h3{{margin-top:28px;}} .muted{{color:#64748b;}}
+table{{border-collapse:collapse;width:100%;margin-top:8px;}}
 th,td{{border-bottom:1px solid #e2e8f0;padding:6px 10px;text-align:left;}}
-.mono{{font-family:ui-monospace,Menlo,monospace;}} .pass{{color:#15803d;}} .fail{{color:#b91c1c;}}
-.badge{{display:inline-block;padding:4px 10px;border-radius:8px;font-weight:700;}}
+.mono{{font-family:ui-monospace,Menlo,monospace;font-size:12px;}} .pass{{color:#15803d;}} .fail{{color:#b91c1c;}}
+.badge{{display:inline-block;padding:3px 10px;border-radius:8px;font-weight:700;}}
 .badge.ok{{background:#dcfce7;color:#15803d;}} .badge.bad{{background:#fee2e2;color:#b91c1c;}}
-.box{{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-top:14px;}}
+.box{{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-top:14px;}}
+.kpi{{font-size:30px;font-weight:800;}}
+.finding{{border:1px solid #e2e8f0;border-left-width:6px;border-radius:10px;padding:12px 14px;margin:10px 0;}}
+.finding .fhead{{font-size:16px;margin-bottom:6px;}} .ftitle{{font-weight:700;}}
+.finding .q,.finding .a{{color:#334155;margin:2px 0;}} .finding .a{{font-style:italic;}}
+.finding .row{{margin-top:6px;}} .sev{{font-size:11px;font-weight:800;letter-spacing:.04em;padding:2px 7px;border-radius:6px;color:#fff;}}
+.sev-critical{{border-left-color:#b91c1c;}} .sev-critical .sev{{background:#b91c1c;}}
+.sev-high{{border-left-color:#c2410c;}} .sev-high .sev{{background:#c2410c;}}
+.sev-medium{{border-left-color:#a16207;}} .sev-medium .sev{{background:#a16207;}}
 </style></head><body>
 <h1>GroundLedger Audit Report</h1>
-<div class="muted">Tenant: {bundle.get('tenant')} · Generated: {bundle.get('generated_at')}</div>
+<div class="muted">Tenant: {_esc(bundle.get('tenant'))} · Generated: {_esc(bundle.get('generated_at'))}
+ · Rules: {_esc(packs)} · Verifier: {_esc(meta.get('verifier_version'))}</div>
+
 <div class="box">
-<p>Answers verified: <b>{report.get('answers_verified')}</b> ·
-Grounded: <b>{report.get('grounded')}</b> ·
-Not grounded: <b>{report.get('not_grounded')}</b> ·
-Groundedness rate: <b>{rate_txt}</b></p>
-<p>Independent verification of this bundle:
-<span class="badge {badge}">{status}</span>
-({verdict['entries_checked']} entries, chain {'ok' if verdict['chain_ok'] else 'broken'})</p>
+  <div class="kpi">{rate_txt} grounded</div>
+  <p>{_esc(report.get('summary'))}</p>
+  <p>Independent verification of this report:
+    <span class="badge {badge}">{status}</span>
+    ({verdict['entries_checked']} sealed records, chain {'ok' if verdict['chain_ok'] else 'broken'})</p>
 </div>
-{('<h3>Failure families</h3><ul>' + fam + '</ul>') if fam else ''}
+
+<h3>What we analysed</h3>
+<p class="muted">{report.get('answers_verified')} assistant answers, each checked against the
+source evidence it cited, using deterministic groundedness rules. No answer key, history, or
+model metadata reaches the verifier.</p>
+
+<h3>Findings</h3>
+{finding_cards}
+
 <h3>Sealed ledger</h3>
-<table><tr><th>#</th><th>Answer</th><th>Status</th><th>Family</th><th>Receipt</th></tr>{rows}</table>
-<p class="muted" style="margin-top:18px;">Reproduce offline: <code>{bundle.get('reproduce_command')}</code></p>
+<table><tr><th>#</th><th>Answer</th><th>Status</th><th>Failure family</th><th>Receipt</th></tr>{rows}</table>
+
+<p class="muted" style="margin-top:22px;">Reproduce this report offline:
+<code>python -m product.groundledger.export verify bundle.json</code></p>
 </body></html>"""
 
 
