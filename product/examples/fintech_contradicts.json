@@ -1,0 +1,20 @@
+{
+  "answer_id": "fin_contradicts_002",
+  "rule_pack": "fintech_v1",
+  "task_input": {"question": "What is my purchase APR?"},
+  "candidate": {
+    "conclusion": "Your purchase APR is 12.99%.",
+    "cited_evidence": ["disclosure_1"],
+    "claims": [
+      {"subject": "purchase_apr", "value": "12.99%"}
+    ]
+  },
+  "evidence": {
+    "documents": [
+      {"id": "disclosure_1", "title": "Interest Rates", "text": "Purchase APR is 24.99%."}
+    ],
+    "facts": [
+      {"id": "f_apr", "subject": "purchase_apr", "value": "24.99%", "aliases": ["purchase apr", "apr"]}
+    ]
+  }
+}

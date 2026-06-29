@@ -200,11 +200,16 @@ spot once the pilot proves value.
   on SDK + API). Catches fabricated citations and contradictions; conservative on
   novel claims. *Validate:* `test_extraction` (12).
 
+- **Second vertical rule pack (fintech)** ✅ — `rule_packs/fintech_v1.json`
+  (APR/fees/limits) + structured & free-text examples. *Validate:* `test_fintech`
+  (6). Proves new verticals are pure config: drop a JSON pack in, no engine change.
+
 Follow-on backlog (each: goal / files / AC / validation):
 1. **Stripe billing + usage metering** — `billing.py` — AC: plan limits enforced.
    (next, once a pilot converts)
 2. **Dashboard / report view UI** — `product/web/` — AC: renders audit report.
-3. **Second vertical rule pack (fintech)** — `rule_packs/` — AC: demo + tests.
+3. **Extraction recall upgrade** — sealed LLM-assisted extractor, output still
+   deterministically re-checked — AC: higher claim recall, determinism preserved.
 
 ---
 

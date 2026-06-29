@@ -29,6 +29,20 @@ Answers can be **structured** (JSON with explicit citations + claims) or
 structured candidate the verifier judges — and seals the extraction so replay
 re-runs it. See [Free-text answers](#free-text-answers).
 
+### Rule packs
+
+A rule pack defines "what grounded means" for a domain (the citation/claim rules
+plus the free-text extraction config). Shipped packs:
+
+| Pack | For |
+|---|---|
+| `insurance_v1` | insurance policy Q&A (deductible, coverage limit, premium) |
+| `fintech_v1` | consumer finance disclosure Q&A (APR, fees, limits) |
+
+List them at `GET /v1/rule-packs`; pick one per request with `rule_pack=`. New
+verticals are added by dropping a JSON pack into
+`product/groundledger/rule_packs/` — no engine changes.
+
 ## Phase 1 demo (the sales-call path)
 
 One command runs the whole thing on bundled sample data:

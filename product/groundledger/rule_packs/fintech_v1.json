@@ -1,0 +1,32 @@
+{
+  "rule_pack_id": "fintech_v1",
+  "version": "1.0.0",
+  "verifier_version": "sfa-verifier-0.1",
+  "title": "Consumer finance disclosure Q&A groundedness",
+  "description": "Checks that an assistant's answer about a credit card / loan disclosure cites only real disclosure sections and only states rates and fees that match the extracted disclosure evidence.",
+  "candidate_shape": {
+    "conclusion": "free-text answer shown to the end user",
+    "cited_evidence": "list of disclosure/section ids the answer relied on",
+    "claims": "list of {subject, value} facts the answer asserts"
+  },
+  "evidence_shape": {
+    "documents": "list of {id, title, text} disclosure sections",
+    "facts": "list of {id, subject, value} extracted terms (APR, fees, limits)"
+  },
+  "rules": [
+    {"id": "schema", "type": "field_types",
+     "types": {"conclusion": "str", "cited_evidence": "list", "claims": "list"}},
+    {"id": "required", "type": "required_fields",
+     "fields": ["conclusion", "cited_evidence", "claims"]},
+    {"id": "citations", "type": "citations_exist",
+     "field": "cited_evidence", "evidence_collection": "documents", "id_key": "id"},
+    {"id": "grounding", "type": "claims_match_evidence",
+     "claims_field": "claims", "evidence_collection": "facts",
+     "match_on": "subject", "value_key": "value"}
+  ],
+  "extraction": {
+    "extractor_version": "groundledger-extractor-v1",
+    "citation_patterns": ["(?:disclosure|schedule|section|stmt)_[A-Za-z0-9]+", "\\[([^\\]]+)\\]"],
+    "value_window": 70
+  }
+}

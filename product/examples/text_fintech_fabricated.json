@@ -1,0 +1,16 @@
+{
+  "answer_id": "txt_fin_fabricated_003",
+  "rule_pack": "fintech_v1",
+  "task_input": {"question": "What's my APR, and are there any fees?"},
+  "answer_text": "Per disclosure_1 and disclosure_9, your purchase APR is just 19.99% on this card.",
+  "evidence": {
+    "documents": [
+      {"id": "disclosure_1", "title": "Interest Rates", "text": "Purchase APR is 24.99%."},
+      {"id": "schedule_a", "title": "Fee Schedule", "text": "Annual fee is $95."}
+    ],
+    "facts": [
+      {"id": "f_apr", "subject": "purchase_apr", "value": "24.99%", "aliases": ["purchase apr", "apr"]},
+      {"id": "f_fee", "subject": "annual_fee", "value": "$95", "aliases": ["annual fee"]}
+    ]
+  }
+}
