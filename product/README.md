@@ -24,6 +24,11 @@ into a content-addressed receipt, and **appends it** to an append-only,
 hash-chained ledger. Anyone can later **replay** the ledger and independently
 reproduce every verdict — and any edit to the record is detected.
 
+Answers can be **structured** (JSON with explicit citations + claims) or
+**free text**. For free text, a deterministic extractor turns the prose into the
+structured candidate the verifier judges — and seals the extraction so replay
+re-runs it. See [Free-text answers](#free-text-answers).
+
 ## Phase 1 demo (the sales-call path)
 
 One command runs the whole thing on bundled sample data:
@@ -68,12 +73,14 @@ Findings (highest severity first):
 ship-blocker; the **VERIFIED**/**TAMPER DETECTED** badge is the auditor-grade
 guarantee that the record itself wasn't edited.
 
-**Known limitations:** v1 checks **structured, cited answers** (JSON-mode /
-function-calling RAG); HMAC signing is keyed integrity, not public-key
-non-repudiation; rule packs are intentionally narrow (insurance v1 shipped).
+**Known limitations:** structured answers get the strongest guarantee; free-text
+extraction is conservative (catches fabricated citations and contradictions on
+evidence-covered facts, under-reports novel claims); HMAC signing is keyed
+integrity, not public-key non-repudiation; rule packs are intentionally narrow
+(insurance v1 shipped).
 
-**Next product step:** free-text → structured **claim extraction** so any RAG
-answer can be checked, kept deterministic by sealing the extraction step.
+**Next product step:** Stripe billing + usage metering (once a pilot converts),
+then a hosted report-view UI and additional vertical rule packs (fintech).
 
 ## Run the tests
 
@@ -104,6 +111,35 @@ Point the same client at an in-VPC server instead with
 ```bash
 python -m product.sdk.example
 ```
+
+### Free-text answers
+
+Most assistants emit prose, not JSON. Submit the raw answer text plus the
+evidence it used; a **deterministic** extractor (`extraction.py`) turns it into
+the structured candidate the verifier judges:
+
+```python
+receipt = gl.verify_text(
+    answer_id="ans_42",
+    answer_text="Good news - your deductible is only $500, per clause_3a and clause_9z.",
+    evidence=chunks,
+)
+# -> FAIL / FABRICATED_ENTITY  (clause_9z is not in the evidence)
+```
+
+Or over HTTP: `POST /v1/verify-text`. The extraction is sealed into the receipt
+and re-run during replay, so an edited answer or a doctored candidate is caught.
+
+What v1 extraction reliably catches from prose:
+
+- **Fabricated citations** — citation-shaped tokens not present in the evidence; and
+- **Contradictions** — a value asserted for an evidence-covered fact (currency,
+  number, percentage, date) that disagrees with the evidence.
+
+It is deliberately **conservative**: it does not invent claims about subjects the
+evidence does not cover, so it under-reports rather than fabricates findings.
+Absence of findings on free text is therefore not a proof of full grounding — for
+the strongest guarantee, have the assistant emit structured, cited answers.
 
 ## Run the API (in-VPC, zero dependencies)
 
@@ -165,6 +201,7 @@ egress. Data persists in the mounted volume.
 | `hashing.sha256_hex` (content addressing) | `store.py` — per-tenant filesystem store |
 | history-blind / gold-blind invariants | `replay.py` — independent attestation |
 | | `report.py` — exportable audit report |
+| | `extraction.py` — deterministic free-text → structured candidate |
 | | `export.py` — signed, self-verifying audit bundle + HTML |
 | | `api.py` — stdlib HTTP backend |
 | | `sdk/` — embedded + HTTP Python client |

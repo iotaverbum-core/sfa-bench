@@ -1,0 +1,16 @@
+{
+  "answer_id": "txt_grounded_001",
+  "rule_pack": "insurance_v1",
+  "task_input": {"question": "What is my deductible and coverage limit?"},
+  "answer_text": "Your deductible is $1,000 per claim, as stated in clause_3a, and your coverage limit is $250,000 under clause_5b.",
+  "evidence": {
+    "documents": [
+      {"id": "clause_3a", "title": "Deductible", "text": "The deductible is $1,000 per claim."},
+      {"id": "clause_5b", "title": "Coverage Limit", "text": "The coverage limit is $250,000 per policy term."}
+    ],
+    "facts": [
+      {"id": "f_deductible", "subject": "deductible", "value": "$1,000"},
+      {"id": "f_limit", "subject": "coverage_limit", "value": "$250,000", "aliases": ["coverage limit", "limit"]}
+    ]
+  }
+}

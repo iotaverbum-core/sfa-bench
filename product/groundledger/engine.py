@@ -17,6 +17,8 @@ from typing import Any, Callable
 from sfa import families, verifier
 from sfa.hashing import sha256_hex
 
+from . import extraction as extraction_mod
+
 RECEIPT_SCHEMA = "groundledger.receipt.v1"
 
 
@@ -40,16 +42,56 @@ def verify_submission(
     *,
     now: Callable[[], str] | None = None,
 ) -> dict[str, Any]:
-    """Run the deterministic verifier and return a sealed receipt."""
+    """Run the deterministic verifier on a structured candidate; return a receipt."""
     answer_id = _require(submission, "answer_id")
     candidate = _require(submission, "candidate")
     evidence = _require(submission, "evidence")
     task = submission.get("task_input", {})
+    return _seal_receipt(answer_id, candidate, evidence, task, rule_pack, now)
+
+
+def verify_text_submission(
+    submission: dict[str, Any],
+    rule_pack: dict[str, Any],
+    *,
+    now: Callable[[], str] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Extract a structured candidate from a free-text answer, then verify it.
+
+    Returns ``(receipt, stored_submission)``. The stored submission carries both
+    the original ``answer_text`` and the extracted ``candidate`` so that replay
+    can re-run extraction and re-derive the verdict deterministically.
+    """
+    answer_id = _require(submission, "answer_id")
+    answer_text = _require(submission, "answer_text")
+    evidence = _require(submission, "evidence")
+    task = submission.get("task_input", {})
+
+    result = extraction_mod.extract_candidate(
+        answer_text, evidence, config=rule_pack.get("extraction")
+    )
+    candidate = result["candidate"]
+    stored_submission = {**submission, "candidate": candidate}
+    receipt = _seal_receipt(
+        answer_id, candidate, evidence, task, rule_pack, now, extraction=result["provenance"]
+    )
+    return receipt, stored_submission
+
+
+def _seal_receipt(
+    answer_id: Any,
+    candidate: dict[str, Any],
+    evidence: dict[str, Any],
+    task: dict[str, Any],
+    rule_pack: dict[str, Any],
+    now: Callable[[], str] | None,
+    *,
+    extraction: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     rules = {
         "verifier_version": rule_pack.get("verifier_version", verifier.VERIFIER_VERSION),
         "rules": rule_pack["rules"],
     }
-
     verdict = verifier.verify(task, evidence, candidate, rules)
     family = None
     if verdict.status == "FAIL":
@@ -74,6 +116,8 @@ def verify_submission(
         "verdict_hash": sha256_hex(verdict.to_dict()),
         "sealed_at": clock(),
     }
+    if extraction is not None:
+        receipt["extraction"] = extraction
     receipt["receipt_hash"] = seal_hash(receipt)
     return receipt
 

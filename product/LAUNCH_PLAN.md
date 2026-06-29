@@ -195,12 +195,16 @@ spot once the pilot proves value.
 - **Productised report + one-command demo** ✅ — `findings.py` (severity +
   recommended actions), customer-facing `report.html`, `scripts/demo.sh`.
   *Validate:* `test_phase1_demo` (8).
+- **Free-text claim extraction** ✅ — `extraction.py` (deterministic prose →
+  structured candidate; sealed + re-run in replay; `verify_text` / `verify-text`
+  on SDK + API). Catches fabricated citations and contradictions; conservative on
+  novel claims. *Validate:* `test_extraction` (12).
 
 Follow-on backlog (each: goal / files / AC / validation):
-1. **Free-text claim extraction** — `extract.py` — AC: text→{claims,citations}
-   sealed + replayable; verifier stays deterministic — `test_extract`. (next)
-2. **Stripe billing + usage metering** — `billing.py` — AC: plan limits enforced.
-3. **Dashboard / report view UI** — `product/web/` — AC: renders audit report.
+1. **Stripe billing + usage metering** — `billing.py` — AC: plan limits enforced.
+   (next, once a pilot converts)
+2. **Dashboard / report view UI** — `product/web/` — AC: renders audit report.
+3. **Second vertical rule pack (fintech)** — `rule_packs/` — AC: demo + tests.
 
 ---
 
@@ -216,8 +220,8 @@ Follow-on backlog (each: goal / files / AC / validation):
 8. Insurance rule pack + examples + demo (done).
 9. Tests across all of the above (done).
 10. Landing page + pilot CTA (done). Signed self-verifying audit export +
-    in-VPC Dockerfile (done). Python SDK (embedded + HTTP) (done).
-    **Next:** free-text claim extraction.
+    in-VPC Dockerfile (done). Python SDK (embedded + HTTP) (done). Free-text
+    claim extraction (done). **Next:** billing/metering once a pilot converts.
 
 ---
 
@@ -283,11 +287,13 @@ build, keep the customer.
   startup whose deal is stuck in security review.
 - **First thing to measure:** does one customer's **buyer/auditor accept the
   exported report as evidence** (the only proof that matters).
-- **Biggest risk:** v1 needs **structured, cited answers**; most RAG output is
-  free text, and extracting claims deterministically is unsolved (an LLM
-  extractor reintroduces the nondeterminism you sell against). Mitigation: target
-  JSON-mode/function-calling RAG now; build sealed, replayable claim extraction as
-  the wedge-expander.
+- **Biggest risk:** free-text extraction is now built (`extraction.py`,
+  deterministic + sealed + replayed), so any RAG answer can be checked — but the
+  residual risk is **recall**: a conservative rule extractor can miss a novel
+  claim and thus a finding. Mitigation: market the strong guarantee on
+  fabricated-citation + contradiction detection, recommend structured/cited
+  answers for the strongest coverage, and treat a sealed LLM-assisted extractor
+  (output still deterministically re-checked) as a later recall upgrade.
 - **Fastest way to prove it deserves to exist:** get one stalled deal unblocked by
   a GroundLedger audit report inside 60 days. If 12 founders can't name a stalled
   deal or a budget owner, the pain is real but not *bought* — pivot to the in-VPC
