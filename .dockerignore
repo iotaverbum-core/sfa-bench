@@ -1,0 +1,12 @@
+.git
+**/__pycache__
+*.pyc
+product/data
+.verify-all-*
+.tamper-tmp
+agent_runs
+transcript_runs
+adapter_runs
+fingerprint_runs
+policy_runs
+artifacts/*.sealed.json

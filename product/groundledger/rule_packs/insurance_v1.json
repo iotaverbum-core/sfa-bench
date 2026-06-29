@@ -1,0 +1,27 @@
+{
+  "rule_pack_id": "insurance_v1",
+  "version": "1.0.0",
+  "verifier_version": "sfa-verifier-0.1",
+  "title": "Insurance policy Q&A groundedness",
+  "description": "Checks that an assistant's answer about an insurance policy cites only real clauses and only states facts that match the extracted policy evidence.",
+  "candidate_shape": {
+    "conclusion": "free-text answer shown to the end user",
+    "cited_evidence": "list of clause/document ids the answer relied on",
+    "claims": "list of {subject, value} facts the answer asserts"
+  },
+  "evidence_shape": {
+    "documents": "list of {id, title, text} source clauses",
+    "facts": "list of {id, subject, value} extracted policy facts"
+  },
+  "rules": [
+    {"id": "schema", "type": "field_types",
+     "types": {"conclusion": "str", "cited_evidence": "list", "claims": "list"}},
+    {"id": "required", "type": "required_fields",
+     "fields": ["conclusion", "cited_evidence", "claims"]},
+    {"id": "citations", "type": "citations_exist",
+     "field": "cited_evidence", "evidence_collection": "documents", "id_key": "id"},
+    {"id": "grounding", "type": "claims_match_evidence",
+     "claims_field": "claims", "evidence_collection": "facts",
+     "match_on": "subject", "value_key": "value"}
+  ]
+}

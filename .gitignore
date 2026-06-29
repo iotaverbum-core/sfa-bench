@@ -8,3 +8,4 @@ adapter_runs/
 fingerprint_runs/
 policy_runs/
 .verify-all-*/
+product/data/

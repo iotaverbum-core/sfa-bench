@@ -1,0 +1,20 @@
+{
+  "answer_id": "ans_unsupported_004",
+  "rule_pack": "insurance_v1",
+  "task_input": {"question": "Does my policy cover a rental car while mine is repaired?"},
+  "candidate": {
+    "conclusion": "Yes, your policy reimburses rental cars at $50 per day.",
+    "cited_evidence": ["clause_3a"],
+    "claims": [
+      {"subject": "rental_reimbursement", "value": "$50/day"}
+    ]
+  },
+  "evidence": {
+    "documents": [
+      {"id": "clause_3a", "title": "Deductible", "text": "The deductible is $1,000 per claim."}
+    ],
+    "facts": [
+      {"id": "f_deductible", "subject": "deductible", "value": "$1,000"}
+    ]
+  }
+}
