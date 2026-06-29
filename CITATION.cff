@@ -1,12 +1,12 @@
 cff-version: 1.2.0
-title: "SFA-Bench v1.0.3: DOI and Citation Update"
+title: "SFA-Bench v1.0.4: Release-gate version-of-record enforcement"
 message: "If you use SFA-Bench, please cite this repository."
 type: software
 authors:
   - family-names: Neal
     given-names: Matthew
-version: "1.0.3"
-date-released: "2026-06-19"
+version: "1.0.4"
+date-released: "2026-06-29"
 doi: 10.5281/zenodo.20766587
 repository-code: "https://github.com/iotaverbum-core/sfa-bench"
 url: "https://github.com/iotaverbum-core/sfa-bench"
