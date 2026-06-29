@@ -1,0 +1,130 @@
+"""Independent replay / attestation.
+
+Replay re-derives every verdict from the stored submission and re-checks every
+seal and the ledger chain. It is the "stranger trust" property: an auditor who
+does not trust the operator can run this and confirm that
+
+  * no receipt was edited after sealing (seal integrity),
+  * every stored verdict still follows from its submission (re-derivation), and
+  * no ledger entry was deleted, inserted, reordered, or edited (chain).
+
+Any tamper surfaces as an explicit issue. Replay reports; it never repairs.
+"""
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+from typing import Any, Callable
+
+from . import engine, ledger as ledger_mod, rulepacks
+from .store import TenantStore
+
+_VERDICT_FIELDS = (
+    "status",
+    "category",
+    "family",
+    "input_hash",
+    "evidence_hash",
+    "candidate_hash",
+    "rules_hash",
+    "verdict_hash",
+)
+
+
+def attest(
+    store: TenantStore,
+    resolve_rule_pack: Callable[[str], dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Re-derive and re-check every record for one tenant."""
+    resolver = resolve_rule_pack or (lambda pack_id: rulepacks.load_rule_pack(pack_id))
+    issues: list[dict[str, Any]] = []
+
+    chain_ok, chain_errors, count = ledger_mod.verify_chain(str(store.ledger_path))
+    for seq, detail in chain_errors:
+        issues.append({"seq": seq, "code": "ledger_chain_broken", "detail": detail})
+
+    entries = []
+    try:
+        entries = store.read_ledger()
+    except ValueError as exc:
+        issues.append({"seq": -1, "code": "ledger_unreadable", "detail": str(exc)})
+
+    for entry in entries:
+        answer_id = entry.get("answer_id")
+        try:
+            receipt = store.read_receipt(answer_id)
+            submission = store.read_submission(answer_id)
+        except Exception as exc:  # noqa: BLE001 - surfaced as an attestation issue
+            issues.append({"answer_id": answer_id, "code": "missing_record", "detail": str(exc)})
+            continue
+
+        if engine.seal_hash(receipt) != receipt.get("receipt_hash"):
+            issues.append(
+                {"answer_id": answer_id, "code": "seal_broken",
+                 "detail": "receipt content does not match its seal"}
+            )
+        if entry.get("receipt_hash") != receipt.get("receipt_hash"):
+            issues.append(
+                {"answer_id": answer_id, "code": "ledger_receipt_mismatch",
+                 "detail": "ledger entry points at a different receipt hash"}
+            )
+
+        try:
+            rule_pack = resolver(receipt["rule_pack_id"])
+        except Exception as exc:  # noqa: BLE001
+            issues.append(
+                {"answer_id": answer_id, "code": "rule_pack_unavailable", "detail": str(exc)}
+            )
+            continue
+        if rule_pack.get("version") != receipt.get("rule_pack_version"):
+            issues.append(
+                {"answer_id": answer_id, "code": "rule_pack_version_changed",
+                 "detail": f"stored {receipt.get('rule_pack_version')!r} "
+                           f"!= available {rule_pack.get('version')!r}"}
+            )
+
+        rederived = engine.verify_submission(submission, rule_pack)
+        mismatched = [f for f in _VERDICT_FIELDS if rederived.get(f) != receipt.get(f)]
+        if mismatched:
+            issues.append(
+                {"answer_id": answer_id, "code": "verdict_mismatch",
+                 "detail": "re-derived verdict differs on: " + ", ".join(mismatched)}
+            )
+
+    return {
+        "attested": not issues,
+        "tenant": store.tenant,
+        "entries_checked": count,
+        "chain_ok": chain_ok,
+        "issues": issues,
+    }
+
+
+def _main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Independently re-attest a GroundLedger tenant.")
+    parser.add_argument("data_root", help="storage root directory")
+    parser.add_argument("tenant", help="tenant id")
+    parser.add_argument("--packs-dir", default=None, help="rule packs directory override")
+    args = parser.parse_args(argv)
+
+    store = TenantStore(args.data_root, args.tenant)
+    resolver = (lambda pack_id: rulepacks.load_rule_pack(pack_id, packs_dir=args.packs_dir))
+    result = attest(store, resolver)
+
+    print(f"GroundLedger attestation - tenant {result['tenant']!r}")
+    print("=" * 56)
+    print(f"entries checked: {result['entries_checked']}")
+    print(f"ledger chain ok: {'yes' if result['chain_ok'] else 'no'}")
+    if result["issues"]:
+        print("issues:")
+        for issue in result["issues"]:
+            ref = issue.get("answer_id", issue.get("seq"))
+            print(f"  - [{issue['code']}] {ref}: {issue['detail']}")
+    print("=" * 56)
+    print(f"final status: {'ATTESTED' if result['attested'] else 'TAMPER DETECTED'}")
+    return 0 if result["attested"] else 2
+
+
+if __name__ == "__main__":
+    sys.exit(_main())

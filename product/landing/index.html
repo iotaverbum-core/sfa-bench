@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GroundLedger — Prove your AI didn't make it up</title>
+<style>
+  :root { --ink:#0f172a; --muted:#475569; --line:#e2e8f0; --brand:#1d4ed8; --bg:#f8fafc; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:var(--ink); background:#fff; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 20px; }
+  header { border-bottom:1px solid var(--line); }
+  .nav { display:flex; justify-content:space-between; align-items:center; padding:18px 0; }
+  .logo { font-weight:700; letter-spacing:-.02em; }
+  .hero { padding:72px 0 48px; }
+  h1 { font-size:44px; line-height:1.1; letter-spacing:-.03em; margin:0 0 16px; }
+  .sub { font-size:20px; color:var(--muted); max-width:680px; }
+  .cta { display:flex; gap:12px; margin-top:28px; flex-wrap:wrap; }
+  .btn { padding:12px 18px; border-radius:10px; text-decoration:none; font-weight:600; }
+  .btn-primary { background:var(--brand); color:#fff; }
+  .btn-ghost { border:1px solid var(--line); color:var(--ink); }
+  section { padding:40px 0; border-top:1px solid var(--line); }
+  h2 { font-size:26px; letter-spacing:-.02em; }
+  .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .card { background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .card h3 { margin:.2em 0 .4em; font-size:17px; }
+  .card p { margin:0; color:var(--muted); font-size:15px; }
+  .steps { counter-reset:s; display:grid; gap:14px; }
+  .step { display:flex; gap:14px; align-items:flex-start; }
+  .step .n { background:var(--brand); color:#fff; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:700; flex:0 0 28px; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; }
+  th,td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); font-size:15px; vertical-align:top; }
+  .price { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+  .tier { border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .tier.featured { border-color:var(--brand); box-shadow:0 0 0 2px rgba(29,78,216,.12); }
+  .tier .amt { font-size:24px; font-weight:700; }
+  .muted { color:var(--muted); }
+  .faq dt { font-weight:600; margin-top:14px; }
+  .faq dd { margin:0; color:var(--muted); }
+  footer { padding:40px 0; color:var(--muted); border-top:1px solid var(--line); }
+  @media (max-width:760px){ .grid,.price{grid-template-columns:1fr;} h1{font-size:34px;} }
+</style>
+</head>
+<body>
+<header><div class="wrap nav"><div class="logo">GroundLedger</div><a class="btn btn-ghost" href="#pricing">Pricing</a></div></header>
+
+<div class="wrap">
+  <div class="hero">
+    <h1>Prove your AI didn't make it up.</h1>
+    <p class="sub">GroundLedger gives document-grounded AI assistants a tamper-evident, independently-replayable audit trail of every answer's groundedness — running inside your own environment, so no documents ever leave your walls.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="#pilot">Book a 2-week paid pilot</a>
+      <a class="btn btn-ghost" href="#how">See the 5-minute demo</a>
+    </div>
+  </div>
+
+  <section id="pain">
+    <h2>If your assistant cites a clause that doesn't exist, who finds out first — you, or your customer's auditor?</h2>
+    <div class="grid">
+      <div class="card"><h3>Deals stall in AI risk review</h3><p>Enterprise buyers now ask "how do you prevent and evidence hallucinations?" A dashboard screenshot isn't an answer.</p></div>
+      <div class="card"><h3>Your evals can't be reproduced</h3><p>LLM-as-judge results change run to run and live in a tool you could quietly edit. That's not evidence anyone trusts.</p></div>
+      <div class="card"><h3>You can't send documents to a SaaS</h3><p>Regulated content can't leave your VPC, so cloud eval platforms are a non-starter for your biggest accounts.</p></div>
+    </div>
+  </section>
+
+  <section id="benefits">
+    <h2>Groundedness as evidence, not as a metric</h2>
+    <div class="grid">
+      <div class="card"><h3>Deterministic verdicts</h3><p>A rule verifier — not another LLM guessing. Your auditor re-runs it and gets the identical result.</p></div>
+      <div class="card"><h3>Tamper-evident by design</h3><p>Every verdict is sealed into a hash-chained ledger. Delete or edit a failure and replay catches it.</p></div>
+      <div class="card"><h3>Runs in your VPC</h3><p>Stdlib-only, no network egress, no package install. Say "yes" to security review on the first call.</p></div>
+    </div>
+  </section>
+
+  <section id="how">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div>Your pipeline sends each answer, its citations, and the evidence chunks it used to GroundLedger.</div></div>
+      <div class="step"><div class="n">2</div><div>A deterministic rule pack checks groundedness and returns PASS/FAIL with a categorized reason.</div></div>
+      <div class="step"><div class="n">3</div><div>The verdict is sealed and appended to an append-only, hash-chained ledger.</div></div>
+      <div class="step"><div class="n">4</div><div>Export an audit report — and a one-line command your customer's auditor runs to reproduce every verdict.</div></div>
+    </div>
+  </section>
+
+  <section id="who">
+    <h2>Who it's for</h2>
+    <p class="muted">Heads of AI and founding engineers at vertical-AI companies shipping document-grounded assistants into regulated buyers — insurance and financial services first — whose deals slow down on AI-risk and audit-trail questions.</p>
+  </section>
+
+  <section id="pricing">
+    <h2>Pricing</h2>
+    <div class="price">
+      <div class="tier"><div class="muted">Dev</div><div class="amt">$0</div><p class="muted">1k verdicts/mo, 7-day history, local replay. Open-source core.</p></div>
+      <div class="tier"><div class="muted">Starter</div><div class="amt">$399<span class="muted">/mo</span></div><p class="muted">50k verdicts/mo, 90-day sealed ledger, 1 audit export/mo, 3 seats.</p></div>
+      <div class="tier featured"><div class="muted">Team</div><div class="amt">$1,900<span class="muted">/mo</span></div><p class="muted">500k verdicts/mo, 1-year ledger, unlimited exports, SSO, 10 seats.</p></div>
+      <div class="tier"><div class="muted">Enterprise</div><div class="amt">from $45k<span class="muted">/yr</span></div><p class="muted">In-VPC deploy, unlimited retention, signed exports, AI-Act/ISO 42001 templates.</p></div>
+    </div>
+  </section>
+
+  <section id="faq" class="faq">
+    <h2>FAQ</h2>
+    <dl>
+      <dt>Is this another LLM grading my LLM?</dt><dd>No. The judge is a deterministic rule verifier, so results are reproducible and can't drift or be gamed by the answer key.</dd>
+      <dt>Does my data leave my environment?</dt><dd>No. GroundLedger runs in your VPC with no network egress and no dependencies.</dd>
+      <dt>What does "tamper-evident" mean?</dt><dd>Any covered edit to a sealed receipt or the ledger breaks an integrity check that replay reports. It is evidence of tampering, not a cryptographic impossibility proof.</dd>
+      <dt>What answers can it check today?</dt><dd>Structured, cited answers (JSON-mode / function-calling RAG). Free-text claim extraction is on the roadmap.</dd>
+    </dl>
+  </section>
+
+  <section id="pilot">
+    <h2>Start with a paid pilot</h2>
+    <p class="muted">Two weeks, fixed price, on your real answers. Success = your audit report is accepted as evidence by one of your own buyers or auditors.</p>
+    <div class="cta"><a class="btn btn-primary" href="mailto:founders@groundledger.example?subject=GroundLedger%20pilot">Book the pilot</a></div>
+  </section>
+</div>
+
+<footer><div class="wrap">GroundLedger — built on the SFA-Bench deterministic verification core. Runs offline. © 2026.</div></footer>
+</body>
+</html>

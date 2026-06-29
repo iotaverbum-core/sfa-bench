@@ -1,0 +1,25 @@
+{
+  "answer_id": "ans_grounded_001",
+  "rule_pack": "insurance_v1",
+  "task_input": {"question": "What is the deductible and the coverage limit on this policy?"},
+  "candidate": {
+    "conclusion": "Your deductible is $1,000 per claim and your coverage limit is $250,000.",
+    "cited_evidence": ["clause_3a", "clause_5b"],
+    "claims": [
+      {"subject": "deductible", "value": "$1,000"},
+      {"subject": "coverage_limit", "value": "$250,000"}
+    ]
+  },
+  "evidence": {
+    "documents": [
+      {"id": "clause_3a", "title": "Deductible", "text": "The deductible is $1,000 per claim."},
+      {"id": "clause_5b", "title": "Coverage Limit", "text": "The coverage limit is $250,000 per policy term."},
+      {"id": "clause_7c", "title": "Premium", "text": "The annual premium is $2,400."}
+    ],
+    "facts": [
+      {"id": "f_deductible", "subject": "deductible", "value": "$1,000"},
+      {"id": "f_limit", "subject": "coverage_limit", "value": "$250,000"},
+      {"id": "f_premium", "subject": "annual_premium", "value": "$2,400"}
+    ]
+  }
+}
