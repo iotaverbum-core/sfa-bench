@@ -4,6 +4,10 @@ All notable changes to SFA-Bench will be documented in this file.
 
 ## Unreleased
 
+No unreleased changes.
+
+## v1.0.4 — Release-gate version-of-record enforcement (2026-06-29)
+
 ### Fixed
 
 - Corrected the package version of record: `sfa.__version__` was left at `0.9.0`
@@ -24,6 +28,14 @@ All notable changes to SFA-Bench will be documented in this file.
 - No taxonomy change.
 - No runtime verdict, fingerprint, or policy behaviour change.
 - No API, model, provider, or network calls.
+- The in-code version of record stays `1.0.0`; v1.0.x tags track documentation
+  and release-tooling patches, consistent with v1.0.1–v1.0.3.
+
+### Not Included
+
+- The GroundLedger product layer (`product/`) is a separate commercial artifact
+  versioned independently (see `product/CHANGELOG.md`). It is intentionally not
+  part of this research-instrument release line or its DOI.
 
 ## v1.0.3 — DOI and Citation Update (2026-06-19)
 
