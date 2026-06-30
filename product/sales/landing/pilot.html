@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GroundLedger Audit Pilot - Prove your AI didn't make it up</title>
+<!--
+  PILOT LANDING PAGE. Replace the two placeholders before publishing:
+    {{BOOKING_LINK}}   e.g. https://cal.com/your-handle/groundledger-pilot
+    {{FOUNDER_EMAIL}}  e.g. founders@groundledger.example
+  Then host this single file anywhere (GitHub Pages, Netlify drop, S3).
+-->
+<style>
+  :root{--ink:#0f172a;--muted:#475569;--line:#e2e8f0;--brand:#1d4ed8;--bg:#f8fafc;--ok:#15803d;--bad:#b91c1c;}
+  *{box-sizing:border-box;}
+  body{margin:0;font:16px/1.6 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px;}
+  header{border-bottom:1px solid var(--line);}
+  .nav{display:flex;justify-content:space-between;align-items:center;padding:18px 0;}
+  .logo{font-weight:700;letter-spacing:-.02em;}
+  .hero{padding:64px 0 44px;}
+  h1{font-size:42px;line-height:1.1;letter-spacing:-.03em;margin:0 0 16px;}
+  .sub{font-size:20px;color:var(--muted);max-width:700px;}
+  .cta{display:flex;gap:12px;margin-top:26px;flex-wrap:wrap;}
+  .btn{padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block;}
+  .btn-primary{background:var(--brand);color:#fff;}
+  .btn-ghost{border:1px solid var(--line);color:var(--ink);}
+  .trust{margin-top:16px;color:var(--muted);font-size:14px;}
+  section{padding:38px 0;border-top:1px solid var(--line);}
+  h2{font-size:26px;letter-spacing:-.02em;margin:0 0 14px;}
+  h3{margin:.2em 0 .4em;font-size:17px;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+  .card{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px;}
+  .card p{margin:0;color:var(--muted);font-size:15px;}
+  ul.clean{margin:.4em 0;padding-left:1.1em;} ul.clean li{margin:.3em 0;}
+  .steps{display:grid;gap:14px;}
+  .step{display:flex;gap:14px;align-items:flex-start;}
+  .step .n{background:var(--brand);color:#fff;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;flex:0 0 28px;}
+  .price{border:1px solid var(--brand);border-radius:14px;padding:20px;box-shadow:0 0 0 2px rgba(29,78,216,.10);}
+  .price .amt{font-size:30px;font-weight:800;}
+  .muted{color:var(--muted);}
+  .faq dt{font-weight:600;margin-top:14px;} .faq dd{margin:.2em 0 0;color:var(--muted);}
+  .final{background:var(--ink);color:#fff;border-radius:16px;padding:28px;margin:36px 0;}
+  .final h2{color:#fff;} .final .btn-primary{background:#fff;color:var(--ink);}
+  footer{padding:30px 0;color:var(--muted);border-top:1px solid var(--line);font-size:14px;}
+  @media(max-width:760px){.grid,.grid2{grid-template-columns:1fr;}h1{font-size:32px;}}
+</style>
+</head>
+<body>
+<header><div class="wrap nav"><div class="logo">GroundLedger</div>
+  <a class="btn btn-ghost" href="{{BOOKING_LINK}}">Book a pilot call</a></div></header>
+
+<div class="wrap">
+
+  <div class="hero">
+    <h1>Prove your AI didn't make it up - in two weeks, on your own answers.</h1>
+    <p class="sub">The GroundLedger Audit Pilot runs deterministic groundedness checks on your assistant's real answers and hands you a tamper-evident report your buyer's security team can reproduce. It runs in your environment. No documents leave your walls.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="{{BOOKING_LINK}}">Book the 2-week pilot</a>
+      <a class="btn btn-ghost" href="mailto:{{FOUNDER_EMAIL}}?subject=GroundLedger%20pilot">Email us</a>
+    </div>
+    <div class="trust">Built on an open, deterministic verification core. No model calls, no network egress, no third-party data sharing.</div>
+  </div>
+
+  <section>
+    <h2>The problem</h2>
+    <p>Your assistant answers customer and policy questions from documents. Sometimes it cites a clause that isn't there, or states a number the source contradicts. You find out when a customer complains - or when a prospect's security team asks how you handle it.</p>
+    <div class="grid" style="margin-top:14px;">
+      <div class="card"><h3>Silent failures</h3><p>Fabricated citations and contradicted facts don't throw errors. They pass review and reach the customer.</p></div>
+      <div class="card"><h3>Unverifiable outputs</h3><p>Your evals run a model to grade a model - nondeterministic, editable, and no auditor accepts the score.</p></div>
+      <div class="card"><h3>No audit trail</h3><p>When a deal review or regulator asks for a record, you can't reconstruct one after the fact.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why now</h2>
+    <p>Enterprise procurement now ships AI-risk questionnaires, and EU AI Act record-keeping and ISO 42001 efforts are landing on vendors this year. The question has shifted from "is it good?" to "prove it - and prove you didn't fudge the proof." Every week without a defensible record is another week of answers you can't stand behind.</p>
+  </section>
+
+  <section>
+    <h2>What the pilot checks</h2>
+    <ul class="clean">
+      <li><b>Fabricated citations</b> - answers citing source ids that aren't in the evidence.</li>
+      <li><b>Contradictions</b> - a stated rate, fee, deductible, or date that disagrees with the source.</li>
+      <li><b>Unverifiable answers</b> - missing citations or claims that make grounding impossible to check.</li>
+      <li><b>A reproducible groundedness rate</b> across your real answers.</li>
+      <li><b>A tamper-evident record</b> of every verdict, independently re-runnable.</li>
+    </ul>
+    <p class="muted">Honest scope: for free-text answers the check is deterministic and conservative - it reliably flags fabricated citations and contradictions on facts your evidence covers, and under-reports novel claims rather than guessing. Structured, cited answers get the strongest coverage. "Tamper-evident" means a covered edit breaks an integrity check we report; it is not a tamper-proof or certified-compliance guarantee.</p>
+  </section>
+
+  <section>
+    <h2>What you receive</h2>
+    <div class="grid2">
+      <div class="card"><h3>Executive summary</h3><p>One page, plain language: your groundedness rate and the headline risk.</p></div>
+      <div class="card"><h3>Severity-ranked findings</h3><p>Critical / high / medium, each with what we detected, why it matters, and a recommended action.</p></div>
+      <div class="card"><h3>Evidence per finding</h3><p>The sealed receipt, the offending citation or claim, and the source it failed against.</p></div>
+      <div class="card"><h3>Self-verifying bundle</h3><p>A signed report your auditor re-runs offline with one command and gets the identical result.</p></div>
+      <div class="card"><h3>Monitoring recommendation</h3><p>Where to wire continuous checks in (pre-send gate, CI, production sampling).</p></div>
+      <div class="card"><h3>Subscription proposal</h3><p>A clear path to keep the record live after the pilot.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Who it's for</h2>
+    <div class="grid2">
+      <div class="card"><h3>A good fit</h3><p>Heads of AI and founding engineers at insurance or fintech companies shipping a document-grounded assistant into regulated buyers, whose deals slow down on AI-risk and audit questions.</p></div>
+      <div class="card"><h3>Not a fit yet</h3><p>Teams with no document-grounded answers, no external/audit pressure, or assistants that don't cite sources at all (low coverage in v1).</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div><b>Discovery call (20-30 min)</b> - we confirm the pain is real and pick a workflow. If it isn't a fit, we tell you.</div></div>
+      <div class="step"><div class="n">2</div><div><b>Workflow selection</b> - you give us ~150-300 real answers and the evidence each used. We deploy in your environment and tune a rule pack for your domain.</div></div>
+      <div class="step"><div class="n">3</div><div><b>Analysis and report</b> - we verify every answer, seal the ledger, and produce your audit report.</div></div>
+      <div class="step"><div class="n">4</div><div><b>Final review and recommendation</b> - we walk the findings with you and propose continuous monitoring.</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Pricing</h2>
+    <div class="grid2">
+      <div class="price">
+        <div class="muted">Groundedness Audit Pilot</div>
+        <div class="amt">$2,500 <span class="muted" style="font-size:15px;font-weight:400;">fixed - 2 weeks</span></div>
+        <p class="muted" style="margin-top:8px;">Design-partner rate <b>$1,500</b> for our first three customers. Credited toward your first 3 months if you continue.</p>
+        <ul class="clean">
+          <li>Included: in-env deployment, one tuned rule pack, sealed ledger of your answers, signed audit report + bundle, findings review, subscription proposal.</li>
+          <li>Excluded: custom connectors, new check types, more than one tuning pass, more than one assistant.</li>
+        </ul>
+        <a class="btn btn-primary" href="{{BOOKING_LINK}}" style="margin-top:8px;">Book the pilot</a>
+      </div>
+      <div class="card">
+        <h3>After the pilot</h3>
+        <p>Continuous monitoring keeps the audit record live as your content and models change.</p>
+        <ul class="clean">
+          <li><b>Starter - $399/mo</b>: one assistant, 90-day sealed ledger, monthly export.</li>
+          <li><b>Team - $1,900/mo</b>: multiple projects, 1-year ledger, unlimited signed exports.</li>
+          <li><b>Enterprise - from $45k/yr</b>: in-VPC deploy, unlimited retention, custom rule packs, priority support.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq">
+    <h2>FAQ</h2>
+    <dl>
+      <dt>How is this different from LLM evals?</dt><dd>Evals run a model to judge a model: nondeterministic, can hallucinate, and live in a mutable dashboard. Ours is a deterministic rule check - same input, same verdict, every time - sealed into a record your auditor re-runs and gets the identical result.</dd>
+      <dt>What if we already have monitoring?</dt><dd>Monitoring helps you improve the app. This produces a reproducible, tamper-evident record an outsider can verify. Different job: iteration vs. evidence.</dd>
+      <dt>What if the pilot finds nothing?</dt><dd>Then you get a reproducible groundedness baseline you can hand a prospect - a sellable result. We state coverage honestly, so "nothing found" is scoped, not a false all-clear.</dd>
+      <dt>Do we need to share sensitive data?</dt><dd>No. It runs in your environment with no network egress and no third-party dependencies. We don't receive your documents or answers.</dd>
+      <dt>Is this consulting or software?</dt><dd>Software, delivered with a fixed scope. The deliverable is a reproducible artifact plus a tool you keep running - not a slide deck. We do one rule-pack tuning pass, no open-ended custom work.</dd>
+      <dt>Who should be involved?</dt><dd>Whoever owns the stalled deal or AI-risk response - usually your Head of AI or CTO - plus one technical contact for the data.</dd>
+      <dt>What happens after the pilot?</dt><dd>If it finds risk worth watching, you convert to a monthly subscription and the pilot fee is credited. If not, you keep the report.</dd>
+      <dt>How quickly can we start?</dt><dd>As soon as you can share ~200 answers and their evidence - usually within a day of the discovery call.</dd>
+    </dl>
+  </section>
+
+  <div class="final">
+    <h2>See what's in your assistant's answers.</h2>
+    <p class="muted" style="color:#cbd5e1;">Two weeks. A report your buyer's auditor can reproduce. Run on your own data, in your own environment.</p>
+    <div class="cta"><a class="btn btn-primary" href="{{BOOKING_LINK}}">Book your pilot call</a>
+      <a class="btn btn-ghost" style="border-color:#475569;color:#fff;" href="mailto:{{FOUNDER_EMAIL}}?subject=GroundLedger%20pilot">Email us</a></div>
+  </div>
+
+</div>
+<footer><div class="wrap">GroundLedger - deterministic groundedness verification for document-grounded AI. Runs offline, in your environment.</div></footer>
+</body>
+</html>

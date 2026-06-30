@@ -1,0 +1,3 @@
+company,contact_name,title,email,linkedin,industry,trigger_event,pain_hypothesis,outreach_status,last_touch,next_action,interest_level,objection,pilot_fit,expected_value,notes
+<EXAMPLE - replace this row>,Jane Doe,Head of AI,jane@example.com,linkedin.com/in/REPLACE,Insurance,Lost deal on AI-risk questionnaire,Cannot evidence groundedness to enterprise security,Target identified,,Send cold email 1,Unknown,,High,$1900/mo,Cited assistant for policy Q&A; structured outputs
+<EXAMPLE - replace this row>,John Roe,CTO,john@example.com,linkedin.com/in/REPLACE,Fintech,Pursuing ISO 42001,No reproducible audit trail for disclosure answers,Target identified,,Connect on LinkedIn,Unknown,,Medium,$399/mo,Free-text answers - confirm coverage in discovery
