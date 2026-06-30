@@ -8,7 +8,7 @@ is not part of that instrument's release line or Zenodo DOI.
 
 No unreleased changes.
 
-## v0.1.0 — Initial product layer
+## v0.1.0 — Initial product layer (2026-06-30)
 
 ### Added
 
@@ -25,14 +25,28 @@ No unreleased changes.
 - Customer-facing audit report with severity-ranked findings and recommended
   actions, plus a signed, self-verifying export bundle and printable HTML
   (`report.py`, `export.py`, `findings.py`).
+- Bulk ingest of a JSONL/CSV batch of answers in one command, idempotent and
+  tolerant of bad rows (`ingest.py`).
 - Stdlib-only HTTP API and one-command in-VPC Dockerfile (`api.py`, `Dockerfile`).
 - Python SDK with embedded and HTTP transports (`sdk/`).
 - Two vertical rule packs: `insurance_v1` and `fintech_v1`.
-- One-command demo (`scripts/demo.sh`) and 49 tests.
+
+### Packaging & trust-readiness
+
+- Zero-runtime-dependency packaging (`pyproject.toml`) and a `groundledger` CLI
+  (`cli.py`); `Makefile` with `setup` / `test` / `demo` / `verify`.
+- Reproducibility + tamper verification (`verification.py`) with committed golden
+  fixtures: `make verify` re-derives the example verdicts/report/signed bundle to
+  byte-identical hashes and proves a corrupted bundle is rejected.
+- `TRUST_MODEL.md`, `SECURITY.md`, and `.env.example`; CI runs the product test
+  suite, demo, and reproducibility/tamper verification.
+- One-command demo (`scripts/demo.sh`) and 65 tests.
 
 ### Boundaries
 
 - Stdlib-only; no model calls and no network egress.
 - The protected `sfa` research core is reused unchanged.
-- v1 free-text extraction is deterministic and conservative (under-reports rather
+- Free-text extraction is deterministic and conservative (under-reports rather
   than fabricates findings); structured/cited answers get the strongest coverage.
+- Tamper-evident, not tamper-proof; HMAC export signing is keyed integrity, not
+  public-key non-repudiation. See `TRUST_MODEL.md`.
