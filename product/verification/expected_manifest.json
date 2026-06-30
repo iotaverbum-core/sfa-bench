@@ -1,0 +1,27 @@
+{
+  "export_hash": "49d2e76a14b85b0b817f084e4c16df329e934355b8c4e069a0c7809817c407e0",
+  "groundedness_rate": 0.25,
+  "inputs": {
+    "contradicts_evidence.json": "fc314ddf06dc66ab6e77946a01d8159c1428512af6944cfafbbae211fcd62de0",
+    "fabricated_citation.json": "7dd111cf55e9e27b878b234f842277bcdb6ba981ab6a6734c786f3834ea69f8f",
+    "grounded_answer.json": "fa8812a213a30824c04f332c5ef8c3957966650a4f12dece77a7f1a6a6eb21d4",
+    "unsupported_claim.json": "d588af5a498e50605b05b051f902c18c97f490773522a5421abd1ba42752ee6d"
+  },
+  "receipts": {
+    "ans_contradicts_003": "389445bbd228a0eab09310925e41eb0a3d2049f374e599b5ceccef751615048f",
+    "ans_fabricated_002": "981061c1e78f85a73c03f335e541afa8e264c7d9c4ab1cf66f4524ea5bf35404",
+    "ans_grounded_001": "0a348a785ca2c927a097a671fd3bc326bdd3b1e7a769aa2975bbc7593106a814",
+    "ans_unsupported_004": "3c4d1611e7d7cad4bc400e328f29615c0d5ab3b1a6dea8beaf9c806fa8e34533"
+  },
+  "rule_pack": {
+    "id": "insurance_v1",
+    "version": "1.0.0"
+  },
+  "schema": "groundledger.verification_manifest.v1",
+  "signature": "39f84eb43501177db0185a8e6529c97bdbcadab7844f54643fdfaf0716f08863",
+  "tool": {
+    "extractor": "groundledger-extractor-v1",
+    "groundledger": "0.1.0",
+    "verifier": "sfa-verifier-0.1"
+  }
+}
