@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Export the one-page pilot sheet to PDF using headless Chrome/Chromium.
-#   ./scripts/pilot-pdf.sh
-# Falls back with instructions if no Chrome/Chromium is found (use the browser's
-# Print > Save as PDF on product/sales/pilot/one-pager.html).
+# Export a printable sales HTML to PDF using headless Chrome/Chromium.
+#   ./scripts/pilot-pdf.sh                                   # the one-pager (default)
+#   ./scripts/pilot-pdf.sh product/sales/pilot/order-form.html
+# Falls back with instructions if no Chrome/Chromium is found (open the HTML and
+# use the browser's Print > Save as PDF).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-SRC="product/sales/pilot/one-pager.html"
-OUT="product/sales/pilot/one-pager.pdf"
+SRC="${1:-product/sales/pilot/one-pager.html}"
+OUT="${SRC%.html}.pdf"
 
 find_chrome() {
   for c in google-chrome-stable google-chrome chromium chromium-browser chrome; do
