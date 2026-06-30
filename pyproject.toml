@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "groundledger"
+version = "0.1.0"
+description = "Deterministic, tamper-evident groundedness verification for document-grounded AI assistants, built on the SFA-Bench research core."
+readme = "product/README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Matthew Neal" }]
+keywords = ["llm", "rag", "groundedness", "audit", "tamper-evident", "verification"]
+
+# Intentionally NO runtime dependencies. GroundLedger and the sfa core are
+# stdlib-only; installing adds a CLI but never pulls third-party packages.
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/iotaverbum-core/sfa-bench"
+
+[project.scripts]
+groundledger = "product.groundledger.cli:main"
+
+[tool.setuptools]
+# The distribution bundles the research core (`sfa`) that the product reuses,
+# plus the product packages. The research core remains runnable with no install
+# via `python verify_all.py`; installation only adds the optional CLI.
+packages = ["sfa", "product", "product.groundledger", "product.sdk"]
+
+[tool.setuptools.package-data]
+"product.groundledger" = ["rule_packs/*.json"]

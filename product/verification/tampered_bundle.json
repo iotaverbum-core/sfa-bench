@@ -1,0 +1,465 @@
+{
+  "schema": "groundledger.audit_export.v1",
+  "tenant": "verification",
+  "generated_at": "2026-01-01T00:00:01+00:00",
+  "report": {
+    "schema": "groundledger.audit_report.v1",
+    "tenant": "verification",
+    "generated_at": "2026-01-01T00:00:00+00:00",
+    "summary": "1 of 4 answers (25%) were grounded in the provided evidence. 3 answer(s) were flagged: 2 critical, 1 high. The audit trail is intact (independently attested).",
+    "answers_verified": 4,
+    "grounded": 1,
+    "not_grounded": 3,
+    "groundedness_rate": 0.25,
+    "severity_counts": {
+      "critical": 2,
+      "high": 1
+    },
+    "findings": [
+      {
+        "answer_id": "ans_contradicts_003",
+        "question": "What is my deductible?",
+        "assistant_answer": "Good news - your deductible is only $500 per claim.",
+        "category": "CONTRADICTS_EVIDENCE",
+        "family": "contradicts_evidence",
+        "detected": "claim 'deductible=$500' contradicts evidence 'deductible=$1,000'",
+        "detection": "deterministic rule match",
+        "receipt_hash": "389445bbd228a0eab09310925e41eb0a3d2049f374e599b5ceccef751615048f",
+        "title": "Contradicts the source",
+        "severity": "critical",
+        "plain_language": "The assistant stated a value that conflicts with the evidence it cited.",
+        "why_it_matters": "A contradicted fact - a wrong deductible, limit, or premium - is a direct liability and a likely complaint or claim dispute.",
+        "recommended_action": "Block the answer and correct it against the evidence value before responding."
+      },
+      {
+        "answer_id": "ans_fabricated_002",
+        "question": "What is the deductible?",
+        "assistant_answer": "Your deductible is $1,000, per clauses 3a and 9z of your policy.",
+        "category": "FABRICATED_ENTITY",
+        "family": "fabricated_entity",
+        "detected": "cited evidence id(s) not present in evidence: clause_9z",
+        "detection": "deterministic rule match",
+        "receipt_hash": "981061c1e78f85a73c03f335e541afa8e264c7d9c4ab1cf66f4524ea5bf35404",
+        "title": "Fabricated citation",
+        "severity": "critical",
+        "plain_language": "The assistant cited a source document that does not exist in the provided evidence.",
+        "why_it_matters": "A fabricated citation makes a wrong answer look authoritative. It is the least defensible failure in a regulated workflow and the hardest to explain in an audit or dispute.",
+        "recommended_action": "Block the answer from reaching the customer and route to human review. Constrain the assistant to cite only retrieved document ids."
+      },
+      {
+        "answer_id": "ans_unsupported_004",
+        "question": "Does my policy cover a rental car while mine is repaired?",
+        "assistant_answer": "Yes, your policy reimburses rental cars at $50 per day.",
+        "category": "UNSUPPORTED_CLAIM",
+        "family": "unsupported_claim",
+        "detected": "claim about 'rental_reimbursement' is not supported by any evidence fact",
+        "detection": "deterministic rule match",
+        "receipt_hash": "3c4d1611e7d7cad4bc400e328f29615c0d5ab3b1a6dea8beaf9c806fa8e34533",
+        "title": "Unsupported claim",
+        "severity": "high",
+        "plain_language": "The assistant asserted a fact that no provided evidence supports.",
+        "why_it_matters": "Unsupported claims are guesses presented as fact. Even when they happen to be right, you cannot prove they were grounded.",
+        "recommended_action": "Remove the unsupported claim or add the evidence that supports it. Prefer fewer claims over ungrounded ones."
+      }
+    ],
+    "failure_families": {
+      "contradicts_evidence": 1,
+      "fabricated_entity": 1,
+      "unsupported_claim": 1
+    },
+    "failure_categories": {
+      "CONTRADICTS_EVIDENCE": 1,
+      "FABRICATED_ENTITY": 1,
+      "UNSUPPORTED_CLAIM": 1
+    },
+    "metadata": {
+      "rule_packs": {
+        "insurance_v1": "1.0.0"
+      },
+      "verifier_version": "sfa-verifier-0.1"
+    },
+    "attestation": {
+      "attested": true,
+      "entries_checked": 4,
+      "chain_ok": true,
+      "issues": []
+    },
+    "reproduce_command": "python -m product.groundledger.replay <data_root> verification"
+  },
+  "ledger": [
+    {
+      "answer_id": "ans_grounded_001",
+      "category": null,
+      "entry_hash": "824d6f21007c89c16b1dc448aa4fb403a7fdb955f48b4398a5e3bac28c7d20a2",
+      "family": null,
+      "prev_hash": "GENESIS",
+      "receipt_hash": "0a348a785ca2c927a097a671fd3bc326bdd3b1e7a769aa2975bbc7593106a814",
+      "sealed_at": "2026-01-01T00:00:00+00:00",
+      "seq": 0,
+      "status": "PASS"
+    },
+    {
+      "answer_id": "ans_fabricated_002",
+      "category": "FABRICATED_ENTITY",
+      "entry_hash": "308e36ee5e3de27a0be3e9abf18b23a2435298c28a4285520b7e2b991ab3e165",
+      "family": "fabricated_entity",
+      "prev_hash": "824d6f21007c89c16b1dc448aa4fb403a7fdb955f48b4398a5e3bac28c7d20a2",
+      "receipt_hash": "981061c1e78f85a73c03f335e541afa8e264c7d9c4ab1cf66f4524ea5bf35404",
+      "sealed_at": "2026-01-01T00:00:01+00:00",
+      "seq": 1,
+      "status": "FAIL"
+    },
+    {
+      "answer_id": "ans_contradicts_003",
+      "category": "CONTRADICTS_EVIDENCE",
+      "entry_hash": "beb63cb63e6157b5229450d164af607d3ca3daf7ba14d6c94182ea8dcff8e467",
+      "family": "contradicts_evidence",
+      "prev_hash": "308e36ee5e3de27a0be3e9abf18b23a2435298c28a4285520b7e2b991ab3e165",
+      "receipt_hash": "389445bbd228a0eab09310925e41eb0a3d2049f374e599b5ceccef751615048f",
+      "sealed_at": "2026-01-01T00:00:02+00:00",
+      "seq": 2,
+      "status": "FAIL"
+    },
+    {
+      "answer_id": "ans_unsupported_004",
+      "category": "UNSUPPORTED_CLAIM",
+      "entry_hash": "cf336347daa795b8d3377796cb638a3e2e9959c170468f0a421f755e2d7333d7",
+      "family": "unsupported_claim",
+      "prev_hash": "beb63cb63e6157b5229450d164af607d3ca3daf7ba14d6c94182ea8dcff8e467",
+      "receipt_hash": "3c4d1611e7d7cad4bc400e328f29615c0d5ab3b1a6dea8beaf9c806fa8e34533",
+      "sealed_at": "2026-01-01T00:00:03+00:00",
+      "seq": 3,
+      "status": "FAIL"
+    }
+  ],
+  "receipts": [
+    {
+      "answer_id": "ans_grounded_001",
+      "candidate_hash": "535e7f2981e3f0a6b98b10538bf8c6b89781a61dbf447734dcdd208e14085d18",
+      "category": null,
+      "evidence_hash": "e27983e0db4b4af82403422bb1ff9dd204f833b0a363fc86e0fb32983702ec2f",
+      "explanation": "candidate is consistent with evidence under all rules",
+      "family": null,
+      "input_hash": "a3bcd16cd60c4265f13570829f2e9469f29128cd6d64d8fb16d7233e1230d5d6",
+      "receipt_hash": "0a348a785ca2c927a097a671fd3bc326bdd3b1e7a769aa2975bbc7593106a814",
+      "rule_pack_id": "insurance_v1",
+      "rule_pack_version": "1.0.0",
+      "rules_hash": "79da5dbd799584f2432981c2b32c06075256312daef666fb3159bd8224d4c18d",
+      "schema": "groundledger.receipt.v1",
+      "sealed_at": "2026-01-01T00:00:00+00:00",
+      "status": "PASS",
+      "verdict_hash": "a71232df56ef5c70c851cd0a73894883b2e30e60150bd1d493f0131c8077a28f",
+      "verifier_version": "sfa-verifier-0.1",
+      "violations": []
+    },
+    {
+      "answer_id": "ans_fabricated_002",
+      "candidate_hash": "38270a2e9ac872c6c9c0bc46147d7120eb600c1246659dcf60c7b5f8263df641",
+      "category": null,
+      "evidence_hash": "f30c577a5d3954520bc80ab8ac133bc41f0acfcd49105a5ed78ce5494035078d",
+      "explanation": "candidate is consistent with evidence under all rules",
+      "family": null,
+      "input_hash": "838ae33b3c6f8135e6b9c442a55a9d796d1f3ee3438a2dd7fef18b3e233d9497",
+      "receipt_hash": "981061c1e78f85a73c03f335e541afa8e264c7d9c4ab1cf66f4524ea5bf35404",
+      "rule_pack_id": "insurance_v1",
+      "rule_pack_version": "1.0.0",
+      "rules_hash": "79da5dbd799584f2432981c2b32c06075256312daef666fb3159bd8224d4c18d",
+      "schema": "groundledger.receipt.v1",
+      "sealed_at": "2026-01-01T00:00:01+00:00",
+      "status": "PASS",
+      "verdict_hash": "3eb8ad35fc7c00c4388cd004aa658e22a33fefb889e890d4912daee856dc7ae0",
+      "verifier_version": "sfa-verifier-0.1",
+      "violations": []
+    },
+    {
+      "answer_id": "ans_contradicts_003",
+      "candidate_hash": "6c9ced7a76ff5acdf227ec55f02188bcf7e6f76f47e4ba2e8af3bb5562b7daf7",
+      "category": "CONTRADICTS_EVIDENCE",
+      "evidence_hash": "400342ca9949cd85a84588f56f9e752fb57a575521daf7b94c824bc5de9380f7",
+      "explanation": "claim 'deductible=$500' contradicts evidence 'deductible=$1,000'",
+      "family": "contradicts_evidence",
+      "input_hash": "5b255dbe2813e48a73d5d76150ac9a0dde4cecfa634f6ef3945a7ff7239d2c85",
+      "receipt_hash": "389445bbd228a0eab09310925e41eb0a3d2049f374e599b5ceccef751615048f",
+      "rule_pack_id": "insurance_v1",
+      "rule_pack_version": "1.0.0",
+      "rules_hash": "79da5dbd799584f2432981c2b32c06075256312daef666fb3159bd8224d4c18d",
+      "schema": "groundledger.receipt.v1",
+      "sealed_at": "2026-01-01T00:00:02+00:00",
+      "status": "FAIL",
+      "verdict_hash": "23a9302bbee914c020799bea54f4f469102744234b9556fbcbac6b622c95fb7f",
+      "verifier_version": "sfa-verifier-0.1",
+      "violations": [
+        {
+          "category": "CONTRADICTS_EVIDENCE",
+          "detail": "claim 'deductible=$500' contradicts evidence 'deductible=$1,000'",
+          "rule_id": "grounding"
+        }
+      ]
+    },
+    {
+      "answer_id": "ans_unsupported_004",
+      "candidate_hash": "bc9f86d7d617dde7b052800a2bb0d499cba7b98fd57549bfe89ddefd396b9cfc",
+      "category": "UNSUPPORTED_CLAIM",
+      "evidence_hash": "400342ca9949cd85a84588f56f9e752fb57a575521daf7b94c824bc5de9380f7",
+      "explanation": "claim about 'rental_reimbursement' is not supported by any evidence fact",
+      "family": "unsupported_claim",
+      "input_hash": "4bad097360faea0955105619b4ffc84756e2ba312f728f11fdb1d515ab706621",
+      "receipt_hash": "3c4d1611e7d7cad4bc400e328f29615c0d5ab3b1a6dea8beaf9c806fa8e34533",
+      "rule_pack_id": "insurance_v1",
+      "rule_pack_version": "1.0.0",
+      "rules_hash": "79da5dbd799584f2432981c2b32c06075256312daef666fb3159bd8224d4c18d",
+      "schema": "groundledger.receipt.v1",
+      "sealed_at": "2026-01-01T00:00:03+00:00",
+      "status": "FAIL",
+      "verdict_hash": "b415894d369fb7c9b3a0d017be5504bc76aa0287cbec91d2c263b5eb378d77a8",
+      "verifier_version": "sfa-verifier-0.1",
+      "violations": [
+        {
+          "category": "UNSUPPORTED_CLAIM",
+          "detail": "claim about 'rental_reimbursement' is not supported by any evidence fact",
+          "rule_id": "grounding"
+        }
+      ]
+    }
+  ],
+  "submissions": [
+    {
+      "answer_id": "ans_grounded_001",
+      "candidate": {
+        "cited_evidence": [
+          "clause_3a",
+          "clause_5b"
+        ],
+        "claims": [
+          {
+            "subject": "deductible",
+            "value": "$1,000"
+          },
+          {
+            "subject": "coverage_limit",
+            "value": "$250,000"
+          }
+        ],
+        "conclusion": "Your deductible is $1,000 per claim and your coverage limit is $250,000."
+      },
+      "evidence": {
+        "documents": [
+          {
+            "id": "clause_3a",
+            "text": "The deductible is $1,000 per claim.",
+            "title": "Deductible"
+          },
+          {
+            "id": "clause_5b",
+            "text": "The coverage limit is $250,000 per policy term.",
+            "title": "Coverage Limit"
+          },
+          {
+            "id": "clause_7c",
+            "text": "The annual premium is $2,400.",
+            "title": "Premium"
+          }
+        ],
+        "facts": [
+          {
+            "id": "f_deductible",
+            "subject": "deductible",
+            "value": "$1,000"
+          },
+          {
+            "id": "f_limit",
+            "subject": "coverage_limit",
+            "value": "$250,000"
+          },
+          {
+            "id": "f_premium",
+            "subject": "annual_premium",
+            "value": "$2,400"
+          }
+        ]
+      },
+      "rule_pack": "insurance_v1",
+      "task_input": {
+        "question": "What is the deductible and the coverage limit on this policy?"
+      }
+    },
+    {
+      "answer_id": "ans_fabricated_002",
+      "candidate": {
+        "cited_evidence": [
+          "clause_3a",
+          "clause_9z"
+        ],
+        "claims": [
+          {
+            "subject": "deductible",
+            "value": "$1,000"
+          }
+        ],
+        "conclusion": "Your deductible is $1,000, per clauses 3a and 9z of your policy."
+      },
+      "evidence": {
+        "documents": [
+          {
+            "id": "clause_3a",
+            "text": "The deductible is $1,000 per claim.",
+            "title": "Deductible"
+          },
+          {
+            "id": "clause_5b",
+            "text": "The coverage limit is $250,000 per policy term.",
+            "title": "Coverage Limit"
+          }
+        ],
+        "facts": [
+          {
+            "id": "f_deductible",
+            "subject": "deductible",
+            "value": "$1,000"
+          }
+        ]
+      },
+      "rule_pack": "insurance_v1",
+      "task_input": {
+        "question": "What is the deductible?"
+      }
+    },
+    {
+      "answer_id": "ans_contradicts_003",
+      "candidate": {
+        "cited_evidence": [
+          "clause_3a"
+        ],
+        "claims": [
+          {
+            "subject": "deductible",
+            "value": "$500"
+          }
+        ],
+        "conclusion": "Good news - your deductible is only $500 per claim."
+      },
+      "evidence": {
+        "documents": [
+          {
+            "id": "clause_3a",
+            "text": "The deductible is $1,000 per claim.",
+            "title": "Deductible"
+          }
+        ],
+        "facts": [
+          {
+            "id": "f_deductible",
+            "subject": "deductible",
+            "value": "$1,000"
+          }
+        ]
+      },
+      "rule_pack": "insurance_v1",
+      "task_input": {
+        "question": "What is my deductible?"
+      }
+    },
+    {
+      "answer_id": "ans_unsupported_004",
+      "candidate": {
+        "cited_evidence": [
+          "clause_3a"
+        ],
+        "claims": [
+          {
+            "subject": "rental_reimbursement",
+            "value": "$50/day"
+          }
+        ],
+        "conclusion": "Yes, your policy reimburses rental cars at $50 per day."
+      },
+      "evidence": {
+        "documents": [
+          {
+            "id": "clause_3a",
+            "text": "The deductible is $1,000 per claim.",
+            "title": "Deductible"
+          }
+        ],
+        "facts": [
+          {
+            "id": "f_deductible",
+            "subject": "deductible",
+            "value": "$1,000"
+          }
+        ]
+      },
+      "rule_pack": "insurance_v1",
+      "task_input": {
+        "question": "Does my policy cover a rental car while mine is repaired?"
+      }
+    }
+  ],
+  "rule_packs": {
+    "insurance_v1": {
+      "rule_pack_id": "insurance_v1",
+      "version": "1.0.0",
+      "verifier_version": "sfa-verifier-0.1",
+      "title": "Insurance policy Q&A groundedness",
+      "description": "Checks that an assistant's answer about an insurance policy cites only real clauses and only states facts that match the extracted policy evidence.",
+      "candidate_shape": {
+        "conclusion": "free-text answer shown to the end user",
+        "cited_evidence": "list of clause/document ids the answer relied on",
+        "claims": "list of {subject, value} facts the answer asserts"
+      },
+      "evidence_shape": {
+        "documents": "list of {id, title, text} source clauses",
+        "facts": "list of {id, subject, value} extracted policy facts"
+      },
+      "rules": [
+        {
+          "id": "schema",
+          "type": "field_types",
+          "types": {
+            "conclusion": "str",
+            "cited_evidence": "list",
+            "claims": "list"
+          }
+        },
+        {
+          "id": "required",
+          "type": "required_fields",
+          "fields": [
+            "conclusion",
+            "cited_evidence",
+            "claims"
+          ]
+        },
+        {
+          "id": "citations",
+          "type": "citations_exist",
+          "field": "cited_evidence",
+          "evidence_collection": "documents",
+          "id_key": "id"
+        },
+        {
+          "id": "grounding",
+          "type": "claims_match_evidence",
+          "claims_field": "claims",
+          "evidence_collection": "facts",
+          "match_on": "subject",
+          "value_key": "value"
+        }
+      ],
+      "extraction": {
+        "extractor_version": "groundledger-extractor-v1",
+        "citation_patterns": [
+          "clause_[A-Za-z0-9]+",
+          "\\[([^\\]]+)\\]"
+        ],
+        "value_window": 70
+      }
+    }
+  },
+  "reproduce_command": "python -m product.groundledger.export verify <bundle.json>",
+  "export_hash": "49d2e76a14b85b0b817f084e4c16df329e934355b8c4e069a0c7809817c407e0",
+  "signature": {
+    "alg": "HMAC-SHA256",
+    "value": "39f84eb43501177db0185a8e6529c97bdbcadab7844f54643fdfaf0716f08863"
+  }
+}

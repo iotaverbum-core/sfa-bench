@@ -188,6 +188,15 @@ guarantees beyond its implemented canonical hashing, sealing, replay, and test
 checks. The rule-based verifier is intentionally narrow and is not semantically
 complete.
 
+## GroundLedger product layer
+
+A separately versioned commercial layer built on top of this research core lives
+in [`product/`](product/) (the `groundledger` package). It is not part of this
+research instrument's release line or its DOI. See
+[`product/README.md`](product/README.md),
+[`product/TRUST_MODEL.md`](product/TRUST_MODEL.md), and
+[`product/SECURITY.md`](product/SECURITY.md).
+
 ## Documentation
 
 - [Researcher Guide](docs/researcher-guide.md)

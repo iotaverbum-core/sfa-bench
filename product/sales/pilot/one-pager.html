@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>GroundLedger Audit Pilot - one pager</title>
+<!-- Printable one-pager. Export to PDF with: bash scripts/pilot-pdf.sh
+     or open in a browser and Print > Save as PDF (A4/Letter, default margins).
+     Replace {{BOOKING_LINK}} and {{FOUNDER_EMAIL}} before sending. -->
+<style>
+  @page{size:A4;margin:14mm;}
+  body{font:12px/1.45 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;margin:0;}
+  h1{font-size:22px;margin:0 0 2px;letter-spacing:-.02em;}
+  .promise{font-size:14px;color:#1d4ed8;font-weight:600;margin:0 0 12px;}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#475569;margin:14px 0 4px;border-bottom:1px solid #e2e8f0;padding-bottom:3px;}
+  p{margin:4px 0;} ul{margin:4px 0;padding-left:16px;} li{margin:2px 0;}
+  .cols{display:flex;gap:18px;} .cols>div{flex:1;}
+  .muted{color:#64748b;font-size:11px;}
+  .price{font-size:18px;font-weight:800;}
+  .cta{margin-top:12px;padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;}
+</style>
+</head>
+<body>
+  <h1>GroundLedger Audit Pilot</h1>
+  <p class="promise">Prove your AI didn't make it up - in two weeks, on your own answers.</p>
+
+  <h2>The problem</h2>
+  <p>Your assistant answers customer and policy questions from documents. Sometimes it cites a clause that isn't there, or states a number the source contradicts. You find out when a customer complains - or when a prospect's security team asks how you prevent and evidence it. Evals can't help: they run a model to grade a model, the score moves run to run, and no auditor accepts it.</p>
+
+  <h2>The pilot</h2>
+  <p>A two-week, fixed-scope engagement that runs deterministic groundedness checks on your assistant's real answers and produces a tamper-evident report your buyer's security team can reproduce. Runs in your environment - no documents leave your walls, no model calls, no network egress.</p>
+
+  <div class="cols">
+    <div>
+      <h2>What we analyse</h2>
+      <ul>
+        <li><b>Fabricated citations</b> - cites source ids not in the evidence.</li>
+        <li><b>Contradictions</b> - a rate/fee/date that disagrees with the source.</li>
+        <li><b>Unverifiable answers</b> - missing citations/claims.</li>
+        <li><b>A reproducible groundedness rate</b>, sealed in a tamper-evident ledger.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>What you receive</h2>
+      <ul>
+        <li>One-page executive summary (rate + headline risk).</li>
+        <li>Severity-ranked findings with recommended actions.</li>
+        <li>Evidence per finding (sealed receipt + source).</li>
+        <li>A signed bundle your auditor re-runs offline.</li>
+        <li>Monitoring recommendation + subscription proposal.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Ideal customer</h2>
+  <p>Head of AI / founding engineer at a 20-150 person insurance or fintech company shipping a document-grounded assistant into regulated buyers, with a deal slowed by AI-risk review.</p>
+
+  <div class="cols">
+    <div><h2>Price</h2><p class="price">$2,500 fixed</p><p class="muted">Design-partner rate $1,500 (first three customers). Credited toward your first 3 months if you continue.</p></div>
+    <div><h2>Timeline</h2><p class="price">2 weeks</p><p class="muted">Start within a day of the discovery call once you share ~150-300 real answers + their evidence.</p></div>
+  </div>
+
+  <div class="cta"><b>Next step:</b> book a 20-minute pilot call - {{BOOKING_LINK}} &nbsp;·&nbsp; {{FOUNDER_EMAIL}}</div>
+
+  <p class="muted" style="margin-top:10px;">Honest scope: free-text checks are deterministic and conservative; structured/cited answers get the strongest coverage. Tamper-evident, not tamper-proof. No compliance certification is claimed; the report is evidence you can use in your own audit/procurement process.</p>
+</body>
+</html>

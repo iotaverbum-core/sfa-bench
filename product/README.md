@@ -14,6 +14,55 @@ It is **stdlib-only** and makes **no model calls and no network calls.** That is
 a feature: regulated buyers can run it next to their pipeline without sending
 documents or answers to a third party.
 
+> Evaluating this without trusting us? Start with
+> [`TRUST_MODEL.md`](TRUST_MODEL.md) (what it does and does not prove) and
+> [`SECURITY.md`](SECURITY.md), then run `make verify` (below) to reproduce the
+> results and confirm tampering is detected - all offline.
+
+## Install & verify from a clean checkout
+
+Requirements: **Python 3.11+ and git only**. No third-party packages, no API keys,
+no network. From a fresh clone:
+
+```bash
+make test     # product test suite (unittest, no deps)
+make demo     # end-to-end demo -> writes product/data/demo/report.html + bundle.json
+make verify   # reproducibility + tamper verification (the trust check)
+```
+
+`make verify` re-derives the committed example answers and asserts the hashes match
+`product/verification/expected_manifest.json`, then confirms the committed corrupted
+bundle (`product/verification/tampered_bundle.json`) is rejected. Expected output
+ends with `final status: VERIFIED`.
+
+Optional - install the `groundledger` CLI (still zero runtime dependencies):
+
+```bash
+make setup            # python -m pip install -e .
+groundledger verify   # same trust check, as a command
+groundledger --help   # replay / export / serve / demo
+```
+
+Every target also works without `make` or install via `python -m ...` (see each
+section below). The research core remains separately runnable with no install:
+`python verify_all.py`.
+
+### Platform notes & troubleshooting
+
+- **Python:** 3.11+ is required (uses `X | Y` type syntax and `ThreadingHTTPServer`).
+  Check with `python3 --version`.
+- **Run from the repo root.** `make demo` / `make verify` read `product/examples/`
+  and write under `product/data/` (git-ignored) using paths relative to the checkout.
+- **`make verify` fails with `manifest_mismatch`?** That means a re-derived hash
+  drifted from the committed manifest. If you changed examples, the rule pack, or
+  the tool version on purpose, regenerate with
+  `python -m product.groundledger.verification --update` and review the diff.
+  If you changed nothing, that is a real reproducibility failure - tell us.
+- **`pip install -e .` offline:** `make setup` passes `--no-build-isolation` and
+  degrades gracefully; if it can't run, the `python -m` / `make` paths still work.
+- **Windows:** `make` may be unavailable; run the underlying `python -m ...`
+  commands shown in each section directly.
+
 ## What it does
 
 For each assistant answer you submit `{answer + citations, the evidence it used,
