@@ -5,6 +5,7 @@ No-install equivalent:                              python -m product.groundledg
 
 Commands:
   verify                      reproducibility + tamper self-check (offline)
+  ingest <file> --tenant T    bulk-load answers from JSONL/CSV into a tenant
   replay <data_root> <tenant> independently re-attest a stored tenant's ledger
   export build <data_root> <tenant> [--out f --html f --key K]
   export verify <bundle.json> [--key K]
@@ -32,6 +33,9 @@ def main(argv: list[str] | None = None) -> int:
     if command == "verify":
         from . import verification
         return verification._main(rest)
+    if command == "ingest":
+        from . import ingest
+        return ingest._main(rest)
     if command == "replay":
         from . import replay
         return replay._main(rest)

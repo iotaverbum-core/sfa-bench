@@ -6,7 +6,7 @@ import urllib.error
 import urllib.request
 from typing import Any
 
-from product.groundledger import engine, export as export_mod, replay, report as report_mod, rulepacks
+from product.groundledger import engine, export as export_mod, ingest as ingest_mod, replay, report as report_mod, rulepacks
 from product.groundledger.store import TenantStore
 
 
@@ -36,6 +36,10 @@ class _EmbeddedTransport:
         receipt, stored = engine.verify_text_submission(submission, rule_pack)
         self.store.record(stored, receipt)
         return receipt
+
+    def ingest(self, records: list[dict[str, Any]]) -> dict[str, Any]:
+        parsed = [(f"record {i}", rec, None) for i, rec in enumerate(records)]
+        return ingest_mod.ingest(self.store, parsed, packs_dir=self.packs_dir)
 
     def receipts(self) -> list[dict[str, Any]]:
         return self.store.list_receipts()
@@ -82,6 +86,9 @@ class _HttpTransport:
 
     def submit_text(self, submission: dict[str, Any]) -> dict[str, Any]:
         return self._request("POST", "/v1/verify-text", submission)["receipt"]
+
+    def ingest(self, records: list[dict[str, Any]]) -> dict[str, Any]:
+        return self._request("POST", "/v1/ingest", {"records": records})
 
     def receipts(self) -> list[dict[str, Any]]:
         return self._request("GET", "/v1/receipts")["receipts"]
@@ -139,6 +146,28 @@ class GroundLedgerClient:
         if task_input is not None:
             submission["task_input"] = task_input
         return self._t.submit_text(submission)
+
+    def ingest_records(self, records: list[dict[str, Any]]) -> dict[str, Any]:
+        """Bulk-verify a list of submission dicts; returns an ingest summary."""
+        prepared = []
+        for record in records:
+            record = dict(record)
+            record.setdefault("rule_pack", self.default_rule_pack)
+            prepared.append(record)
+        return self._t.ingest(prepared)
+
+    def ingest_file(self, path: str, *, fmt: str = "auto") -> dict[str, Any]:
+        """Parse a JSONL/CSV file locally and bulk-ingest it (any transport)."""
+        parsed = ingest_mod.parse_source(path, fmt)
+        submissions = [sub for _ref, sub, err in parsed if err is None and sub is not None]
+        parse_errors = [
+            {"ref": ref, "answer_id": None, "error": err}
+            for ref, _sub, err in parsed if err is not None
+        ]
+        result = self.ingest_records(submissions)
+        if parse_errors:
+            result = {**result, "errors": parse_errors + list(result.get("errors", []))}
+        return result
 
     def submit(self, submission: dict[str, Any]) -> dict[str, Any]:
         """Verify a fully-formed submission dict."""

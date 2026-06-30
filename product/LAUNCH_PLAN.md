@@ -199,6 +199,10 @@ spot once the pilot proves value.
   structured candidate; sealed + re-run in replay; `verify_text` / `verify-text`
   on SDK + API). Catches fabricated citations and contradictions; conservative on
   novel claims. *Validate:* `test_extraction` (12).
+- **Bulk ingest (pilot onboarding)** ✅ — `ingest.py` loads a JSONL/CSV batch of
+  answers (structured or free text) in one command; `groundledger ingest`, SDK
+  `ingest_file`/`ingest_records`, and `POST /v1/ingest`. Idempotent re-runs;
+  per-row errors are non-fatal. *Validate:* `test_ingest` (10).
 
 - **Second vertical rule pack (fintech)** ✅ — `rule_packs/fintech_v1.json`
   (APR/fees/limits) + structured & free-text examples. *Validate:* `test_fintech`

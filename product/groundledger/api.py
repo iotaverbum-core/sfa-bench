@@ -8,6 +8,7 @@ Endpoints (all JSON, header ``X-API-Key`` selects the tenant):
 
   POST /v1/verify         body = submission        -> { receipt }
   POST /v1/verify-text    body = text submission   -> { receipt }
+  POST /v1/ingest         body = { records: [...] } -> ingest summary
   GET  /v1/receipts                                 -> { receipts: [...] }
   GET  /v1/audit-report                             -> audit report
   GET  /v1/audit-export                             -> self-contained signed bundle
@@ -23,7 +24,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-from . import engine, export as export_mod, report as report_mod, replay, rulepacks
+from . import engine, export as export_mod, ingest as ingest_mod, report as report_mod, replay, rulepacks
 from .store import TenantStore
 
 DEFAULT_KEYS = {"demo-key": "demo-tenant"}
@@ -121,6 +122,16 @@ def make_handler(
                     receipt, stored = engine.verify_text_submission(submission, rule_pack)
                     store.record(stored, receipt)
                     self._send(200, {"receipt": receipt})
+                elif self.path == "/v1/ingest":
+                    body = self._body()
+                    records = body.get("records", [])
+                    parsed = [(f"record {i}", rec, None) for i, rec in enumerate(records)]
+                    result = ingest_mod.ingest(
+                        store, parsed,
+                        default_rule_pack=body.get("rule_pack", "insurance_v1"),
+                        packs_dir=packs_dir,
+                    )
+                    self._send(200, result)
                 elif self.path == "/v1/replay":
                     self._send(200, replay.attest(store, self._resolver()))
                 else:
