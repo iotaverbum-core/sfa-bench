@@ -204,6 +204,35 @@ evidence does not cover, so it under-reports rather than fabricates findings.
 Absence of findings on free text is therefore not a proof of full grounding — for
 the strongest guarantee, have the assistant emit structured, cited answers.
 
+## Bulk-ingest a batch of answers (pilot onboarding)
+
+Load a whole batch of real answers + the evidence each used in one command, sealed
+into a tenant's ledger. Structured and free-text answers can be mixed.
+
+```bash
+# JSONL: one submission per line (the SDK/API shape) - recommended, lossless
+python -m product.groundledger.ingest product/examples/batch.jsonl --tenant pilot-acme
+# or, after `make setup`:  groundledger ingest batch.jsonl --tenant pilot-acme
+
+# CSV: columns answer_id, [question], [answer_text], [candidate_json], evidence_json, [rule_pack]
+python -m product.groundledger.ingest product/examples/batch.csv --tenant pilot-acme
+```
+
+It prints a summary (ingested / skipped / errors, groundedness rate, severity
+counts). Messy data is handled gracefully: a bad row is reported and skipped, not
+fatal; answer ids already in the ledger are skipped so re-running is safe; a
+duplicate id within one file is an error.
+
+From the SDK:
+
+```python
+gl = GroundLedgerClient.embedded(data_root="gl-data", tenant="pilot-acme")
+result = gl.ingest_file("answers.jsonl")        # or gl.ingest_records([...])
+print(result["ingested"], result["summary"]["groundedness_rate"])
+```
+
+Over HTTP: `POST /v1/ingest` with `{"records": [ ...submissions... ]}`.
+
 ## Run the API (in-VPC, zero dependencies)
 
 ```bash
