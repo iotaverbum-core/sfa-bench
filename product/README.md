@@ -87,6 +87,7 @@ plus the free-text extraction config). Shipped packs:
 |---|---|
 | `insurance_v1` | insurance policy Q&A (deductible, coverage limit, premium) |
 | `fintech_v1` | consumer finance disclosure Q&A (APR, fees, limits) |
+| `healthcare_v1` | health plan benefits Q&A (copays, coinsurance, limits) |
 
 List them at `GET /v1/rule-packs`; pick one per request with `rule_pack=`. New
 verticals are added by dropping a JSON pack into

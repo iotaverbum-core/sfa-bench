@@ -70,7 +70,7 @@ class FintechViaSdkAndApiTests(unittest.TestCase):
         finally:
             httpd.shutdown()
             httpd.server_close()
-        self.assertEqual({"insurance_v1", "fintech_v1"}, ids)
+        self.assertTrue({"insurance_v1", "fintech_v1", "healthcare_v1"}.issubset(ids))
 
 
 if __name__ == "__main__":

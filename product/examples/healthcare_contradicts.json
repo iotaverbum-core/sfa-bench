@@ -1,0 +1,20 @@
+{
+  "answer_id": "hc_contradicts_002",
+  "rule_pack": "healthcare_v1",
+  "task_input": {"question": "What is my primary care copay?"},
+  "candidate": {
+    "conclusion": "Your primary care copay is $50.",
+    "cited_evidence": ["sbc_pcp"],
+    "claims": [
+      {"subject": "copay_primary_care", "value": "$50"}
+    ]
+  },
+  "evidence": {
+    "documents": [
+      {"id": "sbc_pcp", "title": "Primary Care", "text": "Primary care visit copay is $25."}
+    ],
+    "facts": [
+      {"id": "f_pcp", "subject": "copay_primary_care", "value": "$25", "aliases": ["primary care copay", "copay"]}
+    ]
+  }
+}

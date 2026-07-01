@@ -1,0 +1,24 @@
+{
+  "answer_id": "hc_grounded_001",
+  "rule_pack": "healthcare_v1",
+  "task_input": {"question": "What is my primary care copay and coinsurance?"},
+  "candidate": {
+    "conclusion": "Your primary care copay is $25 and your coinsurance is 20%.",
+    "cited_evidence": ["sbc_pcp", "sbc_cost"],
+    "claims": [
+      {"subject": "copay_primary_care", "value": "$25"},
+      {"subject": "coinsurance", "value": "20%"}
+    ]
+  },
+  "evidence": {
+    "documents": [
+      {"id": "sbc_pcp", "title": "Primary Care", "text": "Primary care visit copay is $25."},
+      {"id": "sbc_cost", "title": "Cost Sharing", "text": "Coinsurance is 20% after the deductible. Out-of-pocket maximum is $6,000."}
+    ],
+    "facts": [
+      {"id": "f_pcp", "subject": "copay_primary_care", "value": "$25", "aliases": ["primary care copay", "copay"]},
+      {"id": "f_coins", "subject": "coinsurance", "value": "20%", "aliases": ["coinsurance"]},
+      {"id": "f_oop", "subject": "out_of_pocket_max", "value": "$6,000", "aliases": ["out-of-pocket maximum", "out of pocket maximum"]}
+    ]
+  }
+}
