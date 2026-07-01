@@ -246,6 +246,21 @@ curl -s -X POST http://127.0.0.1:8000/v1/verify \
 curl -s http://127.0.0.1:8000/v1/audit-report -H 'X-API-Key: demo-key'
 ```
 
+### Report view (for non-engineers)
+
+Open `http://127.0.0.1:8000/` in a browser, enter an API key, and you get the
+audit report rendered as a page (groundedness rate, severity-ranked findings, the
+sealed ledger, and the `VERIFIED` badge) — the same view the demo produces, live
+from the API. The browser page accepts the key as `?key=...` for convenience:
+
+```
+http://127.0.0.1:8000/v1/report.html?key=demo-key
+```
+
+Keys in URLs can be logged, so use the report view only on a trusted network /
+behind your gateway (see `SECURITY.md`). The JSON API still uses the `X-API-Key`
+header.
+
 ## Independently re-attest a tenant (the "stranger trust" check)
 
 ```bash

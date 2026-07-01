@@ -4,11 +4,19 @@ A deliberately tiny ``http.server`` backend so the whole thing can run inside a
 customer VPC with no network egress and no package install. It is not a
 high-scale server; it is the smallest honest "SaaS surface" over the engine.
 
-Endpoints (all JSON, header ``X-API-Key`` selects the tenant):
+The JSON API selects the tenant with the ``X-API-Key`` header. The two
+human-facing HTML pages (``/`` and ``/v1/report.html``) also accept the key as a
+``?key=`` query parameter so a non-engineer can open a link in a browser. Keys in
+URLs can end up in logs; use the report view only inside a trusted network (see
+``SECURITY.md``).
 
-  POST /v1/verify         body = submission        -> { receipt }
-  POST /v1/verify-text    body = text submission   -> { receipt }
-  POST /v1/ingest         body = { records: [...] } -> ingest summary
+Endpoints:
+
+  GET  /                                            -> HTML start page (open)
+  GET  /v1/report.html   [key]                      -> HTML audit report (browser view)
+  POST /v1/verify         body = submission         -> { receipt }
+  POST /v1/verify-text    body = text submission    -> { receipt }
+  POST /v1/ingest         body = { records: [...] }  -> ingest summary
   GET  /v1/receipts                                 -> { receipts: [...] }
   GET  /v1/audit-report                             -> audit report
   GET  /v1/audit-export                             -> self-contained signed bundle
@@ -23,11 +31,43 @@ import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 from . import engine, export as export_mod, ingest as ingest_mod, report as report_mod, replay, rulepacks
 from .store import TenantStore
 
 DEFAULT_KEYS = {"demo-key": "demo-tenant"}
+
+_PAGE_CSS = (
+    "body{font:15px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;"
+    "max-width:640px;margin:60px auto;padding:0 20px;}"
+    "h1{letter-spacing:-.02em;} .muted{color:#64748b;font-size:13px;}"
+    "input,button{font:inherit;padding:9px 12px;border-radius:8px;border:1px solid #cbd5e1;}"
+    "button{background:#1d4ed8;color:#fff;border-color:#1d4ed8;cursor:pointer;}"
+    "code{background:#f1f5f9;padding:1px 5px;border-radius:4px;}"
+)
+
+INDEX_HTML = (
+    "<!doctype html><html><head><meta charset='utf-8'><title>GroundLedger</title>"
+    f"<style>{_PAGE_CSS}</style></head><body>"
+    "<h1>GroundLedger</h1>"
+    "<p>Groundedness audit for document-grounded AI, running in your environment. "
+    "Enter your API key to view your audit report.</p>"
+    "<form action='/v1/report.html' method='get'>"
+    "<input name='key' placeholder='API key' size='28' autofocus> "
+    "<button type='submit'>View audit report</button></form>"
+    "<p class='muted' style='margin-top:22px;'>Machine endpoints: <code>/healthz</code>, "
+    "<code>/v1/rule-packs</code>, and the JSON API. No model calls, no network egress.</p>"
+    "</body></html>"
+)
+
+NEEDS_KEY_HTML = (
+    "<!doctype html><html><head><meta charset='utf-8'><title>GroundLedger - key required</title>"
+    f"<style>{_PAGE_CSS}</style></head><body>"
+    "<h1>API key required</h1>"
+    "<p>Add <code>?key=YOUR_KEY</code> to the URL, or start from "
+    "<a href='/'>the start page</a>.</p></body></html>"
+)
 
 
 def _parse_pairs(raw: str) -> dict[str, str]:
@@ -55,12 +95,22 @@ def make_handler(
 
         def _tenant(self) -> str | None:
             key = self.headers.get("X-API-Key", "")
+            if not key:  # allow ?key= for browser-opened HTML views
+                key = parse_qs(urlparse(self.path).query).get("key", [""])[0]
             return api_keys.get(key)
 
         def _send(self, code: int, payload: dict[str, Any]) -> None:
             body = json.dumps(payload).encode("utf-8")
             self.send_response(code)
             self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _send_html(self, code: int, html: str) -> None:
+            body = html.encode("utf-8")
+            self.send_response(code)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
@@ -78,22 +128,34 @@ def make_handler(
             return
 
         def do_GET(self):
-            if self.path == "/healthz":
+            path = urlparse(self.path).path
+            if path == "/healthz":
                 self._send(200, {"ok": True})
                 return
-            if self.path == "/v1/rule-packs":
+            if path == "/":
+                self._send_html(200, INDEX_HTML)
+                return
+            if path == "/v1/rule-packs":
                 self._send(200, {"rule_packs": rulepacks.list_rule_packs(packs_dir=packs_dir)})
                 return
             tenant = self._tenant()
             if tenant is None:
-                self._send(401, {"error": "invalid or missing X-API-Key"})
+                if path == "/v1/report.html":
+                    self._send_html(401, NEEDS_KEY_HTML)
+                else:
+                    self._send(401, {"error": "invalid or missing X-API-Key"})
                 return
             store = TenantStore(data_root, tenant)
-            if self.path == "/v1/receipts":
+            if path == "/v1/report.html":
+                bundle = export_mod.build_export_bundle(
+                    store, packs_dir=packs_dir, signing_key=signing_keys.get(tenant)
+                )
+                self._send_html(200, export_mod.render_html(bundle))
+            elif path == "/v1/receipts":
                 self._send(200, {"receipts": store.list_receipts()})
-            elif self.path == "/v1/audit-report":
+            elif path == "/v1/audit-report":
                 self._send(200, report_mod.build_report(store, packs_dir=packs_dir))
-            elif self.path == "/v1/audit-export":
+            elif path == "/v1/audit-export":
                 bundle = export_mod.build_export_bundle(
                     store, packs_dir=packs_dir, signing_key=signing_keys.get(tenant)
                 )
@@ -162,7 +224,9 @@ def _serve_from_env() -> ThreadingHTTPServer:
     signing_keys = _parse_pairs(os.environ.get("GROUNDLEDGER_SIGNING_KEYS", ""))
     Path(data_root).mkdir(parents=True, exist_ok=True)
     httpd = serve(host, port, data_root=data_root, api_keys=api_keys, signing_keys=signing_keys)
+    view = "127.0.0.1" if host in ("0.0.0.0", "::") else host
     print(f"GroundLedger API on http://{host}:{port}  (data: {data_root})")
+    print(f"  report view: http://{view}:{port}/  (enter an API key)")
     return httpd
 
 
