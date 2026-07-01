@@ -34,6 +34,7 @@ product/sales/
   landing/pilot.html              <- pilot landing page (host this)
   pilot/
     one-pager.md / one-pager.html <- one-page sheet (md source + printable HTML)
+    order-form.md / order-form.html <- one-page order form for signature (single signature)
     proposal-email.md             <- send after a good call
     agreement-outline.md          <- FOR LAWYER REVIEW before use
     kickoff-checklist.md
@@ -91,6 +92,10 @@ grep -rn "{{" product/sales/ | grep -v SALES_LAUNCH_README
 5. **Demo call:** drive `calls/demo-script-15min.md` while running the real product
    demo: `./scripts/demo.sh` then open `product/data/demo/report.html`.
 6. **Proposal:** after a good call, send `pilot/proposal-email.md` + the one-pager.
+   On a verbal yes, send the **order form** for a single signature: fill the
+   placeholders in `pilot/order-form.html`, export with
+   `./scripts/pilot-pdf.sh product/sales/pilot/order-form.html`, and send the PDF
+   (it is subject to the lawyer-reviewed `pilot/agreement-outline.md`).
 7. **Deliver:** run the pilot with `pilot/kickoff-checklist.md` and
    `pilot/delivery-checklist.md`. Build the report with the product
    (`python -m product.groundledger.export build ...`) using `pilot/report-outline.md`.
@@ -185,4 +190,5 @@ name a stalled deal or budget owner -> pivot to the in-VPC reproducible-grounded
 - [ ] Run a demo (`./scripts/demo.sh` -> `report.html`).
 - [ ] Send a pilot proposal (`pilot/proposal-email.md`).
 - [ ] Get `pilot/agreement-outline.md` reviewed by a lawyer.
+- [ ] Send the order form for signature (`pilot/order-form.html` -> PDF).
 - [ ] Close the first paid pilot.

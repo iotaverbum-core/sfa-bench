@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>GroundLedger Audit Pilot - Order Form</title>
+<!-- Printable, one-page order form. Export to PDF with:
+       bash scripts/pilot-pdf.sh product/sales/pilot/order-form.html
+     or open in a browser and Print > Save as PDF (A4, default margins).
+     Replace {{PROVIDER}}, {{PROVIDER_EMAIL}}, {{PRICE}}, {{START_DATE}},
+     {{RULE_PACK}}, {{PAYMENT_LINK}} before sending. -->
+<style>
+  @page{size:A4;margin:12mm;}
+  body{font:11.5px/1.4 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;margin:0;}
+  h1{font-size:19px;margin:0 0 1px;letter-spacing:-.02em;}
+  .promise{font-size:12px;color:#1d4ed8;font-weight:600;margin:0 0 8px;}
+  h2{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#475569;margin:11px 0 3px;border-bottom:1px solid #e2e8f0;padding-bottom:2px;}
+  p{margin:3px 0;} ul{margin:3px 0;padding-left:15px;} li{margin:1px 0;}
+  .parties{display:flex;gap:18px;margin:6px 0;}
+  .parties>div{flex:1;}
+  table.terms{border-collapse:collapse;width:100%;margin-top:3px;}
+  table.terms td{border:1px solid #e2e8f0;padding:5px 8px;vertical-align:top;}
+  table.terms td.k{width:120px;font-weight:600;background:#f8fafc;}
+  .muted{color:#64748b;font-size:10px;}
+  .note{background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:7px 9px;margin:6px 0;font-size:10px;color:#475569;}
+  .sign{display:flex;gap:18px;margin-top:8px;}
+  .sign>div{flex:1;border:1px solid #cbd5e1;border-radius:8px;padding:9px 11px;}
+  .sign h3{margin:0 0 6px;font-size:12px;}
+  .line{display:block;margin:9px 0 2px;border-bottom:1px solid #94a3b8;height:13px;}
+  .lbl{font-size:9px;color:#64748b;}
+  .fill{border-bottom:1px solid #94a3b8;display:inline-block;min-width:180px;}
+</style>
+</head>
+<body>
+  <h1>GroundLedger Audit Pilot - Order Form</h1>
+  <p class="promise">Prove your AI didn't make it up - in two weeks, on your own answers.</p>
+
+  <div class="parties">
+    <div><b>Provider:</b> {{PROVIDER}}<br><span class="muted">{{PROVIDER_EMAIL}}</span></div>
+    <div><b>Customer:</b> <span class="fill">&nbsp;</span><br><span class="muted">legal name</span></div>
+  </div>
+
+  <h2>Service</h2>
+  <p>A 2-week, fixed-scope engagement that runs deterministic groundedness checks on the Customer's real assistant answers and delivers a tamper-evident audit report the Customer can independently reproduce.</p>
+
+  <h2>Commercial terms</h2>
+  <table class="terms">
+    <tr><td class="k">Price</td><td>{{PRICE}} (one-time, fixed). Credited toward the Customer's first 3 months if they subscribe within 30 days of the final report.</td></tr>
+    <tr><td class="k">Term</td><td>2 weeks from kickoff (optional 1-week extension by mutual written agreement).</td></tr>
+    <tr><td class="k">Start date</td><td>{{START_DATE}} - begins once the Customer delivers the data below.</td></tr>
+    <tr><td class="k">Payment</td><td>Due at kickoff via {{PAYMENT_LINK}}.</td></tr>
+  </table>
+
+  <div class="parties">
+    <div>
+      <h2>Scope (included)</h2>
+      <ul>
+        <li>One assistant; the <b>{{RULE_PACK}}</b> rule pack tuned for your domain (one tuning pass).</li>
+        <li>~150-300 answers verified and sealed into a hash-chained ledger.</li>
+        <li>Executive summary, severity-ranked findings + actions, evidence per finding, a signed self-verifying bundle, and a subscription proposal.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Excluded</h2>
+      <ul>
+        <li>Custom connectors / new check types / extra rule packs.</li>
+        <li>More than one tuning pass or assistant; production integration.</li>
+      </ul>
+      <h2>Customer provides</h2>
+      <ul>
+        <li>~150-300 real answers + the evidence each used (CSV/JSONL).</li>
+        <li>One technical contact; the buyer/auditor to show the report to.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Success criteria</h2>
+  <p>A reproducible groundedness baseline on your real answers, verdicts that replay identically on a clean machine, and the report accepted as evidence by your named buyer/auditor.</p>
+
+  <div class="note">
+    Runs in the Customer's environment; no documents are required to leave it. Checks are
+    deterministic and rule-based; free-text coverage is conservative. "Tamper-evident" means a
+    covered edit breaks an integrity check - <b>not</b> tamper-proof, not non-repudiation, and
+    <b>not</b> a compliance certification. This order form is not legal advice and is subject to the
+    GroundLedger Pilot Agreement (have a lawyer review before use).
+  </div>
+
+  <div class="sign">
+    <div>
+      <h3>Customer</h3>
+      <span class="line"></span><span class="lbl">Name</span>
+      <span class="line"></span><span class="lbl">Title</span>
+      <span class="line"></span><span class="lbl">Signature</span>
+      <span class="line"></span><span class="lbl">Date</span>
+    </div>
+    <div>
+      <h3>Provider</h3>
+      <span class="line"></span><span class="lbl">Name</span>
+      <span class="line"></span><span class="lbl">Title</span>
+      <span class="line"></span><span class="lbl">Signature</span>
+      <span class="line"></span><span class="lbl">Date</span>
+    </div>
+  </div>
+</body>
+</html>

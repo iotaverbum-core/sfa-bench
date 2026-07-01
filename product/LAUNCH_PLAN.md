@@ -204,9 +204,11 @@ spot once the pilot proves value.
   `ingest_file`/`ingest_records`, and `POST /v1/ingest`. Idempotent re-runs;
   per-row errors are non-fatal. *Validate:* `test_ingest` (10).
 
-- **Second vertical rule pack (fintech)** ✅ — `rule_packs/fintech_v1.json`
-  (APR/fees/limits) + structured & free-text examples. *Validate:* `test_fintech`
-  (6). Proves new verticals are pure config: drop a JSON pack in, no engine change.
+- **Vertical rule packs (fintech, healthcare)** ✅ — `rule_packs/fintech_v1.json`
+  (APR/fees/limits) and `rule_packs/healthcare_v1.json` (copays/coinsurance/limits)
+  + structured & free-text examples. *Validate:* `test_fintech` (6),
+  `test_healthcare` (5). Proves new verticals are pure config: drop a JSON pack in,
+  no engine change.
 
 Follow-on backlog (each: goal / files / AC / validation):
 1. **Stripe billing + usage metering** — `billing.py` — AC: plan limits enforced.

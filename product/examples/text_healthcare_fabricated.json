@@ -1,0 +1,14 @@
+{
+  "answer_id": "txt_hc_fabricated_003",
+  "rule_pack": "healthcare_v1",
+  "task_input": {"question": "What's my primary care copay?"},
+  "answer_text": "Per sbc_pcp and sbc_99, your primary care copay is just $10 for every visit.",
+  "evidence": {
+    "documents": [
+      {"id": "sbc_pcp", "title": "Primary Care", "text": "Primary care visit copay is $25."}
+    ],
+    "facts": [
+      {"id": "f_pcp", "subject": "copay_primary_care", "value": "$25", "aliases": ["primary care copay", "copay"]}
+    ]
+  }
+}

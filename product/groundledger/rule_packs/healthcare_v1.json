@@ -1,0 +1,32 @@
+{
+  "rule_pack_id": "healthcare_v1",
+  "version": "1.0.0",
+  "verifier_version": "sfa-verifier-0.1",
+  "title": "Health plan benefits Q&A groundedness",
+  "description": "Checks that an assistant's answer about a health plan cites only real plan-document sections and only states copays, coinsurance, deductibles, and limits that match the extracted plan evidence.",
+  "candidate_shape": {
+    "conclusion": "free-text answer shown to the member",
+    "cited_evidence": "list of plan-document section ids the answer relied on",
+    "claims": "list of {subject, value} benefit facts the answer asserts"
+  },
+  "evidence_shape": {
+    "documents": "list of {id, title, text} plan-document sections (SBC / EOC)",
+    "facts": "list of {id, subject, value} extracted benefit terms (copays, coinsurance, limits)"
+  },
+  "rules": [
+    {"id": "schema", "type": "field_types",
+     "types": {"conclusion": "str", "cited_evidence": "list", "claims": "list"}},
+    {"id": "required", "type": "required_fields",
+     "fields": ["conclusion", "cited_evidence", "claims"]},
+    {"id": "citations", "type": "citations_exist",
+     "field": "cited_evidence", "evidence_collection": "documents", "id_key": "id"},
+    {"id": "grounding", "type": "claims_match_evidence",
+     "claims_field": "claims", "evidence_collection": "facts",
+     "match_on": "subject", "value_key": "value"}
+  ],
+  "extraction": {
+    "extractor_version": "groundledger-extractor-v1",
+    "citation_patterns": ["(?:sbc|eoc|section|plan)_[A-Za-z0-9]+", "\\[([^\\]]+)\\]"],
+    "value_window": 70
+  }
+}
