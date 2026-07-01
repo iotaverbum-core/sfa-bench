@@ -58,6 +58,10 @@ See `product/.env.example`. None are needed for the core checks. For the API:
 - **API authentication is a static API-key check.** There is no rate limiting,
   RBAC, SSO, or audit logging of access in v1. Run the API on a trusted network or
   behind your own gateway. Do not expose it to the public internet as-is.
+- **The browser report view (`/` and `/v1/report.html`) accepts the API key as a
+  `?key=` query parameter** for convenience. Keys in URLs can be captured in
+  browser history, proxy logs, and referrer headers. Use the report view only on a
+  trusted network; the JSON API uses the `X-API-Key` header instead.
 - **HMAC, not PKI.** Export signatures prove the holder of the shared key produced
   them; they do not prove *which* party did, and do not survive key compromise.
 - **No encryption at rest** is provided by the product; rely on your disk/volume
