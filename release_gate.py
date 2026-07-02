@@ -44,6 +44,7 @@ COMMAND_FILES = (
     "policy_demo.py",
     "prior_state_trial.py",
     "deferred_consequence.py",
+    "recurrence_metric.py",
 )
 PACKAGE_INIT = ROOT / "sfa" / "__init__.py"
 PACKAGE_VERSION_RE = re.compile(

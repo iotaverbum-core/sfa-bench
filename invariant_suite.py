@@ -162,6 +162,14 @@ def main() -> int:
         f"horizons {deferred_result['horizons']}; stale answer -> deferred_consequence_stale"
     )
 
+    recurrence_result = invariants.assert_recurrence_metric_determinism(ROOT)
+    print("recurrence-decline metric: PASS")
+    print(
+        f"  continual-learning score {recurrence_result['continual_learning_score']} over "
+        f"{recurrence_result['fingerprints']} fingerprints; eliminated {recurrence_result['eliminated']}; "
+        "tampered chain refused"
+    )
+
     version_consistency = invariants.assert_repository_version_consistency(ROOT)
     print("repository version consistency: PASS")
     print(
