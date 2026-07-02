@@ -28,6 +28,7 @@ COMMANDS = (
     "policy_demo.py",
     "prior_state_trial.py",
     "deferred_consequence.py",
+    "recurrence_metric.py",
 )
 EXCLUDED_DIRECTORIES = {
     ".git",

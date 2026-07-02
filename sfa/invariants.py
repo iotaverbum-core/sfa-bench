@@ -632,6 +632,86 @@ def assert_deferred_consequence_determinism(repo_root: str | Path) -> dict[str, 
     }
 
 
+def assert_recurrence_metric_determinism(repo_root: str | Path) -> dict[str, Any]:
+    """Recurrence-decline metric unit test on the synthetic ledger fixture.
+
+    The fixture's per-epoch counts are hand-verifiable, so this pins the exact
+    decline scores and aggregates, confirms byte-identical recomputation, and
+    checks that the metric refuses a tampered (non-intact) hash chain.
+    """
+    from sfa import recurrence_metric as metric
+
+    root = Path(repo_root)
+    fixture = root / "examples" / "recurrence" / "synthetic_ledger.jsonl"
+
+    first = metric.compute_from_path(str(fixture))
+    second = metric.compute_from_path(str(fixture))
+    if first["metric_hash"] != second["metric_hash"]:
+        raise InvariantFailure("recurrence-decline metric is not deterministic (metric_hash differs)")
+
+    if first["epochs"] != ["2024", "2025", "2026"]:
+        raise InvariantFailure(f"recurrence-decline epochs unexpected: {first['epochs']}")
+    if first["continual_learning_score"] != 0.375:
+        raise InvariantFailure(
+            f"continual_learning_score {first['continual_learning_score']} != 0.375"
+        )
+    if first["occurrence_weighted_score"] != 0.4:
+        raise InvariantFailure(
+            f"occurrence_weighted_score {first['occurrence_weighted_score']} != 0.4"
+        )
+    if first["eliminated_fingerprints"] != ["contradicts_evidence"]:
+        raise InvariantFailure(
+            f"eliminated_fingerprints unexpected: {first['eliminated_fingerprints']}"
+        )
+
+    expected = {
+        "contradicts_evidence": ([3, 1, 0], 1.0, True, True),
+        "fabricated_entity": ([0, 2, 1], 0.5, False, True),
+        "missing_required_field": ([2, 0, 2], 0.0, False, False),
+        "unsupported_number": ([1, 2, 3], 0.0, False, True),
+    }
+    fingerprints = first["fingerprints"]
+    if sorted(fingerprints) != sorted(expected):
+        raise InvariantFailure(f"recurrence-decline fingerprints unexpected: {sorted(fingerprints)}")
+    for family, (series, score, eliminated, monotone) in expected.items():
+        decline = fingerprints[family]
+        if decline["recurrence_series"] != series:
+            raise InvariantFailure(f"{family} series {decline['recurrence_series']} != {series}")
+        if decline["decline_score"] != score:
+            raise InvariantFailure(f"{family} decline_score {decline['decline_score']} != {score}")
+        if decline["eliminated"] != eliminated:
+            raise InvariantFailure(f"{family} eliminated {decline['eliminated']} != {eliminated}")
+        if decline["monotone_post_peak"] != monotone:
+            raise InvariantFailure(f"{family} monotone {decline['monotone_post_peak']} != {monotone}")
+
+    # The metric trusts only an intact hash chain: a tampered ledger must raise.
+    temp_parent = root / ".tamper-tmp" / "recurrence"
+    temp_parent.mkdir(parents=True, exist_ok=True)
+    tampered = temp_parent / f"tampered-{uuid.uuid4().hex}.jsonl"
+    try:
+        lines = fixture.read_text(encoding="utf-8").splitlines()
+        first_entry = json.loads(lines[0])
+        first_entry["family"] = first_entry["family"] + "_tampered"  # breaks entry_hash
+        lines[0] = json.dumps(first_entry, sort_keys=True, ensure_ascii=False)
+        tampered.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        try:
+            metric.compute_from_path(str(tampered))
+        except metric.RecurrenceMetricError:
+            pass
+        else:
+            raise InvariantFailure("recurrence-decline metric accepted a tampered ledger chain")
+    finally:
+        if tampered.exists():
+            tampered.unlink()
+
+    return {
+        "metric_hash": first["metric_hash"],
+        "continual_learning_score": first["continual_learning_score"],
+        "fingerprints": first["fingerprint_count"],
+        "eliminated": first["eliminated_fingerprints"],
+    }
+
+
 def assert_repository_version_consistency(repo_root: str | Path) -> dict[str, Any]:
     """Fail closed when the version of record drifts across the repository.
 

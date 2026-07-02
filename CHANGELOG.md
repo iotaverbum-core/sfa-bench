@@ -34,6 +34,20 @@ All notable changes to SFA-Bench will be documented in this file.
   dry-run added to `verify_all.py`. See
   [docs/deferred-consequence.md](docs/deferred-consequence.md).
 
+- **Recurrence-decline metric** (`sfa/recurrence_metric.py`,
+  `recurrence_metric.py`): a continual-learning score computed as a pure function
+  of the append-only, hash-chained occurrence ledger. For each failure fingerprint
+  (default: the failure `family`) it builds a per-epoch recurrence series over the
+  ledger's own `period` buckets and scores the decline from the fingerprint's peak
+  epoch to the final epoch, `decline_score = (peak − final) / peak ∈ [0, 1]`
+  (`1.0` = eliminated), with `eliminated` and `monotone_post_peak` trajectory
+  flags. Aggregates: mean `continual_learning_score` and a peak-weighted variant.
+  Sealed with a `metric_hash`; `compute_from_path` attests the ledger chain and
+  refuses a tampered one. Ships with a hand-verifiable synthetic ledger fixture
+  (`examples/recurrence/synthetic_ledger.jsonl`) whose exact scores are pinned by
+  a unit test in the invariant suite. See
+  [docs/recurrence-decline.md](docs/recurrence-decline.md).
+
 ### Taxonomy
 
 - Added two **additive** failure-family leaves, `deferred_consequence` and its
