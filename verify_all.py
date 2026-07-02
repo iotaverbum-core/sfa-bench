@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the complete SFA-Bench v1.0.0 offline verification suite."""
+"""Run the complete SFA-Bench v1.1.0 offline verification suite."""
 from __future__ import annotations
 
 import fnmatch
@@ -30,6 +30,7 @@ COMMANDS = (
     "deferred_consequence.py",
     "recurrence_metric.py",
     "property_contract.py",
+    "causal_report.py",
 )
 EXCLUDED_DIRECTORIES = {
     ".git",
@@ -61,7 +62,7 @@ def remove_readonly(function, path: str, _error) -> None:
 
 
 def main() -> int:
-    print("SFA-Bench v1.0.0 full offline verification")
+    print("SFA-Bench v1.1.0 full offline verification")
     print("=" * 56)
     print("workspace: isolated temporary copy (checked-out history is not mutated)")
 

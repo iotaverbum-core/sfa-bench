@@ -1,4 +1,4 @@
-# SFA-Bench v1.0.0
+# SFA-Bench v1.1.0
 
 ![SFA-Bench](https://github.com/iotaverbum-core/sfa-bench/actions/workflows/test.yml/badge.svg)
 
@@ -104,7 +104,7 @@ python policy_demo.py
 ```bash
 python release_gate.py
 python release_gate.py --ci
-python release_gate.py --release v1.0.0
+python release_gate.py --release v1.1.0
 ```
 
 The gate explicitly runs `git status --short --untracked-files=all`; it never
@@ -146,11 +146,15 @@ policy-guided retry
 - v0.8 — deterministic failure fingerprinting
 - v0.9 — deterministic generator-side policy-guided retry
 - v1.0 — researcher readiness, reproducibility, release automation, and claims discipline
+- v1.1 — AGI-axis research extension: prior-state trial, deferred-consequence task
+  family, recurrence-decline metric, gold-absent property contract, and causal-edge
+  taxonomy (schema v2)
 
-v1.0 adds no research capability layer. The verifier invariants remain the spine
-through every layer: generator-side memory and policy may shape proposals, but
-verifier-side judgment remains fixed and blind. Policy may shape the next answer;
-it may never shape the judgment.
+v1.1 adds research capability without weakening the spine. The verifier invariants
+hold through every new layer: generators, priors, metrics, and property contracts
+may shape or measure proposals, but every accept/reject decision remains a fixed,
+deterministic function and no LLM output participates in any verdict. Policy may
+shape the next answer; it may never shape the judgment.
 
 See [Architecture Stack](docs/architecture-stack.md) for data-flow and trust
 boundaries.
@@ -214,13 +218,14 @@ research instrument's release line or its DOI. See
 - [Deferred-Consequence Task Family](docs/deferred-consequence.md)
 - [Recurrence-Decline Metric](docs/recurrence-decline.md)
 - [Property-Based Verifier Contract](docs/property-contract.md)
+- [Causal-Edge Taxonomy (Schema v2)](docs/causal-edges.md)
 - [Prior State Memory: Why AI Needs Memory Before the Next Mistake](docs/prior-state-memory.md)
 
 ## Citation
 
 Use the repository metadata in [`CITATION.cff`](CITATION.cff). A plain-text form:
 
-> Neal, Matthew. (2026). SFA-Bench v1.0.0: Researcher Readiness & Reproducibility. https://github.com/iotaverbum-core/sfa-bench
+> Neal, Matthew. (2026). SFA-Bench v1.1.0: AGI-Axis Research Extension. https://github.com/iotaverbum-core/sfa-bench
 
 DOI: https://doi.org/10.5281/zenodo.20766587
 

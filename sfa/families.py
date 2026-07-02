@@ -15,6 +15,12 @@ from . import categories
 
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
+# Taxonomy file schema versions. v1 = families only (parent/child tree). v2 adds a
+# typed directed causal-edge overlay ("edges"). v2 is backward compatible: a v1
+# file (no "edges") loads as an empty edge set, and `migrate_to_v2` upgrades one.
+TAXONOMY_SCHEMA_V1 = "sfa.taxonomy_schema.v1"
+TAXONOMY_SCHEMA_V2 = "sfa.taxonomy_schema.v2"
+
 CATEGORY_TO_FAMILY = {
     categories.UNSUPPORTED_CLAIM: "unsupported_claim",
     categories.CONTRADICTS_EVIDENCE: "contradicts_evidence",
@@ -25,10 +31,11 @@ CATEGORY_TO_FAMILY = {
 
 
 class Taxonomy:
-    def __init__(self, families):
+    def __init__(self, families, edges=None, schema_version=None):
         self._parent = {}
         self._label = {}
         self._children = {}
+        self.schema_version = schema_version or TAXONOMY_SCHEMA_V1
         for fam in families:
             fid = fam["id"]
             parent = fam.get("parent")
@@ -44,6 +51,74 @@ class Taxonomy:
             if parent is not None and parent not in self._parent:
                 raise ValueError(f"family {fid!r} refers to unknown parent {parent!r}")
             self.ancestry(fid)  # detects loops through the `seen` guard
+
+        self._load_edges(edges or [])
+
+    def _load_edges(self, edges):
+        """Load and validate the typed directed causal-edge overlay (a DAG)."""
+        self._effects = {}   # source -> [(target, type)]
+        self._causes = {}    # target -> [(source, type)]
+        self._edge_type = {}
+        seen_pairs = set()
+        for edge in edges:
+            source = edge.get("from")
+            target = edge.get("to")
+            edge_type = edge.get("type")
+            if source not in self._parent:
+                raise ValueError(f"causal edge references unknown family {source!r}")
+            if target not in self._parent:
+                raise ValueError(f"causal edge references unknown family {target!r}")
+            if not edge_type:
+                raise ValueError(f"causal edge {source!r}->{target!r} has no type")
+            if source == target:
+                raise ValueError(f"causal edge is a self-loop at {source!r}")
+            if (source, target) in seen_pairs:
+                raise ValueError(f"duplicate causal edge {source!r}->{target!r}")
+            seen_pairs.add((source, target))
+            self._effects.setdefault(source, []).append((target, edge_type))
+            self._causes.setdefault(target, []).append((source, edge_type))
+            self._edge_type[(source, target)] = edge_type
+        self._assert_edge_dag()
+
+    def _assert_edge_dag(self):
+        """Detect a cycle in the directed causal-edge graph (parent tree is separate)."""
+        WHITE, GREY, BLACK = 0, 1, 2
+        color = {fid: WHITE for fid in self._parent}
+
+        def visit(node, path):
+            color[node] = GREY
+            for target, _type in sorted(self._effects.get(node, [])):
+                if color[target] == GREY:
+                    cycle = " -> ".join(path + [target])
+                    raise ValueError(f"cycle detected in causal edges: {cycle}")
+                if color[target] == WHITE:
+                    visit(target, path + [target])
+            color[node] = BLACK
+
+        for fid in sorted(self._parent):
+            if color[fid] == WHITE:
+                visit(fid, [fid])
+
+    def has_edges(self):
+        return bool(self._edge_type)
+
+    def edges(self):
+        """Return the causal edges as sorted {from, to, type} dicts."""
+        return [
+            {"from": source, "to": target, "type": self._edge_type[(source, target)]}
+            for source, target in sorted(self._edge_type)
+        ]
+
+    def effects(self, family_id):
+        """Downstream families this family points to (direct causal successors)."""
+        return sorted((target, etype) for target, etype in self._effects.get(family_id, []))
+
+    def causes(self, family_id):
+        """Upstream families that point to this family (direct causal predecessors)."""
+        return sorted((source, etype) for source, etype in self._causes.get(family_id, []))
+
+    def edge_type(self, source, target):
+        return self._edge_type.get((source, target))
 
     def known(self, family_id):
         return family_id in self._parent
@@ -88,10 +163,37 @@ class Taxonomy:
         return sorted(self._parent.keys())
 
 
+def taxonomy_schema_version(data):
+    """Return the declared taxonomy-file schema version (defaults to v1)."""
+    return data.get("taxonomy_schema_version", TAXONOMY_SCHEMA_V1)
+
+
+def migrate_to_v2(data, edges=None):
+    """Upgrade a v1 taxonomy dict to v2 by adding a schema version and edges.
+
+    Backward compatible and idempotent: an already-v2 file keeps its edges unless
+    a new edge list is supplied. Families are never altered.
+    """
+    migrated = dict(data)
+    migrated["taxonomy_schema_version"] = TAXONOMY_SCHEMA_V2
+    if edges is not None:
+        migrated["edges"] = list(edges)
+    else:
+        migrated.setdefault("edges", list(data.get("edges", [])))
+    # Validate the result (unknown endpoints, self-loops, duplicates, cycles).
+    Taxonomy(migrated["families"], edges=migrated["edges"], schema_version=TAXONOMY_SCHEMA_V2)
+    return migrated
+
+
 def load_taxonomy(path):
     with open(path, "r", encoding="utf-8") as fh:
         data = json.load(fh)
-    return Taxonomy(data["families"]), data.get("taxonomy_version", "unknown")
+    taxonomy = Taxonomy(
+        data["families"],
+        edges=data.get("edges"),
+        schema_version=taxonomy_schema_version(data),
+    )
+    return taxonomy, data.get("taxonomy_version", "unknown")
 
 
 def _refine_unsupported(subject, value):

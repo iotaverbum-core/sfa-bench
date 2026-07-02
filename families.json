@@ -1,5 +1,6 @@
 {
   "taxonomy_version": "sfa.families.v0.2",
+  "taxonomy_schema_version": "sfa.taxonomy_schema.v2",
   "families": [
     {
       "id": "unsupported_claim",
@@ -60,6 +61,18 @@
       "id": "uncategorized",
       "parent": null,
       "label": "Uncategorized"
+    }
+  ],
+  "edges": [
+    {
+      "from": "unsupported_claim",
+      "to": "contradicts_evidence",
+      "type": "escalates_to"
+    },
+    {
+      "from": "contradicts_evidence",
+      "to": "deferred_consequence_stale",
+      "type": "causes"
     }
   ]
 }
