@@ -557,6 +557,29 @@ def _read_release_gate_constants(gate_path: Path) -> tuple[str, list[str]]:
     return expected, command_files
 
 
+def assert_prior_state_trial_determinism(repo_root: str | Path) -> dict[str, Any]:
+    """Prior State Trial: byte-identical replay, and the headline delta equals the
+    difference of arm means (a pure verifier-scored function of the seed)."""
+    from sfa import prior_state_trial as trial
+
+    config = {"seed": 20260101, "n": 12, "bootstrap": 200}
+    first = trial.run_trial(config)
+    second = trial.run_trial(config)
+    if first["report_sha"] != second["report_sha"]:
+        raise InvariantFailure("prior state trial is not deterministic (report_sha differs)")
+
+    replayed = trial.replay(first)
+    if not replayed["attested"]:
+        raise InvariantFailure("prior state trial replay failed: " + "; ".join(replayed["issues"]))
+
+    head = first["headline"]
+    arms = first["arms"]
+    delta = arms["true_prior"]["mean_score"] - arms["placebo_prior"]["mean_score"]
+    if abs(delta - head["delta_mean"]) > 1e-9:
+        raise InvariantFailure("prior state trial headline delta is inconsistent with arm means")
+    return {"report_sha": first["report_sha"], "delta_mean": head["delta_mean"]}
+
+
 def assert_repository_version_consistency(repo_root: str | Path) -> dict[str, Any]:
     """Fail closed when the version of record drifts across the repository.
 
