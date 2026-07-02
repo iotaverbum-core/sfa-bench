@@ -14,6 +14,10 @@ authoritative and tell us (see Reporting).
   can confirm this: there are no `requests`/`urllib`/socket calls in the core
   modules. The only networking in the product is the **client SDK's HTTP
   transport** (talking to a server you run) and the **HTTP API server** itself.
+- **The optional LLM-assisted extractor adds no network dependency.** You supply
+  the model call (`suggest`), it runs in your environment, and the product ships no
+  provider integration. That path is opt-in and disabled under CI; the engine, API,
+  and replay never call a model - they only re-check the sealed nomination.
 
 ## Network access
 
