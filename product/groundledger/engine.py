@@ -68,7 +68,8 @@ def verify_text_submission(
     task = submission.get("task_input", {})
 
     result = extraction_mod.extract_candidate(
-        answer_text, evidence, config=rule_pack.get("extraction")
+        answer_text, evidence, config=rule_pack.get("extraction"),
+        proposal=submission.get("extraction_proposal"),
     )
     candidate = result["candidate"]
     stored_submission = {**submission, "candidate": candidate}

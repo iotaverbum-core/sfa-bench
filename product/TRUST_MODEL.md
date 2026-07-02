@@ -31,6 +31,15 @@ Under the rules in a given rule pack, and for the answers and evidence you suppl
 5. **For free-text answers, the extraction is sealed and replayable.** The prose is
    turned into a structured candidate deterministically; the extraction is hashed
    into the receipt and re-run during replay, so an edited answer is detected.
+6. **An optional LLM-assisted extractor widens recall without touching judgment.**
+   A model may *nominate* `{subject, value}` claims (a proposer). Its output is
+   sealed into the submission and then deterministically re-checked: a nominated
+   claim is kept only if its subject and value literally appear in the answer text.
+   So a model can surface a novel claim the rule extractor missed, but cannot
+   fabricate a finding, cannot change a value, and cannot make a verdict
+   nondeterministic. The model is called once at ingest; replay re-derives from the
+   sealed nomination and never calls a model. This path is opt-in and disabled
+   under CI; the default is the pure deterministic extractor.
 
 ## What GroundLedger does NOT prove
 
@@ -44,10 +53,13 @@ Under the rules in a given rule pack, and for the answers and evidence you suppl
   not impossibility.
 - **HMAC signing is keyed integrity, not non-repudiation.** Anyone holding the
   shared signing key can produce a valid signature. It is not public-key signing.
-- **Free-text coverage is conservative.** The extractor reliably flags fabricated
-  citations and contradictions on facts your evidence covers; it does not invent
-  claims about subjects the evidence does not cover, so it under-reports rather
-  than guesses. Absence of findings on free text is not proof of full grounding.
+- **Free-text coverage is conservative.** The default (rule) extractor reliably
+  flags fabricated citations and contradictions on facts your evidence covers; it
+  does not invent claims about subjects the evidence does not cover, so it
+  under-reports rather than guesses. The optional LLM-assisted proposer widens
+  recall to novel claims, but only ones whose subject and value literally appear in
+  the text (deterministically re-checked and sealed). Even so, absence of findings
+  on free text is not proof of full grounding.
 - **The verifier is narrow, not semantically complete.** It checks citation
   existence and claim/evidence agreement under explicit rules. It does not judge
   tone, completeness, or correctness beyond those rules.

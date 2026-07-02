@@ -102,6 +102,7 @@ def attest_records(
             re_extracted = extraction_mod.extract_candidate(
                 submission["answer_text"], submission.get("evidence", {}),
                 config=rule_pack.get("extraction"),
+                proposal=submission.get("extraction_proposal"),
             )["provenance"]
             if re_extracted.get("answer_text_hash") != sealed_extraction.get("answer_text_hash"):
                 issues.append(

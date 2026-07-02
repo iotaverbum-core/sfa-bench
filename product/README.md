@@ -205,6 +205,30 @@ evidence does not cover, so it under-reports rather than fabricates findings.
 Absence of findings on free text is therefore not a proof of full grounding — for
 the strongest guarantee, have the assistant emit structured, cited answers.
 
+### Higher recall with an LLM-assisted proposer (optional)
+
+To catch novel claims the rule extractor misses, you can plug in your own model as
+a **proposer**. It only nominates `{subject, value}` claims; its output is sealed
+and then **deterministically re-checked** — a nomination is kept only if its
+subject and value literally appear in the answer text. So a model widens recall
+but can never fabricate a finding or make a verdict nondeterministic. The model
+runs in your environment, once, at ingest; replay re-derives from the sealed
+nomination and never calls a model.
+
+```python
+def suggest(answer_text, evidence):
+    # your model call; return [{"subject": "...", "value": "..."}]
+    ...
+
+gl = GroundLedgerClient.embedded(data_root="gl-data", tenant="acme", rule_pack="insurance_v1")
+receipt = gl.verify_text_assisted(answer_id="a1", answer_text=answer,
+                                  evidence=chunks, suggest=suggest)
+```
+
+This path is **opt-in and disabled under CI** (pass `allow_in_ci=True` only with a
+deterministic offline `suggest`, e.g. in tests). The default extractor stays pure
+and offline. See [`TRUST_MODEL.md`](TRUST_MODEL.md).
+
 ## Bulk-ingest a batch of answers (pilot onboarding)
 
 Load a whole batch of real answers + the evidence each used in one command, sealed

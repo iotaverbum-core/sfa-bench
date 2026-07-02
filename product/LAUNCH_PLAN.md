@@ -206,6 +206,11 @@ spot once the pilot proves value.
 - **Report view UI (for non-engineers)** ✅ — server-rendered HTML audit report
   from the stdlib API: `GET /` start page + `GET /v1/report.html` (key via header
   or `?key=`). No framework, in-VPC. *Validate:* `test_report_view` (5).
+- **LLM-assisted extraction recall upgrade** ✅ — `assisted.py` proposer boundary:
+  a model nominates claims, sealed into `extraction_proposal` and deterministically
+  re-checked (a nomination survives only if its subject+value are in the text).
+  Widens recall to novel claims; can't fabricate; replay re-derives offline;
+  opt-in and CI-blocked. SDK `verify_text_assisted`. *Validate:* `test_assisted` (6).
 
 - **Vertical rule packs (fintech, healthcare)** ✅ — `rule_packs/fintech_v1.json`
   (APR/fees/limits) and `rule_packs/healthcare_v1.json` (copays/coinsurance/limits)

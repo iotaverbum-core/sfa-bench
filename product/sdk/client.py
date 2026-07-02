@@ -6,7 +6,7 @@ import urllib.error
 import urllib.request
 from typing import Any
 
-from product.groundledger import engine, export as export_mod, ingest as ingest_mod, replay, report as report_mod, rulepacks
+from product.groundledger import assisted as assisted_mod, engine, export as export_mod, ingest as ingest_mod, replay, report as report_mod, rulepacks
 from product.groundledger.store import TenantStore
 
 
@@ -168,6 +168,22 @@ class GroundLedgerClient:
         if parse_errors:
             result = {**result, "errors": parse_errors + list(result.get("errors", []))}
         return result
+
+    def verify_text_assisted(self, *, answer_id: str, answer_text: str, evidence: dict[str, Any],
+                             suggest, task_input: dict[str, Any] | None = None,
+                             rule_pack: str | None = None, allow_in_ci: bool = False) -> dict[str, Any]:
+        """Verify a free-text answer with an LLM-assisted proposer.
+
+        The model (``suggest``) runs here, in your environment. Its nominations are
+        sealed into the submission and re-checked deterministically by the verifier
+        boundary - the server/engine never calls a model. Works over both transports.
+        """
+        submission = assisted_mod.build_text_submission(
+            answer_id=answer_id, answer_text=answer_text, evidence=evidence,
+            suggest=suggest, rule_pack=rule_pack or self.default_rule_pack,
+            task_input=task_input, allow_in_ci=allow_in_ci,
+        )
+        return self._t.submit_text(submission)
 
     def submit(self, submission: dict[str, Any]) -> dict[str, Any]:
         """Verify a fully-formed submission dict."""

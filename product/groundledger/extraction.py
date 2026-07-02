@@ -41,17 +41,32 @@ def extract_candidate(
     evidence: dict[str, Any],
     *,
     config: dict[str, Any] | None = None,
+    proposal: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Return ``{candidate, provenance, trace}`` from a free-text answer."""
+    """Return ``{candidate, provenance, trace}`` from a free-text answer.
+
+    ``proposal`` is an optional list of ``{subject, value}`` claims nominated by an
+    upstream (possibly LLM-assisted) proposer - see ``assisted.py``. It is applied
+    **deterministically**: a nominated claim is accepted only if its subject and a
+    matching value literally appear in the answer text. The proposer can therefore
+    widen recall (surface claims about subjects the evidence does not cover) but can
+    never fabricate a claim that is not in the text. With ``proposal=None`` (the
+    default) the output is byte-identical to the pure rule extractor, so replay and
+    the committed manifests are unaffected.
+    """
     if not isinstance(answer_text, str):
         raise ValueError("answer_text must be a string")
     config = config or {}
     patterns = tuple(config.get("citation_patterns", DEFAULT_CITATION_PATTERNS))
     window = int(config.get("value_window", DEFAULT_WINDOW))
+    proposal = proposal or []
 
     valid_ids = {d.get("id") for d in evidence.get("documents", []) if isinstance(d, dict)}
     cited, citation_trace = _extract_citations(answer_text, patterns, valid_ids)
     claims, claim_trace = _extract_claims(answer_text, evidence.get("facts", []), window)
+
+    proposed_claims, proposed_trace = _confirm_proposed_claims(answer_text, proposal, claims, window)
+    claims = claims + proposed_claims
 
     candidate = {
         "conclusion": answer_text.strip(),
@@ -61,15 +76,55 @@ def extract_candidate(
     provenance = {
         "schema": EXTRACTION_SCHEMA,
         "extractor_version": EXTRACTOR_VERSION,
+        "mode": "llm-assisted" if proposal else "rule",
         "answer_text_hash": sha256_hex(answer_text),
         "config_hash": sha256_hex({"citation_patterns": list(patterns), "value_window": window}),
+        "proposal_hash": sha256_hex(proposal),
         "candidate_hash": sha256_hex(candidate),
     }
     return {
         "candidate": candidate,
         "provenance": provenance,
-        "trace": {"citations": citation_trace, "claims": claim_trace},
+        "trace": {"citations": citation_trace, "claims": claim_trace, "proposed": proposed_trace},
     }
+
+
+def _confirm_proposed_claims(
+    answer_text: str,
+    proposal: list[dict[str, Any]],
+    existing_claims: list[dict[str, Any]],
+    window: int,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Deterministically keep only nominated claims that are present in the text.
+
+    A nominated claim is accepted only when its subject surface form is found and a
+    value of the matching kind appears nearby. Subjects already covered by the rule
+    extractor are skipped. Accepted claims are ordered by subject for determinism.
+    """
+    low = answer_text.lower()
+    seen = {c["subject"] for c in existing_claims}
+    accepted: list[dict[str, Any]] = []
+    trace: list[dict[str, Any]] = []
+    for item in proposal:
+        if not isinstance(item, dict):
+            continue
+        subject = item.get("subject")
+        value = item.get("value")
+        if not isinstance(subject, str) or not subject or value is None or subject in seen:
+            continue
+        position = _find_subject(low, _surface_forms(subject, None))
+        if position is None:
+            trace.append({"subject": subject, "accepted": False, "reason": "subject not in answer text"})
+            continue
+        asserted = _read_value(answer_text, position, window, _infer_kind(value), value)
+        if asserted is None:
+            trace.append({"subject": subject, "accepted": False, "reason": "value not found near subject"})
+            continue
+        seen.add(subject)
+        accepted.append({"subject": subject, "value": asserted})
+        trace.append({"subject": subject, "accepted": True, "asserted": asserted, "proposed": value})
+    accepted.sort(key=lambda claim: claim["subject"])
+    return accepted, trace
 
 
 def _extract_citations(text: str, patterns, valid_ids) -> tuple[list[str], list[dict[str, Any]]]:
