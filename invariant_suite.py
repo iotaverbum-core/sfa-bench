@@ -170,6 +170,13 @@ def main() -> int:
         "tampered chain refused"
     )
 
+    property_result = invariants.assert_property_contract_determinism(ROOT)
+    print("property-contract (gold-absent) determinism: PASS")
+    print(
+        f"  {property_result['contract_version']} over {property_result['cases_checked']} cases; "
+        f"decidable families {property_result['families']}; deterministic conjunction"
+    )
+
     version_consistency = invariants.assert_repository_version_consistency(ROOT)
     print("repository version consistency: PASS")
     print(

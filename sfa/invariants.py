@@ -632,6 +632,87 @@ def assert_deferred_consequence_determinism(repo_root: str | Path) -> dict[str, 
     }
 
 
+def assert_property_contract_determinism(repo_root: str | Path) -> dict[str, Any]:
+    """Property-based verifier contract for gold-absent tasks.
+
+    Wires the item-2 deferred-consequence family: the sealed, versioned contract
+    decides accept/reject by decidable properties (no gold answer). This pins the
+    verdicts for correct / stale / fabricated / self-contradictory / malformed
+    candidates, confirms deterministic conjunction and byte-identical sealing, and
+    exercises all four decidable property families.
+    """
+    from sfa import deferred_consequence as dc
+    from sfa import property_contract as pc
+
+    pack = dc.generate_pack({"seed": 20260301, "per_cell": 1})
+    all_families_seen: set[str] = set()
+
+    for case in pack["cases"]:
+        subject = case["subject"]
+        correct = case["scoring"]["correct_value"]
+        stale = case["scoring"]["stale_value"]
+
+        contract = dc.property_contract(case)
+        if contract["contract_version"] != pc.CONTRACT_VERSION:
+            raise InvariantFailure(f"unexpected contract version: {contract['contract_version']!r}")
+        if contract["conjunction"] != "all":
+            raise InvariantFailure("property contract must use deterministic 'all' conjunction")
+        if dc.property_contract(case)["contract_hash"] != contract["contract_hash"]:
+            raise InvariantFailure("property contract seal is not deterministic")
+        all_families_seen.update(prop["family"] for prop in contract["properties"])
+
+        cases_expected = [
+            ("correct", {"claims": [{"subject": subject, "value": correct}]}, "PASS", []),
+            ("stale", {"claims": [{"subject": subject, "value": stale}]}, "FAIL", ["recency"]),
+            ("self_contradictory",
+             {"claims": [{"subject": subject, "value": correct}, {"subject": subject, "value": stale}]},
+             "FAIL", None),
+            ("malformed", {"claims": "not-a-list"}, "FAIL", None),
+        ]
+        for label, candidate, status, failed in cases_expected:
+            first = dc.score_candidate_by_contract(case, candidate)
+            second = dc.score_candidate_by_contract(case, candidate)
+            if first["verdict_hash"] != second["verdict_hash"]:
+                raise InvariantFailure(f"property verdict not deterministic for {label} on {case['case_id']}")
+            if first["status"] != status:
+                raise InvariantFailure(
+                    f"property contract {label} status {first['status']} != {status} on {case['case_id']}"
+                )
+            if failed is not None and first["failed_properties"] != failed:
+                raise InvariantFailure(
+                    f"property contract {label} failed_properties {first['failed_properties']} != {failed}"
+                )
+            if label == "self_contradictory" and "consistency" not in first["failed_properties"]:
+                raise InvariantFailure("self-contradictory candidate did not fail internal_consistency")
+            if label == "malformed" and "schema" not in first["failed_properties"]:
+                raise InvariantFailure("malformed candidate did not fail schema_validity")
+
+    # Exercise the citation_grounding family (gold-absent structural grounding).
+    cite_contract = pc.build_contract(
+        "citation_grounding_check", "generic",
+        [{"id": "cite", "family": "citation_grounding",
+          "params": {"field": "cited", "collection": "sources", "id_key": "id"}}],
+    )
+    all_families_seen.add("citation_grounding")
+    context = {"sources": [{"id": "e1"}, {"id": "e2"}]}
+    grounded = pc.evaluate(cite_contract, {"cited": ["e1", "e2"]}, context)
+    ungrounded = pc.evaluate(cite_contract, {"cited": ["e1", "e9"]}, context)
+    if grounded["status"] != "PASS":
+        raise InvariantFailure("grounded citations did not pass citation_grounding")
+    if ungrounded["status"] != "FAIL" or ungrounded["failed_properties"] != ["cite"]:
+        raise InvariantFailure("ungrounded citation was not rejected by citation_grounding")
+
+    missing = set(pc.PROPERTY_FAMILIES) - all_families_seen
+    if missing:
+        raise InvariantFailure(f"decidable property families not exercised: {sorted(missing)}")
+
+    return {
+        "contract_version": pc.CONTRACT_VERSION,
+        "families": sorted(all_families_seen),
+        "cases_checked": len(pack["cases"]),
+    }
+
+
 def assert_recurrence_metric_determinism(repo_root: str | Path) -> dict[str, Any]:
     """Recurrence-decline metric unit test on the synthetic ledger fixture.
 

@@ -45,6 +45,7 @@ COMMAND_FILES = (
     "prior_state_trial.py",
     "deferred_consequence.py",
     "recurrence_metric.py",
+    "property_contract.py",
 )
 PACKAGE_INIT = ROOT / "sfa" / "__init__.py"
 PACKAGE_VERSION_RE = re.compile(
