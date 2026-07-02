@@ -27,6 +27,7 @@ COMMANDS = (
     "fingerprint_report.py",
     "policy_demo.py",
     "prior_state_trial.py",
+    "deferred_consequence.py",
 )
 EXCLUDED_DIRECTORIES = {
     ".git",
