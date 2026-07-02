@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>GroundLedger Demo Guide</title>
+<!-- Print to PDF: bash scripts/pilot-pdf.sh product/sales/DEMO_GUIDE.html
+     or open in a browser and Print > Save as PDF. -->
+<style>
+  @page{size:A4;margin:16mm;}
+  body{font:12.5px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;margin:0;max-width:760px;}
+  h1{font-size:22px;margin:0 0 2px;letter-spacing:-.02em;}
+  h2{font-size:15px;margin:20px 0 6px;border-bottom:2px solid #e2e8f0;padding-bottom:3px;page-break-after:avoid;}
+  h3{font-size:13px;margin:12px 0 3px;}
+  p{margin:5px 0;} ul{margin:5px 0;padding-left:18px;} li{margin:3px 0;}
+  code{background:#f1f5f9;padding:1px 5px;border-radius:4px;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;}
+  pre{background:#0f172a;color:#e2e8f0;padding:10px 12px;border-radius:8px;overflow:auto;font-size:11px;line-height:1.45;page-break-inside:avoid;}
+  pre code{background:none;color:inherit;padding:0;}
+  .lead{color:#475569;}
+  .note{background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #1d4ed8;border-radius:6px;padding:8px 12px;margin:8px 0;font-size:11.5px;}
+  .say{background:#eff6ff;border-radius:6px;padding:6px 10px;margin:5px 0;font-style:italic;}
+  .beat{font-weight:600;} .muted{color:#64748b;font-size:11px;}
+  section{page-break-inside:avoid;}
+</style>
+</head>
+<body>
+<h1>GroundLedger Demo Guide</h1>
+<p class="lead">A plain-language, step-by-step manual for the person selling it. If you can paste a line into a terminal, you can run this demo.</p>
+<div class="note">Commands are written for <b>Windows</b> (they also work on Mac/Linux). If <code>python</code> says "not found", try <code>python3</code>. There is nothing to install - no accounts, no keys, no internet.</div>
+
+<section>
+<h2>1. The 30-second idea</h2>
+<p>Companies put AI assistants in front of customers to answer questions from their documents. Sometimes the assistant <b>makes things up</b> - it cites a section that doesn't exist, or states a number the source contradicts. That's a hallucination, and it's a real risk in regulated industries.</p>
+<p><b>GroundLedger checks every answer against the documents it should have used, and keeps a permanent, tamper-evident record you can prove to an auditor.</b> It runs on the customer's own computers, so their documents never leave.</p>
+</section>
+
+<section>
+<h2>2. The story your demo tells (three beats)</h2>
+<p><span class="beat">1. We catch the bad answers.</span> Four sample answers go in; one is fine, three are wrong - and it says exactly why.</p>
+<p><span class="beat">2. We turn that into evidence.</span> Each verdict is sealed into a report the customer's auditor can re-check themselves.</p>
+<p><span class="beat">3. Nobody can quietly fudge it.</span> We edit a failed answer to look like it passed - the system catches it: <b>TAMPER DETECTED</b>.</p>
+</section>
+
+<section>
+<h2>3. Words you'll hear</h2>
+<ul>
+<li><b>Grounded</b> - the answer is backed by the source documents.</li>
+<li><b>Citation</b> - the document/section the answer points to (e.g. <code>clause_3a</code>).</li>
+<li><b>Fabricated citation</b> - it points to a section that doesn't exist.</li>
+<li><b>Contradiction</b> - it states a value that disagrees with the source.</li>
+<li><b>Receipt</b> - a sealed record of one answer's verdict (like a store receipt you can't secretly change).</li>
+<li><b>Ledger</b> - the chained list of all receipts; nothing can be deleted or reordered without it showing.</li>
+<li><b>Groundedness rate</b> - the percentage of answers that were grounded.</li>
+<li><b>Tamper-evident</b> - edits are detected (not the same as "impossible to edit" - be honest).</li>
+<li><b>Replay / attest</b> - re-checking the whole record to confirm the verdicts are real ("prove it yourself").</li>
+</ul>
+</section>
+
+<section>
+<h2>4. One-time setup</h2>
+<p>Check you have Python 3.11+:</p>
+<pre><code>python --version</code></pre>
+<p>You should see <code>Python 3.11.x</code> or higher (else install from python.org and tick "Add to PATH").</p>
+<p>Open a terminal <b>inside the sfa-bench folder</b> (Windows: type <code>cmd</code> in the folder's address bar and press Enter).</p>
+</section>
+
+<section>
+<h2>5. Run the demo (the main event)</h2>
+<pre><code>python -m product.demo</code></pre>
+<p>You'll see: <b>(A)</b> four answers checked - one PASS, three FAIL with the reason; <b>(B)</b> a report summary ("1 of 4 answers (25%) grounded") with findings ranked Critical / High / Medium; <b>(C)</b> two saved files:</p>
+<pre><code>report : product/data/demo/report.html   (open in a browser)
+bundle : product/data/demo/bundle.json    (verifies offline)</code></pre>
+<p>If you got here, you've run the demo - that's 90% of it.</p>
+</section>
+
+<section>
+<h2>6. The moment that sells it</h2>
+<pre><code>Now an insider quietly edits a sealed failure to look like a pass...
+  re-attestation: TAMPER DETECTED</code></pre>
+<p>Someone tried to cheat - to make a bad answer look good. The system re-checked and caught it.</p>
+<p class="say">"Your evals live in a dashboard you could edit. This is a record your auditor re-runs themselves - and if anyone changes it, it shows. That's the difference between a metric and evidence."</p>
+</section>
+
+<section>
+<h2>7. Show the pretty report in a browser (optional wow)</h2>
+<pre><code>python -m product.groundledger.ingest product/examples/batch.jsonl --tenant demo-tenant --data-root product/data
+python -m product.groundledger.api</code></pre>
+<p>Open <b>http://127.0.0.1:8000/</b>, type the key <code>demo-key</code>, click "View audit report". Press <b>Ctrl+C</b> in the terminal to stop. Everything runs on your computer - nothing goes to the internet.</p>
+</section>
+
+<section>
+<h2>8. Prove it's trustworthy</h2>
+<pre><code>python -m product.groundledger.verification</code></pre>
+<p>You'll see <code>reproducibility: PASS</code>, <code>tamper detection: PASS</code>, <code>final status: VERIFIED</code>.</p>
+<p class="say">"The same inputs always produce the exact same result - I can prove it, and so can you. That's why an auditor will accept it."</p>
+</section>
+
+<section>
+<h2>9. Run it on real answers</h2>
+<p>Put the answers in a JSONL or CSV file (see <code>product/examples/batch.jsonl</code> for the shape), then:</p>
+<pre><code>python -m product.groundledger.ingest their-answers.jsonl --tenant acme --data-root product/data</code></pre>
+<p>It prints how many were grounded and the findings. This is exactly what a paid pilot does - on ~150-300 of their answers.</p>
+</section>
+
+<section>
+<h2>10. Running a live demo call (~15 min)</h2>
+<p>Full script: <code>product/sales/calls/demo-script-15min.md</code>. Short version: frame the problem &rarr; run <code>python -m product.demo</code> &rarr; the tamper moment &rarr; show the browser report &rarr; close ("let's run this on ~200 of your real answers"). Practice the run 3-4 times until it feels automatic.</p>
+</section>
+
+<section>
+<h2>11. If something goes wrong</h2>
+<ul>
+<li><b>"python not recognized":</b> try <code>python3</code>; else reinstall Python with "Add to PATH".</li>
+<li><b>"No module named product":</b> you're in the wrong folder - be inside <code>sfa-bench</code> (you should see <code>product</code> and <code>sfa</code>).</li>
+<li><b>Browser says "API key required":</b> add the key - go to http://127.0.0.1:8000/ and type <code>demo-key</code>.</li>
+<li><b>Unexpected "TAMPER DETECTED":</b> the demo leaves one answer tampered on purpose. Delete the <code>product/data</code> folder to start clean.</li>
+<li><b>Reset everything:</b> delete the <code>product/data</code> folder (only demo/run data lives there).</li>
+</ul>
+</section>
+
+<section>
+<h2>12. Cheat sheet</h2>
+<pre><code>python --version                              # check Python 3.11+
+python -m product.demo                        # run the full demo
+python -m product.groundledger.verification   # prove reproducible + tamper-catch
+
+# Browser report:
+python -m product.groundledger.ingest product/examples/batch.jsonl --tenant demo-tenant --data-root product/data
+python -m product.groundledger.api            # open http://127.0.0.1:8000/  (key: demo-key), Ctrl+C to stop
+
+# Real answers:
+python -m product.groundledger.ingest their-answers.jsonl --tenant acme --data-root product/data</code></pre>
+</section>
+
+<section>
+<h2>13. What NOT to say (stay honest)</h2>
+<ul>
+<li>Not "tamper-proof" &rarr; say <b>"tamper-evident"</b> (edits are detected).</li>
+<li>Not "certified/compliant" &rarr; say <b>"audit-ready evidence for your own compliance process."</b></li>
+<li>Not "catches every hallucination" &rarr; say <b>"reliably catches fabricated citations and contradictions, and records everything."</b></li>
+<li>Strongest on answers that cite their sources; free-text is supported but more conservative.</li>
+</ul>
+<p class="muted">Being straight about the limits is what makes a skeptical buyer trust the rest. Full boundary: <code>product/TRUST_MODEL.md</code>.</p>
+</section>
+
+</body>
+</html>

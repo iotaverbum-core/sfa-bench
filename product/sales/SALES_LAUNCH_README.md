@@ -28,9 +28,13 @@ run the demo, send the proposal, close the pilot.
 
 ## What's in this pack
 
+**New to the demo? Start with `DEMO_GUIDE.md`** (plain-language, step-by-step;
+`DEMO_GUIDE.html` prints to a PDF via `./scripts/pilot-pdf.sh product/sales/DEMO_GUIDE.html`).
+
 ```
 product/sales/
   SALES_LAUNCH_README.md          <- you are here
+  DEMO_GUIDE.md / DEMO_GUIDE.html <- learn & run the demo (read this first)
   landing/pilot.html              <- pilot landing page (host this)
   pilot/
     one-pager.md / one-pager.html <- one-page sheet (md source + printable HTML)

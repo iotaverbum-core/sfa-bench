@@ -9,4 +9,4 @@ fingerprint_runs/
 policy_runs/
 .verify-all-*/
 product/data/
-product/sales/pilot/*.pdf
+product/sales/**/*.pdf
