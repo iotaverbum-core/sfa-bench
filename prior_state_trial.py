@@ -48,7 +48,7 @@ def _run_replay(path: str) -> int:
     with open(path, "r", encoding="utf-8") as fh:
         report = json.load(fh)
     result = trial.replay(report)
-    print("SFA-Bench v1.0.0 Prior State Trial - replay")
+    print("SFA-Bench v1.1.0 Prior State Trial - replay")
     print("=" * 56)
     print(f"report_sha (re-derived): {result['report_sha']}")
     for issue in result["issues"]:
@@ -77,7 +77,7 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("replay requires a report path")
         return _run_replay(args.report)
 
-    print("SFA-Bench v1.0.0 Prior State Trial")
+    print("SFA-Bench v1.1.0 Prior State Trial")
     print("=" * 56)
 
     if args.live:

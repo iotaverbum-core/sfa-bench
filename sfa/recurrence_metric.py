@@ -102,6 +102,12 @@ def _decline_of(row: list[int]) -> dict[str, Any] | None:
     }
 
 
+def decline_of(row: list[int]) -> dict[str, Any] | None:
+    """Public: the decline summary for one per-epoch recurrence series, or None if
+    the fingerprint never occurs. See the module docstring for the definition."""
+    return _decline_of(row)
+
+
 def compute_recurrence_decline(
     entries: list[dict[str, Any]],
     *,

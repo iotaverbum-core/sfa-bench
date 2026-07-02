@@ -1,12 +1,12 @@
 cff-version: 1.2.0
-title: "SFA-Bench v1.0.4: Release-gate version-of-record enforcement"
+title: "SFA-Bench v1.1.0: AGI-Axis Research Extension"
 message: "If you use SFA-Bench, please cite this repository."
 type: software
 authors:
   - family-names: Neal
     given-names: Matthew
-version: "1.0.4"
-date-released: "2026-06-29"
+version: "1.1.0"
+date-released: "2026-07-02"
 doi: 10.5281/zenodo.20766587
 repository-code: "https://github.com/iotaverbum-core/sfa-bench"
 url: "https://github.com/iotaverbum-core/sfa-bench"
@@ -25,3 +25,8 @@ abstract: >
   supports offline artifact and ledger attestation, transcript re-derivation,
   fixed-condition fixture fingerprinting, and deterministic generator-side
   policy guidance without live model, API, provider, or network calls in CI.
+  The v1.1 AGI-axis extension adds a controlled prior-state trial, a
+  deferred-consequence task family, a recurrence-decline (continual-learning)
+  metric, a gold-absent property-based verifier contract, and a causal-edge
+  taxonomy (schema v2) - each preserving the fixed, blind, deterministic
+  verifier boundary.

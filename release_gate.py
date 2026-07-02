@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Repository release checks for SFA-Bench v1.0.0."""
+"""Repository release checks for SFA-Bench v1.1.0."""
 from __future__ import annotations
 
 import argparse
@@ -10,7 +10,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parent
-EXPECTED_RELEASE = "v1.0.0"
+EXPECTED_RELEASE = "v1.1.0"
 WORKFLOW = ROOT / ".github" / "workflows" / "test.yml"
 REQUIRED_CI_COMMANDS = (
     "python verify_all.py",
@@ -46,6 +46,7 @@ COMMAND_FILES = (
     "deferred_consequence.py",
     "recurrence_metric.py",
     "property_contract.py",
+    "causal_report.py",
 )
 PACKAGE_INIT = ROOT / "sfa" / "__init__.py"
 PACKAGE_VERSION_RE = re.compile(

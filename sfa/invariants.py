@@ -632,6 +632,89 @@ def assert_deferred_consequence_determinism(repo_root: str | Path) -> dict[str, 
     }
 
 
+def assert_causal_taxonomy(repo_root: str | Path) -> dict[str, Any]:
+    """Causal-edge taxonomy (schema v2): DAG validation, backward-compatible
+    migration, and the deterministic upstream/downstream recurrence-linkage report.
+    """
+    from sfa import causal_report as causal
+    from sfa import families as fam_mod
+    from sfa import ledger as ledger_mod
+
+    root = Path(repo_root)
+    taxonomy, _version = fam_mod.load_taxonomy(root / "families.json")
+
+    if taxonomy.schema_version != fam_mod.TAXONOMY_SCHEMA_V2:
+        raise InvariantFailure(f"families.json is not schema v2: {taxonomy.schema_version!r}")
+    if not taxonomy.has_edges():
+        raise InvariantFailure("families.json declares no causal edges")
+
+    expected_edges = [
+        {"from": "contradicts_evidence", "to": "deferred_consequence_stale", "type": "causes"},
+        {"from": "unsupported_claim", "to": "contradicts_evidence", "type": "escalates_to"},
+    ]
+    if taxonomy.edges() != expected_edges:
+        raise InvariantFailure(f"unexpected causal edges: {taxonomy.edges()}")
+    if taxonomy.causes("deferred_consequence_stale") != [("contradicts_evidence", "causes")]:
+        raise InvariantFailure("deferred_consequence_stale upstream link is wrong")
+    if taxonomy.effects("unsupported_claim") != [("contradicts_evidence", "escalates_to")]:
+        raise InvariantFailure("unsupported_claim downstream link is wrong")
+
+    # Backward-compatible migration: a v1 file (no edges) loads and upgrades cleanly.
+    v1 = {"taxonomy_version": "x", "families": [{"id": "a", "parent": None}, {"id": "b", "parent": None}]}
+    legacy = fam_mod.Taxonomy(v1["families"])
+    if legacy.has_edges() or legacy.schema_version != fam_mod.TAXONOMY_SCHEMA_V1:
+        raise InvariantFailure("v1 taxonomy did not load as an empty-edge schema v1")
+    migrated = fam_mod.migrate_to_v2(v1, edges=[{"from": "a", "to": "b", "type": "causes"}])
+    if migrated["taxonomy_schema_version"] != fam_mod.TAXONOMY_SCHEMA_V2:
+        raise InvariantFailure("migration did not set schema v2")
+    if fam_mod.migrate_to_v2(migrated)["edges"] != migrated["edges"]:
+        raise InvariantFailure("migration is not idempotent")
+
+    # DAG validation refuses a cycle and unknown/self edges.
+    for bad in (
+        [{"from": "a", "to": "b", "type": "c"}, {"from": "b", "to": "a", "type": "c"}],  # cycle
+        [{"from": "a", "to": "z", "type": "c"}],  # unknown endpoint
+        [{"from": "a", "to": "a", "type": "c"}],  # self-loop
+    ):
+        try:
+            fam_mod.Taxonomy(v1["families"], edges=bad)
+        except ValueError:
+            continue
+        raise InvariantFailure(f"invalid causal edges accepted: {bad}")
+
+    # Deterministic linkage report over the causal ledger fixture.
+    fixture = root / "examples" / "causal" / "causal_ledger.jsonl"
+    ok, _errors, _count = ledger_mod.verify_chain(str(fixture))
+    if not ok:
+        raise InvariantFailure("causal ledger fixture chain is not intact")
+    entries = ledger_mod.read_ledger(str(fixture))
+    first = causal.compute_linkage(taxonomy, entries)
+    second = causal.compute_linkage(taxonomy, entries)
+    if first["report_hash"] != second["report_hash"]:
+        raise InvariantFailure("causal linkage report is not deterministic")
+
+    expected_family = {
+        "unsupported_claim": ([3, 2, 0], 1.0),
+        "contradicts_evidence": ([4, 2, 1], 0.75),
+        "deferred_consequence_stale": ([2, 1, 1], 0.5),
+    }
+    for family, (series, score) in expected_family.items():
+        row = first["families"][family]
+        if row["recurrence_series"] != series or row["decline_score"] != score:
+            raise InvariantFailure(
+                f"causal linkage {family} {row['recurrence_series']}/{row['decline_score']} "
+                f"!= {series}/{score}"
+            )
+    if not all(edge["downstream_declines_with_upstream"] for edge in first["edges"]):
+        raise InvariantFailure("causal linkage did not show downstream decline tracking upstream")
+
+    return {
+        "schema_version": taxonomy.schema_version,
+        "edges": len(taxonomy.edges()),
+        "report_hash": first["report_hash"],
+    }
+
+
 def assert_property_contract_determinism(repo_root: str | Path) -> dict[str, Any]:
     """Property-based verifier contract for gold-absent tasks.
 

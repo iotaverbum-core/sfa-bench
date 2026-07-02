@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v1.0.0 verifier, fingerprint, and policy invariant suite.
+"""SFA-Bench v1.1.0 verifier, fingerprint, and policy invariant suite.
 
 Run: python invariant_suite.py
 """
@@ -48,7 +48,7 @@ def _summarize_verdict(output):
 def main() -> int:
     invariants = _load_invariants_module()
 
-    print("SFA-Bench v1.0.0 Verifier, Fingerprint & Policy Invariant Suite")
+    print("SFA-Bench v1.1.0 Verifier, Fingerprint & Policy Invariant Suite")
     print("=" * 74)
 
     invariants.assert_verifier_static_guard(VERIFIER_PATH)
@@ -175,6 +175,13 @@ def main() -> int:
     print(
         f"  {property_result['contract_version']} over {property_result['cases_checked']} cases; "
         f"decidable families {property_result['families']}; deterministic conjunction"
+    )
+
+    causal_result = invariants.assert_causal_taxonomy(ROOT)
+    print("causal-edge taxonomy (schema v2): PASS")
+    print(
+        f"  {causal_result['schema_version']} with {causal_result['edges']} DAG-validated edges; "
+        "backward-compatible migration; deterministic upstream/downstream linkage"
     )
 
     version_consistency = invariants.assert_repository_version_consistency(ROOT)

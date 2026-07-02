@@ -2,9 +2,15 @@
 
 All notable changes to SFA-Bench will be documented in this file.
 
-## Unreleased
+## v1.1.0 — AGI-Axis Research Extension (2026-07-02)
 
-### Added (AGI-axis extension, toward v1.1.0)
+The research core gains five frontier-capability layers, each preserving the five
+hard invariants: the proposer is never the verifier (every accept/reject is a
+deterministic function; no LLM output participates in a verdict), history is
+append-only, sealed outputs replay byte-for-byte, gold never reaches the proposer
+path, and CI stays offline. The `sfa/verifier.py` boundary is unchanged.
+
+### Added (AGI-axis extension)
 
 - **Prior State Trial harness** (`sfa/prior_state_trial.py`, `prior_state_trial.py`):
   a controlled, three-arm measurement of whether a matured lesson (prior) injected
@@ -63,6 +69,21 @@ All notable changes to SFA-Bench will be documented in this file.
   suite; CLI dry-run added to `verify_all.py`. The fixed `sfa/verifier.py` is
   unchanged. See [docs/property-contract.md](docs/property-contract.md).
 
+- **Causal-edge taxonomy (schema v2)** (`sfa/families.py`, `sfa/causal_report.py`,
+  `causal_report.py`, `families.json`): a typed directed causal overlay `A → B` on
+  top of the parent/child family tree, expressing "failure A tends to lead to
+  failure B." `families.json` declares `taxonomy_schema_version`
+  (`sfa.taxonomy_schema.v2`) and an `edges` list. The `Taxonomy` loader validates
+  the overlay at load — known endpoints, no self-loops, no duplicates, and a
+  **DAG** (cycles raise) — and exposes `edges()`, `causes()`, `effects()`, and
+  `edge_type()`. Backward compatible: a v1 file (no `edges`) loads as an empty edge
+  set, with an idempotent `migrate_to_v2` helper. A deterministic, sealed
+  upstream/downstream **recurrence-linkage report** (`causal_report.py`) joins the
+  overlay with ledger recurrence to show that a downstream family declines as its
+  upstream cause is addressed, over the fixture
+  `examples/causal/causal_ledger.jsonl`. See
+  [docs/causal-edges.md](docs/causal-edges.md).
+
 ### Taxonomy
 
 - Added two **additive** failure-family leaves, `deferred_consequence` and its
@@ -72,14 +93,25 @@ All notable changes to SFA-Bench will be documented in this file.
   contradiction to `deferred_consequence_stale` only when scoring evidence is
   marked `task_family == "deferred_consequence"`. Evidence without that marker
   classifies exactly as before, so existing artifacts, the ledger, and the
-  fingerprint demo re-derive byte-for-byte unchanged. No `taxonomy_version` bump:
-  formal taxonomy schema versioning/migration is deferred to the causal-edge work.
+  fingerprint demo re-derive byte-for-byte unchanged.
+- Upgraded the taxonomy file to **schema v2** (`taxonomy_schema_version`), adding a
+  backward-compatible typed causal-edge overlay with DAG validation and migration.
+  The family-set version (`taxonomy_version`) is unchanged and edges never affect
+  classification, so the fingerprint demo re-derives byte-for-byte unchanged.
+
+### Changed
+
+- Version of record bumped to `1.1.0`: `sfa.__version__`, the release gate's
+  `EXPECTED_RELEASE`, every command header, the README, and `CITATION.cff` now
+  declare `v1.1.0`.
 
 ### Not Changed
 
 - No verifier behaviour or `sfa/verifier.py` change; no `sfa/categories.py`
   change. No LLM output participates in any verdict.
 - No API, model, provider, or network calls in CI.
+- The GroundLedger product layer (`product/`) is unaffected and independently
+  versioned; it is not part of this research-instrument release line or its DOI.
 
 ## v1.0.4 — Release-gate version-of-record enforcement (2026-06-29)
 
