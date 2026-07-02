@@ -151,6 +151,10 @@ def main() -> int:
     print("CI live-adapter unreachability: PASS")
     print("  CI registry exposes no live adapters and rejects live opt-in")
 
+    trial_result = invariants.assert_prior_state_trial_determinism(ROOT)
+    print("prior state trial determinism: PASS")
+    print(f"  deterministic replay + headline delta {trial_result['delta_mean']} == mean(true) - mean(placebo)")
+
     version_consistency = invariants.assert_repository_version_consistency(ROOT)
     print("repository version consistency: PASS")
     print(

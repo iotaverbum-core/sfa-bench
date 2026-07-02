@@ -4,7 +4,23 @@ All notable changes to SFA-Bench will be documented in this file.
 
 ## Unreleased
 
-No unreleased changes.
+### Added (AGI-axis extension, toward v1.1.0)
+
+- **Prior State Trial harness** (`sfa/prior_state_trial.py`, `prior_state_trial.py`):
+  a controlled, three-arm measurement of whether a matured lesson (prior) injected
+  into the proposer improves outcomes, scored entirely by the deterministic
+  verifier. Arms: `true_prior`, length/format-matched `placebo_prior` (the
+  headline control), and `baseline`. Per-arm mean, W/L/D, and a fixed-seed
+  bootstrap 95% CI on the `true_prior − placebo` delta. Sealed hash-chained report
+  with a `report_sha`; offline deterministic `replay <report>` mode; `--live` fails
+  closed (user-supplied adapter/key, never in CI). Determinism invariant added to
+  the invariant suite; CLI dry-run added to `verify_all.py`. See
+  [docs/prior-state-trial.md](docs/prior-state-trial.md).
+
+### Not Changed
+
+- No verifier or taxonomy change. No LLM output participates in any verdict.
+- No API, model, provider, or network calls in CI.
 
 ## v1.0.4 — Release-gate version-of-record enforcement (2026-06-29)
 
