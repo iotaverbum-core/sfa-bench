@@ -155,6 +155,13 @@ def main() -> int:
     print("prior state trial determinism: PASS")
     print(f"  deterministic replay + headline delta {trial_result['delta_mean']} == mean(true) - mean(placebo)")
 
+    deferred_result = invariants.assert_deferred_consequence_determinism(ROOT)
+    print("deferred-consequence determinism: PASS")
+    print(
+        f"  {deferred_result['cases']} sealed cases, skins {deferred_result['skins']}, "
+        f"horizons {deferred_result['horizons']}; stale answer -> deferred_consequence_stale"
+    )
+
     version_consistency = invariants.assert_repository_version_consistency(ROOT)
     print("repository version consistency: PASS")
     print(

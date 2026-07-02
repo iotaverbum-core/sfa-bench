@@ -43,6 +43,7 @@ COMMAND_FILES = (
     "fingerprint_report.py",
     "policy_demo.py",
     "prior_state_trial.py",
+    "deferred_consequence.py",
 )
 PACKAGE_INIT = ROOT / "sfa" / "__init__.py"
 PACKAGE_VERSION_RE = re.compile(

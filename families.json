@@ -47,6 +47,16 @@
       "label": "Schema Violation"
     },
     {
+      "id": "deferred_consequence",
+      "parent": null,
+      "label": "Deferred Consequence"
+    },
+    {
+      "id": "deferred_consequence_stale",
+      "parent": "deferred_consequence",
+      "label": "Stale Deferred Consequence"
+    },
+    {
       "id": "uncategorized",
       "parent": null,
       "label": "Uncategorized"

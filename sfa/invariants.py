@@ -580,6 +580,58 @@ def assert_prior_state_trial_determinism(repo_root: str | Path) -> dict[str, Any
     return {"report_sha": first["report_sha"], "delta_mean": head["delta_mean"]}
 
 
+def assert_deferred_consequence_determinism(repo_root: str | Path) -> dict[str, Any]:
+    """Deferred-consequence task family: byte-identical replay, valid horizons and
+    skins, gold isolation, and zero-LLM scoring where the stale answer is the
+    characteristic failure classified to ``deferred_consequence_stale``."""
+    from sfa import deferred_consequence as dc
+    from sfa import families as fam_mod
+
+    config = {"seed": 20260301, "per_cell": 1}
+    first = dc.generate_pack(config)
+    second = dc.generate_pack(config)
+    if first["pack_hash"] != second["pack_hash"]:
+        raise InvariantFailure("deferred-consequence pack is not deterministic (pack_hash differs)")
+
+    replayed = dc.replay(first)
+    if not replayed["attested"]:
+        raise InvariantFailure("deferred-consequence replay failed: " + "; ".join(replayed["issues"]))
+
+    horizons = {case["horizon_k"] for case in first["cases"]}
+    if not {1, 3, 5}.issubset(horizons):
+        raise InvariantFailure(f"deferred-consequence horizons incomplete: {sorted(horizons)}")
+    skins = {case["skin"] for case in first["cases"]}
+    if len(skins) < 3:
+        raise InvariantFailure(f"deferred-consequence needs >= 3 skins, got {sorted(skins)}")
+
+    taxonomy, _version = fam_mod.load_taxonomy(Path(repo_root) / "families.json")
+    for family_id in ("deferred_consequence", "deferred_consequence_stale"):
+        if not taxonomy.known(family_id):
+            raise InvariantFailure(f"families.json missing registered family {family_id!r}")
+
+    for case in first["cases"]:
+        if not dc.proposer_view_is_gold_isolated(case):
+            raise InvariantFailure(
+                f"deferred-consequence case {case['case_id']!r} leaks gold into the proposer view"
+            )
+        correct = dc.score_candidate(case, dc.correct_candidate(case))
+        stale = dc.score_candidate(case, dc.stale_candidate(case))
+        if correct["status"] != "PASS":
+            raise InvariantFailure(
+                f"deferred-consequence propagated answer did not PASS for {case['case_id']!r}"
+            )
+        if stale["status"] != "FAIL" or stale["family"] != "deferred_consequence_stale":
+            raise InvariantFailure(
+                f"deferred-consequence stale answer misclassified for {case['case_id']!r}: {stale}"
+            )
+    return {
+        "pack_hash": first["pack_hash"],
+        "cases": len(first["cases"]),
+        "skins": sorted(skins),
+        "horizons": sorted(horizons),
+    }
+
+
 def assert_repository_version_consistency(repo_root: str | Path) -> dict[str, Any]:
     """Fail closed when the version of record drifts across the repository.
 

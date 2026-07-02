@@ -17,9 +17,39 @@ All notable changes to SFA-Bench will be documented in this file.
   the invariant suite; CLI dry-run added to `verify_all.py`. See
   [docs/prior-state-trial.md](docs/prior-state-trial.md).
 
+- **Deferred-consequence task family v0** (`sfa/deferred_consequence.py`,
+  `deferred_consequence.py`): a HOP3-03-class probe for failing to propagate an
+  update through a deferred consequence. A premise at `T` sets `X = v0`; an update
+  at `T+u` (`1 ≤ u ≤ k`) sets `X := v1`; the query binds at the horizon `T+k`,
+  where the correct answer is the propagated `v1` and the characteristic failure
+  preserves the stale `v0`. Horizon `k` is parameterised (default `{1, 3, 5}`),
+  with four rotating surface skins (`inventory`, `ledger_balance`,
+  `access_policy`, `document_status`) over one invariant logical core. Cases are
+  deterministic (SHA-256-seeded, no wall-clock time), sealed with a `case_hash`
+  and a chained `pack_hash`, and replay byte-for-byte. Gold isolation: the
+  proposer-facing view carries only ordered episodes and the query, while the
+  gold-bearing scoring evidence stays verifier-side. Scoring is the fixed SFA
+  verifier (zero LLM): the propagated answer passes and the stale answer fails as
+  `CONTRADICTS_EVIDENCE`. Determinism invariant added to the invariant suite; CLI
+  dry-run added to `verify_all.py`. See
+  [docs/deferred-consequence.md](docs/deferred-consequence.md).
+
+### Taxonomy
+
+- Added two **additive** failure-family leaves, `deferred_consequence` and its
+  child `deferred_consequence_stale`, to `families.json` for the deferred-
+  consequence family's fingerprint support. The change is backward compatible: the
+  family-set is a superset of the prior one, and `classify_family` refines a
+  contradiction to `deferred_consequence_stale` only when scoring evidence is
+  marked `task_family == "deferred_consequence"`. Evidence without that marker
+  classifies exactly as before, so existing artifacts, the ledger, and the
+  fingerprint demo re-derive byte-for-byte unchanged. No `taxonomy_version` bump:
+  formal taxonomy schema versioning/migration is deferred to the causal-edge work.
+
 ### Not Changed
 
-- No verifier or taxonomy change. No LLM output participates in any verdict.
+- No verifier behaviour or `sfa/verifier.py` change; no `sfa/categories.py`
+  change. No LLM output participates in any verdict.
 - No API, model, provider, or network calls in CI.
 
 ## v1.0.4 — Release-gate version-of-record enforcement (2026-06-29)

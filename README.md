@@ -211,6 +211,7 @@ research instrument's release line or its DOI. See
 - [Tamper Suite](docs/tamper-suite.md)
 - [Prior State](docs/prior-state.md)
 - [Prior State Trial](docs/prior-state-trial.md)
+- [Deferred-Consequence Task Family](docs/deferred-consequence.md)
 - [Prior State Memory: Why AI Needs Memory Before the Next Mistake](docs/prior-state-memory.md)
 
 ## Citation

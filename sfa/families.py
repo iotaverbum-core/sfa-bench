@@ -113,9 +113,18 @@ def classify_family(category, candidate, evidence):
     """Map a verifier category to a deterministic leaf family.
 
     UNSUPPORTED_CLAIM is refined into number/date/attribution/citation where the
-    offending claim makes that possible. All other categories map directly to a
-    root family. This is deliberately simple and deterministic.
+    offending claim makes that possible. Deferred-consequence scoring evidence
+    (marked with ``task_family == "deferred_consequence"``) refines a contradiction
+    into the ``deferred_consequence_stale`` leaf, since the characteristic failure
+    of that task family is preserving the pre-update (stale) value. All other
+    categories map directly to a root family. This is deliberately simple and
+    deterministic, and inspects only structured evidence - never a model's opinion
+    and never the expected verdict.
     """
+    if isinstance(evidence, dict) and evidence.get("task_family") == "deferred_consequence":
+        if category == categories.CONTRADICTS_EVIDENCE:
+            return "deferred_consequence_stale"
+        return "deferred_consequence"
     if category == categories.UNSUPPORTED_CLAIM:
         facts = {f.get("subject") for f in evidence.get("facts", []) if isinstance(f, dict)}
         for claim in candidate.get("claims", []):
