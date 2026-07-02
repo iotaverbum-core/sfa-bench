@@ -40,6 +40,7 @@ import json
 from typing import Any
 
 from . import families as families_mod
+from . import property_contract as property_contract_mod
 from . import verifier as verifier_mod
 from .hashing import sha256_hex
 
@@ -276,6 +277,54 @@ def score_candidate(case: dict[str, Any], candidate: dict[str, Any]) -> dict[str
         "family": family,
         "verdict_hash": sha256_hex(verdict.to_dict()),
     }
+
+
+def property_context(case: dict[str, Any]) -> dict[str, Any]:
+    """Gold-absent evaluation context: the structured timeline (verifier-side only).
+
+    Built from the sealed case data (premise value at ``T``, update value at
+    ``T+u``). This is the material the property contract's ``temporal_recency``
+    invariant reads to decide correctness *without* a stored gold answer. It lives
+    on the verifier side and is never part of the proposer view.
+    """
+    bundle = case["scoring"]
+    return {
+        "subject": case["subject"],
+        "timeline": [
+            {"offset": 0, "kind": "premise", "value": bundle["stale_value"]},
+            {"offset": case["update_offset"], "kind": "update", "value": bundle["correct_value"]},
+        ],
+    }
+
+
+def property_contract(case: dict[str, Any]) -> dict[str, Any]:
+    """Build the sealed, gold-absent property contract for a deferred-consequence case."""
+    subject = case["subject"]
+    claim_params = {
+        "subject": subject,
+        "claims_field": "claims",
+        "subject_key": "subject",
+        "value_key": "value",
+    }
+    return property_contract_mod.build_contract(
+        contract_id=f"{case['case_id']}_contract",
+        task_family=TASK_FAMILY,
+        properties=[
+            {"id": "schema", "family": "schema_validity",
+             "params": {"required": {"claims": "list"}}},
+            {"id": "consistency", "family": "internal_consistency",
+             "params": {"claims_field": "claims", "subject_key": "subject", "value_key": "value"}},
+            {"id": "admissible", "family": "invariant_preservation",
+             "params": {"invariant": "value_admissibility", **claim_params}},
+            {"id": "recency", "family": "invariant_preservation",
+             "params": {"invariant": "temporal_recency", **claim_params}},
+        ],
+    )
+
+
+def score_candidate_by_contract(case: dict[str, Any], candidate: dict[str, Any]) -> dict[str, Any]:
+    """Score a candidate with the gold-absent property contract (deterministic conjunction)."""
+    return property_contract_mod.evaluate(property_contract(case), candidate, property_context(case))
 
 
 def _chain_cases(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:

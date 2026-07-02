@@ -213,6 +213,7 @@ research instrument's release line or its DOI. See
 - [Prior State Trial](docs/prior-state-trial.md)
 - [Deferred-Consequence Task Family](docs/deferred-consequence.md)
 - [Recurrence-Decline Metric](docs/recurrence-decline.md)
+- [Property-Based Verifier Contract](docs/property-contract.md)
 - [Prior State Memory: Why AI Needs Memory Before the Next Mistake](docs/prior-state-memory.md)
 
 ## Citation

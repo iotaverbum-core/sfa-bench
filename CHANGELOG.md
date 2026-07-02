@@ -48,6 +48,21 @@ All notable changes to SFA-Bench will be documented in this file.
   a unit test in the invariant suite. See
   [docs/recurrence-decline.md](docs/recurrence-decline.md).
 
+- **Property-based verifier contract for gold-absent tasks**
+  (`sfa/property_contract.py`, `property_contract.py`): a gold-absent verdict path
+  that decides accept/reject from decidable properties instead of a stored gold
+  answer. Four property families — `schema_validity`, `citation_grounding`,
+  `internal_consistency`, and `invariant_preservation` (with `temporal_recency`
+  and `value_admissibility` invariants) — each a pure deterministic predicate. The
+  contract is versioned and sealed (`contract_hash`); the verdict is the
+  deterministic conjunction (`all`) of its properties, sealed with a
+  `verdict_hash`. Wires the item-2 deferred-consequence family: `temporal_recency`
+  decides correctness from the sealed timeline (the propagated answer passes; the
+  stale answer fails `recency`) with no gold label. Property definitions are sealed
+  and never enter a proposer prompt. Determinism/behaviour invariant added to the
+  suite; CLI dry-run added to `verify_all.py`. The fixed `sfa/verifier.py` is
+  unchanged. See [docs/property-contract.md](docs/property-contract.md).
+
 ### Taxonomy
 
 - Added two **additive** failure-family leaves, `deferred_consequence` and its
