@@ -1,0 +1,19 @@
+{
+  "schema": "sfa_bench.fable5_failure_delta.failure_modes.v0",
+  "suite_version": "frontier_delta_v0",
+  "model": "claude-fable-5",
+  "generated_at": "2026-07-03T17:20:29.9164283+00:00",
+  "blind_task_prompt_only": true,
+  "candidate_only_no_valid_delta_yet": true,
+  "selected_task_ids": [
+    "contradiction_recovery_001",
+    "tool_false_completion_001"
+  ],
+  "failure_modes": [
+    {
+      "failure_mode": "missing_evidence",
+      "count": 1
+    }
+  ],
+  "failure_modes_sha256": "bbad279018590a3a67a956ccbfe4cd2f503e73545ab190fefdb294d66d1078e6"
+}
