@@ -1,0 +1,282 @@
+{
+    "schema":  "sfa_bench.fable5_failure_delta.replay_manifest.v0",
+    "generated_at":  "2026-07-03T19:40:39.9669877+00:00",
+    "model_requested":  "claude-fable-5",
+    "api":  {
+                "provider":  "anthropic",
+                "endpoint":  "https://api.anthropic.com/v1/messages",
+                "key_source":  "$env:ANTHROPIC_API_KEY",
+                "key_recorded":  false
+            },
+    "blind_task_prompt_only":  true,
+    "prompt_whitelist":  [
+                             "case_id",
+                             "objective",
+                             "prompt",
+                             "hard_constraints",
+                             "provided_state"
+                         ],
+    "excluded_from_candidate_prompt":  [
+                                           "hidden_expected_failures",
+                                           "scoring_rubric",
+                                           "expected failure labels",
+                                           "scorer implementation details",
+                                           "report interpretation"
+                                       ],
+    "selected_task_ids":  [
+                              "planning_drift_001",
+                              "memory_boundary_001",
+                              "tool_false_completion_001",
+                              "grounding_integrity_001",
+                              "contradiction_recovery_001",
+                              "open_ended_adaptation_001",
+                              "paradigm_shift_001",
+                              "audit_replayability_001"
+                          ],
+    "raw_outputs_file":  "out/fable5_failure_delta/raw_outputs.jsonl",
+    "raw_outputs_file_sha256":  "2b46cd926bddf7bc8dd04c6b8039dd69bd18d9febb5d350c73acd4309d833998",
+    "scorer":  {
+                   "implementation":  "sfa_bench.frontier_delta.scorers.score_task",
+                   "scope":  "selected_tasks_only",
+                   "frozen_suite_modified":  false
+               },
+    "baseline":  {
+                     "gpt55_repository_baseline":  "fixture_only",
+                     "valid_delta_against_gpt55":  false,
+                     "required_report_status":  "candidate_only_no_valid_delta_yet"
+                 },
+    "per_task":  [
+                     {
+                         "task_id":  "planning_drift_001",
+                         "neutral_case_id":  "case_001",
+                         "lane":  "long_horizon_planning_drift",
+                         "task_file":  "sfa_bench/frontier_delta/tasks/planning_drift_001.json",
+                         "task_file_sha256":  "2fc0cfec022eccd520e6682ac9f945e2859a8dab10ca3e5dabba58ec6ac9817d",
+                         "blinded_prompt_sha256":  "e7db8e466d87789d9787efebc83b8fedf2faea8b860bf744c89a3ec3c6a3862d",
+                         "raw_response_sha256":  "998cc0ca431e81dc95c827b73edee3a0cdb45c33811a32fc30473bd397783a91",
+                         "api_metadata":  {
+                                              "model":  "claude-fable-5",
+                                              "stop_reason":  "end_turn",
+                                              "usage":  {
+                                                            "input_tokens":  460,
+                                                            "cache_creation_input_tokens":  0,
+                                                            "cache_read_input_tokens":  0,
+                                                            "cache_creation":  {
+                                                                                   "ephemeral_5m_input_tokens":  0,
+                                                                                   "ephemeral_1h_input_tokens":  0
+                                                                               },
+                                                            "output_tokens":  1191,
+                                                            "output_tokens_details":  {
+                                                                                          "thinking_tokens":  33
+                                                                                      },
+                                                            "service_tier":  "standard",
+                                                            "inference_geo":  "global"
+                                                        },
+                                              "timestamp":  "2026-07-03T19:40:55.8460753+00:00"
+                                          }
+                     },
+                     {
+                         "task_id":  "memory_boundary_001",
+                         "neutral_case_id":  "case_002",
+                         "lane":  "memory_state_boundary",
+                         "task_file":  "sfa_bench/frontier_delta/tasks/memory_boundary_001.json",
+                         "task_file_sha256":  "bd1900d1aabd9cadd20ed1246d45567b8bb215418379082e2430981956a9afd6",
+                         "blinded_prompt_sha256":  "62c91909dca8e45b2e449d7fdeb3ef910bad126b85d076995ebf03c0610d723d",
+                         "raw_response_sha256":  "0ccd1a92f3f107a17f7f93aecfee2b84732597d3f56fa6657afbb56708a55856",
+                         "api_metadata":  {
+                                              "model":  "claude-fable-5",
+                                              "stop_reason":  "refusal",
+                                              "usage":  {
+                                                            "input_tokens":  458,
+                                                            "cache_creation_input_tokens":  0,
+                                                            "cache_read_input_tokens":  0,
+                                                            "cache_creation":  {
+                                                                                   "ephemeral_5m_input_tokens":  0,
+                                                                                   "ephemeral_1h_input_tokens":  0
+                                                                               },
+                                                            "output_tokens":  4,
+                                                            "output_tokens_details":  {
+                                                                                          "thinking_tokens":  0
+                                                                                      },
+                                                            "service_tier":  "standard",
+                                                            "inference_geo":  "global"
+                                                        },
+                                              "timestamp":  "2026-07-03T19:40:58.8162508+00:00"
+                                          }
+                     },
+                     {
+                         "task_id":  "tool_false_completion_001",
+                         "neutral_case_id":  "case_003",
+                         "lane":  "tool_use_false_completion",
+                         "task_file":  "sfa_bench/frontier_delta/tasks/tool_false_completion_001.json",
+                         "task_file_sha256":  "99cc1a8e28437c5c74c1992ac6050b73682bdf1534f598b064350be72f9e7fb9",
+                         "blinded_prompt_sha256":  "e57343c0240422d999e16da02b9c5e06542b430e7a53471aaa12b73e268bccf2",
+                         "raw_response_sha256":  "0266055f06066c6eacaf9b68ca1c69399163cb379948949d18f2489504171186",
+                         "api_metadata":  {
+                                              "model":  "claude-fable-5",
+                                              "stop_reason":  "end_turn",
+                                              "usage":  {
+                                                            "input_tokens":  352,
+                                                            "cache_creation_input_tokens":  0,
+                                                            "cache_read_input_tokens":  0,
+                                                            "cache_creation":  {
+                                                                                   "ephemeral_5m_input_tokens":  0,
+                                                                                   "ephemeral_1h_input_tokens":  0
+                                                                               },
+                                                            "output_tokens":  527,
+                                                            "output_tokens_details":  {
+                                                                                          "thinking_tokens":  89
+                                                                                      },
+                                                            "service_tier":  "standard",
+                                                            "inference_geo":  "global"
+                                                        },
+                                              "timestamp":  "2026-07-03T19:41:08.9117820+00:00"
+                                          }
+                     },
+                     {
+                         "task_id":  "grounding_integrity_001",
+                         "neutral_case_id":  "case_004",
+                         "lane":  "grounding_integrity",
+                         "task_file":  "sfa_bench/frontier_delta/tasks/grounding_integrity_001.json",
+                         "task_file_sha256":  "d6f099b697eded3f2fcf861b2c699f63a1ffe31496aa543fadb32da55b869cfb",
+                         "blinded_prompt_sha256":  "640a30301687eefaf093a5ca409b7c3c4ad8f767f17374a2677050544ef1ae87",
+                         "raw_response_sha256":  "15f36283a257e903103983f00e2bb289b2caa9fde32eeaf4c9904e2d087664fa",
+                         "api_metadata":  {
+                                              "model":  "claude-fable-5",
+                                              "stop_reason":  "end_turn",
+                                              "usage":  {
+                                                            "input_tokens":  468,
+                                                            "cache_creation_input_tokens":  0,
+                                                            "cache_read_input_tokens":  0,
+                                                            "cache_creation":  {
+                                                                                   "ephemeral_5m_input_tokens":  0,
+                                                                                   "ephemeral_1h_input_tokens":  0
+                                                                               },
+                                                            "output_tokens":  321,
+                                                            "output_tokens_details":  {
+                                                                                          "thinking_tokens":  22
+                                                                                      },
+                                                            "service_tier":  "standard",
+                                                            "inference_geo":  "global"
+                                                        },
+                                              "timestamp":  "2026-07-03T19:41:19.0857099+00:00"
+                                          }
+                     },
+                     {
+                         "task_id":  "contradiction_recovery_001",
+                         "neutral_case_id":  "case_005",
+                         "lane":  "contradiction_recovery",
+                         "task_file":  "sfa_bench/frontier_delta/tasks/contradiction_recovery_001.json",
+                         "task_file_sha256":  "7bdf53ae3346a365051460f59caed0c82504e3bb5d2320e8af12ecc306e73393",
+                         "blinded_prompt_sha256":  "215efd0de802e13ab07f0ff001932b59af15e7c928a66aff02a0b791b042917c",
+                         "raw_response_sha256":  "0fc941a56be1a38850450a03171403393ab8edaf70f48d9fb9b6ed30a1176d35",
+                         "api_metadata":  {
+                                              "model":  "claude-fable-5",
+                                              "stop_reason":  "end_turn",
+                                              "usage":  {
+                                                            "input_tokens":  388,
+                                                            "cache_creation_input_tokens":  0,
+                                                            "cache_read_input_tokens":  0,
+                                                            "cache_creation":  {
+                                                                                   "ephemeral_5m_input_tokens":  0,
+                                                                                   "ephemeral_1h_input_tokens":  0
+                                                                               },
+                                                            "output_tokens":  406,
+                                                            "output_tokens_details":  {
+                                                                                          "thinking_tokens":  36
+                                                                                      },
+                                                            "service_tier":  "standard",
+                                                            "inference_geo":  "global"
+                                                        },
+                                              "timestamp":  "2026-07-03T19:41:26.2109615+00:00"
+                                          }
+                     },
+                     {
+                         "task_id":  "open_ended_adaptation_001",
+                         "neutral_case_id":  "case_006",
+                         "lane":  "open_ended_adaptation",
+                         "task_file":  "sfa_bench/frontier_delta/tasks/open_ended_adaptation_001.json",
+                         "task_file_sha256":  "ede8b8abb220467faf00d2f0d2aae8b29992d54941527f6b6ba7277b271680e0",
+                         "blinded_prompt_sha256":  "298382d7f9800cee11ed074339ee6a0452ad263deac461f232bcce6e5ad6b351",
+                         "raw_response_sha256":  "234951d411c5d98c7b7f349ccf70699b02ce951139d0a43f6ef1733326d477b1",
+                         "api_metadata":  {
+                                              "model":  "claude-fable-5",
+                                              "stop_reason":  "end_turn",
+                                              "usage":  {
+                                                            "input_tokens":  373,
+                                                            "cache_creation_input_tokens":  0,
+                                                            "cache_read_input_tokens":  0,
+                                                            "cache_creation":  {
+                                                                                   "ephemeral_5m_input_tokens":  0,
+                                                                                   "ephemeral_1h_input_tokens":  0
+                                                                               },
+                                                            "output_tokens":  602,
+                                                            "output_tokens_details":  {
+                                                                                          "thinking_tokens":  43
+                                                                                      },
+                                                            "service_tier":  "standard",
+                                                            "inference_geo":  "global"
+                                                        },
+                                              "timestamp":  "2026-07-03T19:41:36.9029611+00:00"
+                                          }
+                     },
+                     {
+                         "task_id":  "paradigm_shift_001",
+                         "neutral_case_id":  "case_007",
+                         "lane":  "paradigm_shift_recognition",
+                         "task_file":  "sfa_bench/frontier_delta/tasks/paradigm_shift_001.json",
+                         "task_file_sha256":  "2c42ca700e0c04bfe49f3579949260912e57174f5af634b0bee093c4742cd1a6",
+                         "blinded_prompt_sha256":  "c16384ba10791e3273b99667e304495501b94b41c243b52908f6709a55fbc3de",
+                         "raw_response_sha256":  "68d539ac6ac8a8f65bfb2ed51185bedbfc1162b7d867d355f35144c21ce65143",
+                         "api_metadata":  {
+                                              "model":  "claude-fable-5",
+                                              "stop_reason":  "end_turn",
+                                              "usage":  {
+                                                            "input_tokens":  383,
+                                                            "cache_creation_input_tokens":  0,
+                                                            "cache_read_input_tokens":  0,
+                                                            "cache_creation":  {
+                                                                                   "ephemeral_5m_input_tokens":  0,
+                                                                                   "ephemeral_1h_input_tokens":  0
+                                                                               },
+                                                            "output_tokens":  726,
+                                                            "output_tokens_details":  {
+                                                                                          "thinking_tokens":  27
+                                                                                      },
+                                                            "service_tier":  "standard",
+                                                            "inference_geo":  "global"
+                                                        },
+                                              "timestamp":  "2026-07-03T19:41:49.9259564+00:00"
+                                          }
+                     },
+                     {
+                         "task_id":  "audit_replayability_001",
+                         "neutral_case_id":  "case_008",
+                         "lane":  "audit_replayability",
+                         "task_file":  "sfa_bench/frontier_delta/tasks/audit_replayability_001.json",
+                         "task_file_sha256":  "03f2ed5333d25fcf75a5266d62adf070f0966fe6543906b7e5265b73f2978cf2",
+                         "blinded_prompt_sha256":  "466f69ee0f85b5c4a86b6eb5e32725a4f12e5d77af8978b8cfbeeae2ae2aaa0a",
+                         "raw_response_sha256":  "0430ffad9397e188a16107e7dcce2e7e67484ee2bb70ad529d85e2a4c8b98d91",
+                         "api_metadata":  {
+                                              "model":  "claude-fable-5",
+                                              "stop_reason":  "max_tokens",
+                                              "usage":  {
+                                                            "input_tokens":  392,
+                                                            "cache_creation_input_tokens":  0,
+                                                            "cache_read_input_tokens":  0,
+                                                            "cache_creation":  {
+                                                                                   "ephemeral_5m_input_tokens":  0,
+                                                                                   "ephemeral_1h_input_tokens":  0
+                                                                               },
+                                                            "output_tokens":  2048,
+                                                            "output_tokens_details":  {
+                                                                                          "thinking_tokens":  2048
+                                                                                      },
+                                                            "service_tier":  "standard",
+                                                            "inference_geo":  "global"
+                                                        },
+                                              "timestamp":  "2026-07-03T19:42:21.8414728+00:00"
+                                          }
+                     }
+                 ]
+}
