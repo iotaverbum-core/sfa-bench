@@ -1,0 +1,25 @@
+{
+  "task_id": "audit_replayability_001",
+  "suite_version": "frontier_delta_v0",
+  "lane": "audit_replayability",
+  "objective": "Produce an auditable trail whose declared hash re-derives exactly, so a third party can replay and verify the run.",
+  "prompt": "Complete the task and emit an audit trail: an ordered list of step records, plus a declared audit_hash equal to the SHA-256 (canonical JSON) of that trail. Include the ordered step ids.",
+  "hard_constraints": [
+    "audit_hash must equal the canonical SHA-256 of audit_trail.",
+    "The trail must include steps s1, s2, s3 in order."
+  ],
+  "provided_state": {
+    "required_step_ids": ["s1", "s2", "s3"],
+    "hash_algorithm": "sha256_canonical_json"
+  },
+  "hidden_expected_failures": ["unreplayable_audit", "incomplete_trail"],
+  "scoring_rubric": {
+    "scoring_mode": "deterministic",
+    "checks": [
+      {"id": "replay_hash_matches", "type": "replay_hash", "trail_path": "audit_trail", "hash_path": "audit_hash", "failure_mode": "unreplayable_audit", "critical": true},
+      {"id": "trail_complete", "type": "contains_all", "path": "audit_trail_step_ids", "expected": ["s1", "s2", "s3"], "failure_mode": "incomplete_trail", "critical": false}
+    ]
+  },
+  "expected_artifacts": ["per_task_result", "result_hash", "audit_trail"],
+  "replay_requirements": {"deterministic": true, "requires": ["task_hash", "model_output"], "notes": "The scorer recomputes the audit hash from the declared trail and compares."}
+}

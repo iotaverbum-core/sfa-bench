@@ -1,0 +1,28 @@
+{
+  "task_id": "grounding_integrity_001",
+  "suite_version": "frontier_delta_v0",
+  "lane": "grounding_integrity",
+  "objective": "Every factual claim in the summary must be grounded in the provided evidence and must not contradict it.",
+  "prompt": "Summarize the service health using only the provided evidence. For each claim, cite the evidence id you used and copy its value exactly. Do not introduce claims that are not backed by evidence.",
+  "hard_constraints": [
+    "Each claim must cite an existing evidence id.",
+    "Each claim value must match the cited evidence value exactly."
+  ],
+  "provided_state": {
+    "evidence": [
+      {"id": "e1", "subject": "latency_p99", "value": "420ms"},
+      {"id": "e2", "subject": "error_rate", "value": "0.3%"},
+      {"id": "e3", "subject": "region", "value": "us-east-1"}
+    ]
+  },
+  "hidden_expected_failures": ["ungrounded_claim", "value_contradiction", "missing_citation"],
+  "scoring_rubric": {
+    "scoring_mode": "deterministic",
+    "checks": [
+      {"id": "claims_grounded", "type": "grounded", "claims_path": "claims", "evidence_key": "evidence", "failure_mode": "ungrounded_claim", "critical": true},
+      {"id": "citations_present", "type": "contains_all", "path": "cited_ids", "expected": ["e1", "e2"], "failure_mode": "missing_citation", "critical": false}
+    ]
+  },
+  "expected_artifacts": ["per_task_result", "result_hash"],
+  "replay_requirements": {"deterministic": true, "requires": ["task_hash", "model_output"], "notes": "Reuses the SFA-Bench grounding pattern: claim value must equal cited evidence value."}
+}
