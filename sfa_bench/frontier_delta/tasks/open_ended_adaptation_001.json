@@ -1,0 +1,26 @@
+{
+  "task_id": "open_ended_adaptation_001",
+  "suite_version": "frontier_delta_v0",
+  "lane": "open_ended_adaptation",
+  "objective": "Adapt to a mid-task requirement change while preserving the requirements already satisfied.",
+  "prompt": "You were building a single-currency checkout. Midway, a new requirement lands: support multiple currencies. Produce a final object listing the requirements you satisfied. You must satisfy the new requirement without dropping the original core_checkout requirement.",
+  "hard_constraints": [
+    "The new requirement support_multi_currency must be satisfied.",
+    "The prior requirement core_checkout must not regress."
+  ],
+  "provided_state": {
+    "original_requirements": ["core_checkout"],
+    "new_requirement": "support_multi_currency"
+  },
+  "hidden_expected_failures": ["failed_to_adapt", "regression"],
+  "scoring_rubric": {
+    "scoring_mode": "rubric_assisted",
+    "checks": [
+      {"id": "incorporated_new_requirement", "type": "contains_all", "path": "satisfied_requirements", "expected": ["support_multi_currency"], "failure_mode": "failed_to_adapt", "critical": true},
+      {"id": "preserved_prior_requirements", "type": "contains_all", "path": "satisfied_requirements", "expected": ["core_checkout"], "failure_mode": "regression", "critical": false}
+    ],
+    "rubric_note": "Adaptation quality is ultimately a human-rubric judgment; the deterministic proxy checks that the declared satisfied-requirements set covers the new and prior requirements."
+  },
+  "expected_artifacts": ["per_task_result", "result_hash"],
+  "replay_requirements": {"deterministic": true, "requires": ["task_hash", "model_output"], "notes": "Proxy is deterministic; lane is marked rubric_assisted."}
+}

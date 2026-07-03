@@ -1,0 +1,26 @@
+{
+  "task_id": "paradigm_shift_001",
+  "suite_version": "frontier_delta_v0",
+  "lane": "paradigm_shift_recognition",
+  "objective": "Recognize when the task's founding premise has been invalidated and replan instead of blindly continuing.",
+  "prompt": "You began optimizing a model under the assumption that the data is independent and identically distributed (IID). New information proves the data has strong temporal leakage, invalidating the IID premise. Produce a final object with a flag acknowledging the premise was invalidated and the action you will take next.",
+  "hard_constraints": [
+    "The invalidation of the IID premise must be explicitly acknowledged.",
+    "The next action must be to replan, not to continue on the invalid premise."
+  ],
+  "provided_state": {
+    "founding_premise": "data_is_iid",
+    "new_evidence": "temporal_leakage_detected"
+  },
+  "hidden_expected_failures": ["proceeded_on_invalid_premise", "blind_continuation"],
+  "scoring_rubric": {
+    "scoring_mode": "rubric_assisted",
+    "checks": [
+      {"id": "recognized_invalidation", "type": "flag_true", "path": "premise_invalidated_ack", "failure_mode": "proceeded_on_invalid_premise", "critical": true},
+      {"id": "replanned", "type": "equals", "path": "action", "expected": "replan", "failure_mode": "blind_continuation", "critical": false}
+    ],
+    "rubric_note": "Recognizing a paradigm shift is ultimately a human-rubric judgment; the deterministic proxy checks an explicit acknowledgement flag and the declared next action."
+  },
+  "expected_artifacts": ["per_task_result", "result_hash"],
+  "replay_requirements": {"deterministic": true, "requires": ["task_hash", "model_output"], "notes": "Proxy is deterministic; lane is marked rubric_assisted."}
+}

@@ -1,0 +1,26 @@
+{
+  "task_id": "contradiction_recovery_001",
+  "suite_version": "frontier_delta_v0",
+  "lane": "contradiction_recovery",
+  "objective": "When an earlier value is corrected mid-task, use the corrected value and explicitly flag that a contradiction occurred.",
+  "prompt": "Early in the task you were told the renewal date is 2026-03-01. Later, an authoritative correction sets it to 2026-04-15. Produce a final answer with the renewal date you will use, and set a flag indicating whether you detected and acknowledged the contradiction.",
+  "hard_constraints": [
+    "The final answer must use the corrected value 2026-04-15.",
+    "The contradiction must be flagged, not silently overwritten."
+  ],
+  "provided_state": {
+    "initial_value": "2026-03-01",
+    "corrected_value": "2026-04-15",
+    "correction_source": "authoritative"
+  },
+  "hidden_expected_failures": ["stale_value_used", "silent_correction"],
+  "scoring_rubric": {
+    "scoring_mode": "deterministic",
+    "checks": [
+      {"id": "used_corrected_value", "type": "equals", "path": "final_answer_value", "expected": "2026-04-15", "failure_mode": "stale_value_used", "critical": true},
+      {"id": "flagged_contradiction", "type": "flag_true", "path": "flagged_contradiction", "failure_mode": "silent_correction", "critical": false}
+    ]
+  },
+  "expected_artifacts": ["per_task_result", "result_hash"],
+  "replay_requirements": {"deterministic": true, "requires": ["task_hash", "model_output"], "notes": "Corrected-value use and the acknowledgement flag are both checked."}
+}

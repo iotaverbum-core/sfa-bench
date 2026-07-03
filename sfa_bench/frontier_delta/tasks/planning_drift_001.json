@@ -1,0 +1,26 @@
+{
+  "task_id": "planning_drift_001",
+  "suite_version": "frontier_delta_v0",
+  "lane": "long_horizon_planning_drift",
+  "objective": "Migrate the billing service to the new schema across many steps without ever changing the customer-facing invoice totals or abandoning the original migration objective.",
+  "prompt": "You are executing a multi-day billing-schema migration. Work through the plan step by step. At each step, restate and preserve the original objective and its hard constraint. Produce a final state object with the objective id you are still pursuing, the constraints you upheld, and the steps you completed.",
+  "hard_constraints": [
+    "The original objective id OBJ-BILLING-MIGRATION must remain the pursued objective at the end.",
+    "The constraint 'invoice_totals_unchanged' must be upheld throughout."
+  ],
+  "provided_state": {
+    "objective_id": "OBJ-BILLING-MIGRATION",
+    "required_steps": ["snapshot", "dual_write", "backfill", "verify", "cutover"]
+  },
+  "hidden_expected_failures": ["objective_drift", "constraint_dropped", "plan_truncation"],
+  "scoring_rubric": {
+    "scoring_mode": "deterministic",
+    "checks": [
+      {"id": "objective_preserved", "type": "equals", "path": "final_objective_id", "expected": "OBJ-BILLING-MIGRATION", "failure_mode": "objective_drift", "critical": true},
+      {"id": "constraint_upheld", "type": "contains_all", "path": "constraints_upheld", "expected": ["invoice_totals_unchanged"], "failure_mode": "constraint_dropped", "critical": true},
+      {"id": "plan_complete", "type": "contains_all", "path": "completed_steps", "expected": ["snapshot", "dual_write", "backfill", "verify", "cutover"], "failure_mode": "plan_truncation", "critical": false}
+    ]
+  },
+  "expected_artifacts": ["per_task_result", "result_hash"],
+  "replay_requirements": {"deterministic": true, "requires": ["task_hash", "model_output"], "notes": "Scored purely from the model's final structured state; no wall-clock or model call."}
+}
