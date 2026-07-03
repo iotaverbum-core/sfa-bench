@@ -47,3 +47,25 @@ jobs:
 
       - name: GroundLedger CLI smoke test
         run: groundledger verify
+
+  frontier:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Frontier Delta Suite tests
+        run: python -m unittest discover -s tests -t . -p 'test_*.py'
+
+      - name: Frontier Delta runner fixture smoke test
+        run: >
+          python -m sfa_bench.frontier_delta.runner
+          --suite frontier_delta_v0
+          --model gpt-5.5
+          --input sfa_bench/frontier_delta/fixtures/gpt55_outputs.jsonl
+          --now 2026-07-03T00:00:00+00:00
