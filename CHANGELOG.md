@@ -4,6 +4,33 @@ All notable changes to SFA-Bench will be documented in this file.
 
 ## Unreleased — SFA-AutoLab v0
 
+### Added (AutoLab Item 3 — Loop controller)
+
+- **AutoLab loop controller** (`autolab/controller.py`, `loop_controller_demo.py`):
+  one iteration as a **pure, deterministic function** of its config — propose →
+  public suite → budgeted holdout → paired comparison via the Item-1 trial harness
+  (arms `candidate` / `incumbent` / `ancestor_anchor`, identical seeds, bootstrap
+  95% CI on `candidate − incumbent`, pre-registered threshold) → sealed
+  improvement report → the Item-2 asymmetric gate → a PR payload with the
+  declaration + report attached. **No autonomous promotion**: an iteration ends at
+  `awaiting_human_ratification` and records that promotion `requires`
+  deterministic-gate-green **and** a human token. The report's numbers come only
+  from frozen evaluators (the fixed verifier via the harness, the public suite,
+  the holdout); the builder contributes only an advisory rationale, excluded from
+  the gate. **Budgeted holdout**: coarse feedback (lane pass/fail + aggregate
+  delta, never per-case gold), append-only non-reused seeds from a deterministic
+  schedule, metered per suite version with a `budget_exhausted` flag. Each
+  iteration brackets itself with a pre/post frozen-zone attestation. The default
+  `stub-autolab-builder-v0` is a deterministic mechanism model (config-overridable
+  arm probabilities let the harness exercise a rejecting iteration); `--live` (a
+  real builder) is opt-in and never in CI. The iteration seals to a hash-chained
+  `loop_hash` and `replay` re-derives it byte-for-byte. The controller is
+  **frozen** (invariant 1): manifest → `fz-v0.3.0` (14 frozen files) with an
+  append-only amendment record `fz-v0.3.0-add-controller`. 26 deterministic tests.
+  No verifier, taxonomy, or version-of-record change. See
+  [docs/autolab-loop-controller.md](docs/autolab-loop-controller.md) and
+  [docs/checkpoints/autolab-item-3-loop-controller.md](docs/checkpoints/autolab-item-3-loop-controller.md).
+
 ### Added (AutoLab Item 2 — Pre-registration module)
 
 - **Pre-registration declaration + asymmetric gate** (`autolab/preregistration.py`,

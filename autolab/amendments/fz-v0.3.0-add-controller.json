@@ -1,0 +1,13 @@
+{
+  "schema": "sfa.autolab.frozen_zone.amendment.v0",
+  "amendment_id": "fz-v0.3.0-add-controller",
+  "manifest_version": "fz-v0.3.0",
+  "prev_zone_hash": "d9fa889ae405b1da107ecaa0a18f8b45281054406637f24a692261f93f06f72b",
+  "new_zone_hash": "7edfb561a2ea9e0aad4299cddaae3b8422f19a32093b56afbb3059f8f14a0685",
+  "applies_to": [
+    "autolab/controller.py"
+  ],
+  "reason": "Item 3 adds the AutoLab loop controller. Invariant 1 lists the controller as frozen (unpatchable by the loop it orchestrates); add it to the frozen zone.",
+  "author": "Matthew Neal (human amendment channel)",
+  "authored_on": "2026-07-06"
+}

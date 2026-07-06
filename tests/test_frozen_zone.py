@@ -339,6 +339,17 @@ class RealRepositoryTests(unittest.TestCase):
                          "frozen_zone_check.py", fz.MANIFEST_RELPATH):
             self.assertIn(required, manifest["frozen_paths"], required)
 
+    def test_head_amendment_matches_current_zone(self):
+        """The amendment for the current manifest_version seals the current zone."""
+        manifest = fz.load_manifest(REPO_ROOT)
+        version = manifest["manifest_version"]
+        if version == "fz-v0.1.0":
+            self.skipTest("genesis manifest has no amendment record")
+        amendments = {a.get("manifest_version"): a for a in fz.load_amendments(REPO_ROOT)}
+        head = amendments.get(version)
+        self.assertIsNotNone(head, f"no amendment record for {version}")
+        self.assertEqual(head["new_zone_hash"], manifest["zone_hash"])
+
 
 if __name__ == "__main__":
     unittest.main()

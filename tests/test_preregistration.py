@@ -239,13 +239,16 @@ class FrozenZoneIntegrationTests(unittest.TestCase):
 
     def test_amendment_record_documents_the_transition(self):
         from autolab import frozen_zone as fz
-        manifest = fz.load_manifest(REPO_ROOT)
         amendments = {a.get("amendment_id"): a for a in fz.load_amendments(REPO_ROOT)}
         record = amendments.get("fz-v0.2.0-add-preregistration")
         self.assertIsNotNone(record, "fz-v0.2.0 amendment record missing")
-        # The amendment's new_zone_hash must match the currently sealed zone.
-        self.assertEqual(record["new_zone_hash"], manifest["zone_hash"])
+        # The record is internally well-formed and adds the gate module. (Its
+        # new_zone_hash matches the *fz-v0.2.0* head, which may no longer be the
+        # current manifest once later items amend the zone again.)
         self.assertIn("autolab/preregistration.py", record["applies_to"])
+        self.assertEqual(record["manifest_version"], "fz-v0.2.0")
+        for key in ("prev_zone_hash", "new_zone_hash"):
+            self.assertRegex(record[key], r"^[0-9a-f]{64}$")
 
 
 if __name__ == "__main__":
