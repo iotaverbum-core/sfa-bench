@@ -85,5 +85,4 @@ intended surface for AutoLab.
 ## Not in this item
 
 Version-of-record stays `v1.1.0` (the version bump is proposed in the final PR).
-The AutoLab controller path is not yet in the manifest; it will be added by
-amendment when Item 3 lands.
+The AutoLab controller path is added by the Item 3 amendment (`fz-v0.3.0-add-controller`).

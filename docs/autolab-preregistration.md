@@ -26,7 +26,10 @@ Sealed before patch generation:
   "eval_plan": { "suite": "public+holdout",
                  "arms": ["candidate", "incumbent", "ancestor_anchor"],
                  "seeds": [...], "n": 30, "bootstrap": 2000,
-                 "harness": "sfa.prior_state_trial.v1" },
+                 "harness": "sfa.prior_state_trial.v1",
+                 "holdout": { "budget_id": "frontier-delta-holdout:hd-v0.1.0",
+                              "suite": "frontier-delta-holdout",
+                              "version": "hd-v0.1.0", "units": 1 } },
   "protected_metrics": [
     { "name": "public_suite_pass_rate", "direction": "no_decrease", "tolerance": 0.0 },
     { "name": "holdout_lane_pass_count", "direction": "no_decrease", "tolerance": 0.0 },
@@ -81,12 +84,12 @@ raises (a tampered declaration is not evaluated).
 
 ## What is and isn't enforced yet
 
-Enforced now: hash binding of report → declaration, eval-plan conformance,
-recomputed primary + Pareto checks, determinism, and gate asymmetry. The
-*temporal* commitment ("declared before the patch") is realized by the loop
-controller (Item 3), which seals the declaration into the meta-ledger before
-invoking the builder; here it is represented by `phase: "pre_patch"` and the
-report's hash reference back to the sealed declaration.
+Enforced by Item 2: hash binding of report -> declaration, eval-plan
+conformance, recomputed primary + Pareto checks, determinism, and gate
+asymmetry. Enforced by Item 3: the loop controller seals the declaration into
+the append-only meta-ledger before invoking the builder, and consumes any
+declared holdout access against a bounded budget before the builder callback
+runs. See [`docs/autolab-controller.md`](autolab-controller.md).
 
 ## CLI / fixtures
 

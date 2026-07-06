@@ -50,14 +50,14 @@ check.
    `test_self_reported_booleans_do_not_help_a_bad_report`). ✔ Enforced.
 
 4. **Append-only lineage.** The declaration and report are sealed with canonical
-   hashes; the report references the declaration by hash. The full meta-ledger is
-   Item 5; this item produces the sealed, hash-bound records it will chain. ✔
-   Consistent; not yet complete (by design).
+   hashes; the report references the declaration by hash. Item 3 now chains the
+   declaration record in the meta-ledger; Item 2 remains the hash-bound gate
+   policy. Consistent.
 
 5. **Budgeted holdout.** Not exercised beyond the eval plan naming a holdout lane;
-   no holdout data is read here. The declaration's `eval_plan` is the pre-registered
-   place where holdout suite/version and seeds are committed, which the budgeted
-   holdout machinery (Item 3/5) will consume append-only. ✔ Respected.
+   no holdout data is read here. The declaration's `eval_plan` is the
+   pre-registered place where holdout suite/version and seeds are committed; Item
+   3 consumes that holdout plan append-only against a bounded budget. Respected.
 
 6. **Determinism and offline CI.** `evaluate_gate` is a pure function; sealing is
    deterministic; fixtures are sealed and re-verified; no wall-clock, network,
@@ -91,4 +91,4 @@ None. No invariant was bent.
 
 Version-of-record stays `v1.1.0` (the bump is proposed in the final PR). The loop
 controller that seals the declaration *before* invoking the builder, and the
-budgeted-holdout consumption, are Item 3.
+budgeted-holdout consumption, are implemented in Item 3.

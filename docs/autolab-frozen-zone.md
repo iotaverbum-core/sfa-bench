@@ -8,9 +8,9 @@ that to mean anything, the parts that decide, measure, and record must be
 This is scaffold-level self-improvement, not an autonomous agent editing its own
 judge. The frozen zone is the boundary that keeps the distinction honest.
 
-## What is frozen (v0)
+## What is frozen (v0.3.0)
 
-The manifest (`autolab/frozen_manifest.json`) declares the frozen paths. v0:
+The manifest (`autolab/frozen_manifest.json`) declares the frozen paths. v0.3.0:
 
 | Path | Why it is frozen |
 | --- | --- |
@@ -24,16 +24,15 @@ The manifest (`autolab/frozen_manifest.json`) declares the frozen paths. v0:
 | `seed_history.py` | seed schedule machinery |
 | `holdout/frontier-delta-holdout_hd-v0.1.0_PREREGISTRATION.md` | holdout access machinery (sealed public commitment) |
 | `autolab/frozen_zone.py` | frozen-zone enforcement (self-protecting) |
+| `autolab/preregistration.py` | gate policy (pre-registration declaration + asymmetric gate) |
+| `autolab/controller.py` | controller, meta-ledger, and holdout budget guard |
 | `autolab/frozen_manifest.json` | frozen-zone manifest (self-protecting) |
 | `frozen_zone_check.py` | frozen-zone CI check (self-protecting) |
 
-The zone is intentionally tight: it covers verdict *logic* and integrity
-machinery, not the improvable scaffold (task families, taxonomy tree, metrics,
-generators, docs). Over-freezing would defeat the point of AutoLab.
-
-The **AutoLab controller** (mission Item 3) joins the zone when it exists, added
-by amendment. The taxonomy tree (`families.json`) stays improvable; it keeps its
-own release-gate protection.
+The zone is intentionally tight: it covers verdict logic and integrity machinery,
+not the improvable scaffold (task families, taxonomy tree, metrics, generators,
+docs). Over-freezing would defeat the point of AutoLab. The taxonomy tree
+(`families.json`) stays improvable; it keeps its own release-gate protection.
 
 ## Two enforcement mechanisms
 
