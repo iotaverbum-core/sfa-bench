@@ -219,6 +219,7 @@ research instrument's release line or its DOI. See
 - [Recurrence-Decline Metric](docs/recurrence-decline.md)
 - [Property-Based Verifier Contract](docs/property-contract.md)
 - [Causal-Edge Taxonomy (Schema v2)](docs/causal-edges.md)
+- [AutoLab Frozen Zone](docs/autolab-frozen-zone.md)
 - [Prior State Memory: Why AI Needs Memory Before the Next Mistake](docs/prior-state-memory.md)
 
 ## Citation

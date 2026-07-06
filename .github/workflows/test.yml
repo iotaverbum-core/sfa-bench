@@ -10,6 +10,10 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          # Full history so the frozen-zone amendment gate can diff against the
+          # PR base ref (origin/$GITHUB_BASE_REF).
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -21,6 +25,13 @@ jobs:
 
       - name: Run repository release gate
         run: python release_gate.py --ci
+
+      - name: Frozen-zone attestation + amendment gate
+        env:
+          # Human-only amendment token: a protected CI input the automated loop
+          # cannot set. Empty unless a human authorizes a frozen-zone change.
+          SFA_FROZEN_ZONE_AMENDMENT_TOKEN: ${{ secrets.SFA_FROZEN_ZONE_AMENDMENT_TOKEN }}
+        run: python frozen_zone_check.py --ci
 
   product:
     runs-on: ubuntu-latest

@@ -19,6 +19,7 @@ COMMANDS = (
     "report.py",
     "tamper_suite.py",
     "invariant_suite.py",
+    "frozen_zone_check.py",
     "agent_demo.py",
     "external_candidate_demo.py",
     "transcript_demo.py",
