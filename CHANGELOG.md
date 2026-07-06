@@ -2,6 +2,35 @@
 
 All notable changes to SFA-Bench will be documented in this file.
 
+## Unreleased — SFA-AutoLab v0
+
+### Added (AutoLab Item 1 — Frozen-zone manifest + enforcement)
+
+- **Frozen-zone manifest, attestation, and CI enforcement** (`autolab/frozen_zone.py`,
+  `autolab/frozen_manifest.json`, `frozen_zone_check.py`): a path manifest of the
+  parts that the AutoLab loop may never patch — verifier verdict logic
+  (`sfa/verifier.py`, `sfa/categories.py`), gate policy (`release_gate.py`),
+  ledger code (`sfa/ledger.py`, `sfa/hashing.py`), invariant suite
+  (`invariant_suite.py`, `sfa/invariants.py`), the holdout pre-registration
+  commitment, seed machinery (`seed_history.py`), and the enforcement itself. Two
+  deterministic, offline mechanisms enforce it: (1) a git-free **zone-hash
+  attestation** — the manifest seals a SHA-256 over the canonical content of every
+  frozen file (the manifest's own digest excludes its self-referential
+  `zone_hash`/`file_digests` keys to break circularity), so any content drift
+  without a resealed manifest fails closed; and (2) a git-based **amendment gate**
+  that rejects any change to files frozen as of the PR base — or to the manifest's
+  zone definition — unless authorized by a human amendment token
+  (`SFA_FROZEN_ZONE_AMENDMENT_TOKEN`, a protected CI input the builder cannot set)
+  matching an append-only amendment record that binds one `prev_zone_hash ->
+  new_zone_hash` transition. The zone protects itself (manifest, library, and CI
+  command are all frozen). `seal` is idempotent human tooling refused under
+  `--ci`. Genesis-safe: a base with no manifest passes. 18 deterministic tests
+  (`tests/test_frozen_zone.py`) cover attestation determinism, the zone-touch
+  failure, and the gate; the check is wired into `verify_all.py` and a dedicated CI
+  step. No verifier, taxonomy, or version-of-record change. See
+  [docs/autolab-frozen-zone.md](docs/autolab-frozen-zone.md) and
+  [docs/checkpoints/autolab-item-1-frozen-zone.md](docs/checkpoints/autolab-item-1-frozen-zone.md).
+
 ## v1.1.0 — AGI-Axis Research Extension (2026-07-02)
 
 The research core gains five frontier-capability layers, each preserving the five

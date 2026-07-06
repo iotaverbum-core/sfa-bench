@@ -1,0 +1,50 @@
+{
+  "amendment_channel": "autolab/amendments/",
+  "amendment_token_env": "SFA_FROZEN_ZONE_AMENDMENT_TOKEN",
+  "description": "Path manifest of the SFA-AutoLab frozen zone. These files are unpatchable by the loop; changes occur only via the human-only amendment channel (autolab/amendments/) with a human-supplied amendment token. Enforced by autolab/frozen_zone.py + frozen_zone_check.py.",
+  "file_digests": {
+    "autolab/frozen_zone.py": "164bec3f10d586afb9481bb0a7c8fb5b6f79d893655708915a0954a6b59cab9b",
+    "frozen_zone_check.py": "1e3ffb7a334b4a198fa2961c182dd6941353d8d37f02f5e5603581d87c2a7273",
+    "holdout/frontier-delta-holdout_hd-v0.1.0_PREREGISTRATION.md": "51563dd462b1485b6baba5b42aecdfee51a8650b515de93fcb7a0eb7faada7e4",
+    "invariant_suite.py": "dc861d2d595c2b4a77a74e0f77022fdb51a071eabfb343ee6cee6179e3c66abf",
+    "release_gate.py": "3da380694fac99f2139f98eec0bc16847cb664632193ba47e1dd396a942cce74",
+    "seed_history.py": "e9022c0a99ed648ddff1120911f2cc47ef1855c15398d749690359cb10e8cdc8",
+    "sfa/categories.py": "0eba5e259b0340ddab24cc134337e91ce346c93a269653330b83f9929736bb9c",
+    "sfa/hashing.py": "04bc6058d750d344b3810128a333a5a0f1bcac00827ca93a82f66688806c9955",
+    "sfa/invariants.py": "620e5735ba5db6984fe66f0bc6e84dd6ba6de75ed5c584a37e3214aa3201bc93",
+    "sfa/ledger.py": "885802527289f1b27ba2fed48ddc60635492e24dfe5669b05bf945d188979c9c",
+    "sfa/verifier.py": "144a79e2decf47a44c2f1972b02a8f0ef174de027f13c29a4d5517e99e3238cd"
+  },
+  "frozen_paths": [
+    "autolab/frozen_manifest.json",
+    "autolab/frozen_zone.py",
+    "frozen_zone_check.py",
+    "holdout/frontier-delta-holdout_hd-v0.1.0_PREREGISTRATION.md",
+    "invariant_suite.py",
+    "release_gate.py",
+    "seed_history.py",
+    "sfa/categories.py",
+    "sfa/hashing.py",
+    "sfa/invariants.py",
+    "sfa/ledger.py",
+    "sfa/verifier.py"
+  ],
+  "manifest_version": "fz-v0.1.0",
+  "schema": "sfa.autolab.frozen_zone.v0",
+  "sealed_date": "2026-07-06",
+  "zone_hash": "e0c98d37379d07383ac70fd26ea9082013b75f52eb46822f35f3ddf2b828e662",
+  "zone_rationale": {
+    "autolab/frozen_manifest.json": "frozen-zone manifest (self-protecting)",
+    "autolab/frozen_zone.py": "frozen-zone enforcement (self-protecting)",
+    "frozen_zone_check.py": "frozen-zone CI check (self-protecting)",
+    "holdout/frontier-delta-holdout_hd-v0.1.0_PREREGISTRATION.md": "holdout access machinery (sealed public commitment)",
+    "invariant_suite.py": "invariant suite runner",
+    "release_gate.py": "gate policy",
+    "seed_history.py": "seed schedule machinery",
+    "sfa/categories.py": "verifier verdict logic (failure categories)",
+    "sfa/hashing.py": "canonical hashing underpinning ledger + all attestation/sealing",
+    "sfa/invariants.py": "invariant suite implementation",
+    "sfa/ledger.py": "append-only ledger code",
+    "sfa/verifier.py": "verifier verdict logic"
+  }
+}
