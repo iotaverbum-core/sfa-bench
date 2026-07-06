@@ -222,6 +222,7 @@ research instrument's release line or its DOI. See
 - [AutoLab Frozen Zone](docs/autolab-frozen-zone.md)
 - [AutoLab Pre-registration Gate](docs/autolab-preregistration.md)
 - [AutoLab Loop Controller](docs/autolab-loop-controller.md)
+- [AutoLab Promotion / Rollback](docs/autolab-promotion-rollback.md)
 - [Prior State Memory: Why AI Needs Memory Before the Next Mistake](docs/prior-state-memory.md)
 
 ## Citation

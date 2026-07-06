@@ -4,6 +4,28 @@ All notable changes to SFA-Bench will be documented in this file.
 
 ## Unreleased — SFA-AutoLab v0
 
+### Added (AutoLab Item 4 — Promotion / rollback)
+
+- **Promotion/rollback with tagged states** (`autolab/promotion.py`,
+  `promotion_demo.py`): promotion is the only operation that turns a candidate
+  into the incumbent, and it is not autonomous. `promote` is **refused** unless
+  the loop record is deterministically **gate-green** AND an explicit **human
+  token** (`SFA_PROMOTION_TOKEN`, an out-of-loop authority the builder cannot
+  produce) is supplied — optionally an authorization record binding the exact
+  `loop_hash`; it also refuses a loop record that claims self-promotion.
+  Promotion is asymmetric (it can only fail, never happen by default). States are
+  **tagged** (`tag`, `parent_tag`, `anchor_tag`, `sequence`, `origin`,
+  bit-exact `state_hash`); the **anchor is pinned at `v-root`** and never moves.
+  **Rollback** restores the previous incumbent **bit-exact** (same payload, same
+  `state_hash`) as a first-class, append-only, hash-chained tagged event.
+  `promote_rollback_round_trip` + `replay_round_trip` give the deterministic
+  **promote → rollback → replay** round trip. The module is **frozen**
+  (invariant 1): manifest → `fz-v0.4.0` (15 frozen files) with an append-only
+  amendment record `fz-v0.4.0-add-promotion`. 17 deterministic tests. No verifier,
+  taxonomy, or version-of-record change. See
+  [docs/autolab-promotion-rollback.md](docs/autolab-promotion-rollback.md) and
+  [docs/checkpoints/autolab-item-4-promotion-rollback.md](docs/checkpoints/autolab-item-4-promotion-rollback.md).
+
 ### Added (AutoLab Item 3 — Loop controller)
 
 - **AutoLab loop controller** (`autolab/controller.py`, `loop_controller_demo.py`):

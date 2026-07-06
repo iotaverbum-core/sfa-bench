@@ -1,0 +1,13 @@
+{
+  "schema": "sfa.autolab.frozen_zone.amendment.v0",
+  "amendment_id": "fz-v0.4.0-add-promotion",
+  "manifest_version": "fz-v0.4.0",
+  "prev_zone_hash": "7edfb561a2ea9e0aad4299cddaae3b8422f19a32093b56afbb3059f8f14a0685",
+  "new_zone_hash": "410db5b21a5b76bb3299de49399438a84dbed56b1025f52fc9d9de1daa6a6118",
+  "applies_to": [
+    "autolab/promotion.py"
+  ],
+  "reason": "Item 4 adds the promotion/rollback path. Promotion is the only operation that flips a candidate into the incumbent and is gate-adjacent policy (invariant 1/2), so it must be unpatchable by the loop; add it to the frozen zone.",
+  "author": "Matthew Neal (human amendment channel)",
+  "authored_on": "2026-07-06"
+}
