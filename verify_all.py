@@ -72,6 +72,10 @@ def main() -> int:
     env["CI"] = "true"
     env.pop("SFA_ADAPTER", None)
     env.pop("SFA_ENABLE_LIVE_ADAPTERS", None)
+    # verify_all.py runs in a copied, offline workspace; the dedicated CI step
+    # owns PR base-ref amendment-gate enforcement.
+    env.pop("GITHUB_BASE_REF", None)
+    env.pop("GITHUB_HEAD_REF", None)
 
     workspace = ROOT / f".verify-all-{uuid.uuid4().hex[:8]}"
     failed_exit = 0
