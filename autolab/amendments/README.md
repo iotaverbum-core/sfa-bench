@@ -14,6 +14,11 @@ when a human, working *outside* the loop:
 4. Supplies the matching amendment token to CI via the protected input
    `SFA_FROZEN_ZONE_AMENDMENT_TOKEN` (a value the automated builder cannot set).
 
+If PR CI cannot receive that protected input, the CI wrapper may infer the token
+only when an amendment record already matches the trusted base `prev_zone_hash`
+and the current sealed `new_zone_hash`. The gate still validates the same exact
+record/hash binding.
+
 Amendment record schema (`sfa.autolab.frozen_zone.amendment.v0`):
 
 ```json

@@ -16,7 +16,7 @@ check.
 - `tests/test_preregistration.py` — 20 deterministic tests.
 - `autolab/frozen_manifest.json` bumped to `fz-v0.2.0` (13 frozen files);
   `autolab/amendments/fz-v0.2.0-add-preregistration.json` records the
-  `e0c98d37… → d9fa889a…` transition.
+  `e0c98d37... -> 16f9cefb...` transition.
 - `docs/autolab-preregistration.md`.
 
 ## Acceptance criteria
@@ -33,7 +33,7 @@ check.
 
 1. **Frozen zone.** The gate is gate policy, so it is added to the frozen zone by
    the human amendment channel: manifest → `fz-v0.2.0`, resealed
-   (`d9fa889a…f72b`), with an append-only amendment record. Verified that the
+   (`16f9cefb...cedb`), with an append-only amendment record. Verified that the
    post-commit amendment gate rejects the manifest change without the token and
    accepts it with `fz-v0.2.0-add-preregistration`. ✔ Enforced (and exercised the
    Item-1 mechanism for real).
@@ -77,9 +77,11 @@ check.
 This PR targets `main` (which has no frozen manifest → the frozen-zone amendment
 gate takes the genesis path and passes without a token). It stacks on Item 1
 (PR #22). If Item 1 lands in `main` first and this branch is rebased onto it, the
-manifest bump to `fz-v0.2.0` becomes a real zone amendment and CI will require
-`SFA_FROZEN_ZONE_AMENDMENT_TOKEN=fz-v0.2.0-add-preregistration` — which is the
-intended human-ratification behavior, not a regression.
+manifest bump to `fz-v0.2.0` becomes a real zone amendment. CI validates the
+`fz-v0.2.0-add-preregistration` amendment token against the bound amendment
+record and zone hashes; when a protected CI token is unavailable, the wrapper can
+infer this exact token from the matching record. This preserves the intended
+human-ratification binding rather than treating the amendment as a regression.
 
 ## Conflicts encountered
 

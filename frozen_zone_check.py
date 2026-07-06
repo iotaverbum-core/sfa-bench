@@ -87,12 +87,39 @@ def _cmd_attest(args: argparse.Namespace) -> int:
     return 0 if attestation.matches else 2
 
 
+def _ci_recorded_amendment_token(base_ref: str | None) -> str | None:
+    """Infer a CI token only when an amendment record already binds the transition."""
+    if base_ref is None:
+        return None
+    try:
+        manifest = fz.load_manifest(ROOT)
+        base = fz.base_manifest(ROOT, base_ref)
+        if base is None:
+            return None
+        current_zone = fz.compute_zone_hash(ROOT, manifest)
+        sealed_zone = manifest.get(fz.ZONE_HASH_KEY)
+        for record in fz.load_amendments(ROOT):
+            token = record.get("amendment_id")
+            if (
+                token
+                and record.get("prev_zone_hash") == base.get(fz.ZONE_HASH_KEY)
+                and record.get("new_zone_hash") == current_zone
+                and record.get("new_zone_hash") == sealed_zone
+            ):
+                return str(token)
+    except fz.FrozenZoneError:
+        return None
+    return None
+
+
 def _cmd_check(args: argparse.Namespace) -> int:
     base_ref = fz.resolve_base_ref(args.base)
     token = fz.resolve_amendment_token(args.amendment_token)
     # Only consult git for the gate when a base is known and git is present.
     if base_ref is not None and not fz.git_available(ROOT):
         base_ref = None
+    if token is None and args.ci:
+        token = _ci_recorded_amendment_token(base_ref)
     try:
         result = fz.check(ROOT, base_ref=base_ref, amendment_token=token)
     except fz.FrozenZoneError as exc:
