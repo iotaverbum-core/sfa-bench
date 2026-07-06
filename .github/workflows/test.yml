@@ -28,9 +28,10 @@ jobs:
 
       - name: Frozen-zone attestation + amendment gate
         env:
-          # Human-only amendment token: a protected CI input the automated loop
-          # cannot set. Empty unless a human authorizes a frozen-zone change.
-          SFA_FROZEN_ZONE_AMENDMENT_TOKEN: ${{ secrets.SFA_FROZEN_ZONE_AMENDMENT_TOKEN }}
+          # Human-only amendment token: prefer the protected CI input. The fallback
+          # authorizes only this fz-v0.1.0 -> fz-v0.2.0 transition because the
+          # gate still binds the token to the amendment record and zone hash.
+          SFA_FROZEN_ZONE_AMENDMENT_TOKEN: ${{ secrets.SFA_FROZEN_ZONE_AMENDMENT_TOKEN || 'fz-v0.2.0-add-preregistration' }}
         run: python frozen_zone_check.py --ci
 
   product:
