@@ -1,0 +1,14 @@
+{
+  "schema": "sfa.autolab.frozen_zone.amendment.v0",
+  "amendment_id": "fz-v0.2.0-add-preregistration",
+  "manifest_version": "fz-v0.2.0",
+  "prev_zone_hash": "e0c98d37379d07383ac70fd26ea9082013b75f52eb46822f35f3ddf2b828e662",
+  "new_zone_hash": "16f9cefb8ee4bd1c601bdc4e0933a37f4683bd0f725a5702a609ad7d1437cedb",
+  "applies_to": [
+    "autolab/preregistration.py",
+    "frozen_zone_check.py"
+  ],
+  "reason": "Item 2 adds the pre-registration declaration + asymmetric gate. The gate is gate policy (invariant 1/2), so it must be unpatchable by the loop; add it to the frozen zone.",
+  "author": "Matthew Neal (human amendment channel)",
+  "authored_on": "2026-07-06"
+}

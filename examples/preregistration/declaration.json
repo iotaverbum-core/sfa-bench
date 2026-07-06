@@ -1,0 +1,46 @@
+{
+  "declaration_hash": "f51b249049ae4c7928f670f3670851c4e89fedfa07e238cd4b953bf8a9b5fc48",
+  "declaration_id": "prereg-demo-0001",
+  "eval_plan": {
+    "arms": [
+      "candidate",
+      "incumbent",
+      "ancestor_anchor"
+    ],
+    "bootstrap": 2000,
+    "harness": "sfa.prior_state_trial.v1",
+    "n": 30,
+    "seeds": [
+      20260101,
+      20260102,
+      20260103
+    ],
+    "suite": "public+holdout"
+  },
+  "phase": "pre_patch",
+  "protected_metrics": [
+    {
+      "direction": "no_decrease",
+      "name": "holdout_lane_pass_count",
+      "tolerance": 0.0
+    },
+    {
+      "direction": "no_decrease",
+      "name": "public_suite_pass_rate",
+      "tolerance": 0.0
+    },
+    {
+      "direction": "no_increase",
+      "name": "verifier_latency_ms",
+      "tolerance": 5.0
+    }
+  ],
+  "schema": "sfa.autolab.preregistration.v0",
+  "target": {
+    "comparator": "incumbent",
+    "decision_rule": "ci95_low_gt_0",
+    "direction": "increase",
+    "metric": "continual_learning_score",
+    "min_delta": 0.05
+  }
+}

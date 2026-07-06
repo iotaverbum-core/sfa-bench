@@ -1,0 +1,50 @@
+{
+  "builder_rationale": "Big headline gain (ignore the suite dip).",
+  "declaration_hash": "f51b249049ae4c7928f670f3670851c4e89fedfa07e238cd4b953bf8a9b5fc48",
+  "eval_plan": {
+    "arms": [
+      "candidate",
+      "incumbent",
+      "ancestor_anchor"
+    ],
+    "bootstrap": 2000,
+    "harness": "sfa.prior_state_trial.v1",
+    "n": 30,
+    "seeds": [
+      20260101,
+      20260102,
+      20260103
+    ],
+    "suite": "public+holdout"
+  },
+  "primary": {
+    "candidate_value": 0.75,
+    "ci95_high": 0.241,
+    "ci95_low": 0.061,
+    "comparator_value": 0.6,
+    "delta": 0.15,
+    "metric": "continual_learning_score"
+  },
+  "protected": [
+    {
+      "candidate_value": 0.91,
+      "comparator_value": 0.94,
+      "delta": -0.03,
+      "name": "public_suite_pass_rate"
+    },
+    {
+      "candidate_value": 6,
+      "comparator_value": 6,
+      "delta": 0,
+      "name": "holdout_lane_pass_count"
+    },
+    {
+      "candidate_value": 815.0,
+      "comparator_value": 809.0,
+      "delta": 6.0,
+      "name": "verifier_latency_ms"
+    }
+  ],
+  "report_hash": "b2f3a9e8b484e4bf6d9b34590b3d4ee6f1515ad1631768bee1473f6aed0fcea3",
+  "schema": "sfa.autolab.improvement_report.v0"
+}

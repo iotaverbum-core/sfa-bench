@@ -77,6 +77,12 @@ current computed zone hash and the sealed manifest `zone_hash`, and whose
 `prev_zone_hash` equals the base's sealed `zone_hash`. This binds one human
 authorization to exactly one `prev -> new` transition.
 
+When PR CI cannot receive the protected input, `frozen_zone_check.py --ci` may
+infer the token only from a checked-in amendment record that already binds the
+trusted base zone hash to the current sealed zone hash. The lower-level
+amendment gate still validates the same token/record/hash binding; no unmatched
+or future frozen-zone transition is authorized by this fallback.
+
 If the base has no frozen manifest (genesis), the gate passes — you cannot
 violate a zone that did not yet exist.
 

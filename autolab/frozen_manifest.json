@@ -4,7 +4,8 @@
   "description": "Path manifest of the SFA-AutoLab frozen zone. These files are unpatchable by the loop; changes occur only via the human-only amendment channel (autolab/amendments/) with a human-supplied amendment token. Enforced by autolab/frozen_zone.py + frozen_zone_check.py.",
   "file_digests": {
     "autolab/frozen_zone.py": "164bec3f10d586afb9481bb0a7c8fb5b6f79d893655708915a0954a6b59cab9b",
-    "frozen_zone_check.py": "1e3ffb7a334b4a198fa2961c182dd6941353d8d37f02f5e5603581d87c2a7273",
+    "autolab/preregistration.py": "e67f94eb66b68946af576a882585064a4fd65b9e1262cf0548d38d1fa2a2b228",
+    "frozen_zone_check.py": "f91411fb58d17b0c05a41f16e04e0a9a176c1639575660f99e1e703fc11f5bf8",
     "holdout/frontier-delta-holdout_hd-v0.1.0_PREREGISTRATION.md": "51563dd462b1485b6baba5b42aecdfee51a8650b515de93fcb7a0eb7faada7e4",
     "invariant_suite.py": "dc861d2d595c2b4a77a74e0f77022fdb51a071eabfb343ee6cee6179e3c66abf",
     "release_gate.py": "3da380694fac99f2139f98eec0bc16847cb664632193ba47e1dd396a942cce74",
@@ -18,6 +19,7 @@
   "frozen_paths": [
     "autolab/frozen_manifest.json",
     "autolab/frozen_zone.py",
+    "autolab/preregistration.py",
     "frozen_zone_check.py",
     "holdout/frontier-delta-holdout_hd-v0.1.0_PREREGISTRATION.md",
     "invariant_suite.py",
@@ -29,13 +31,14 @@
     "sfa/ledger.py",
     "sfa/verifier.py"
   ],
-  "manifest_version": "fz-v0.1.0",
+  "manifest_version": "fz-v0.2.0",
   "schema": "sfa.autolab.frozen_zone.v0",
   "sealed_date": "2026-07-06",
-  "zone_hash": "e0c98d37379d07383ac70fd26ea9082013b75f52eb46822f35f3ddf2b828e662",
+  "zone_hash": "16f9cefb8ee4bd1c601bdc4e0933a37f4683bd0f725a5702a609ad7d1437cedb",
   "zone_rationale": {
     "autolab/frozen_manifest.json": "frozen-zone manifest (self-protecting)",
     "autolab/frozen_zone.py": "frozen-zone enforcement (self-protecting)",
+    "autolab/preregistration.py": "gate policy (pre-registration declaration + asymmetric gate)",
     "frozen_zone_check.py": "frozen-zone CI check (self-protecting)",
     "holdout/frontier-delta-holdout_hd-v0.1.0_PREREGISTRATION.md": "holdout access machinery (sealed public commitment)",
     "invariant_suite.py": "invariant suite runner",

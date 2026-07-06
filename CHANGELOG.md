@@ -4,6 +4,31 @@ All notable changes to SFA-Bench will be documented in this file.
 
 ## Unreleased — SFA-AutoLab v0
 
+### Added (AutoLab Item 2 — Pre-registration module)
+
+- **Pre-registration declaration + asymmetric gate** (`autolab/preregistration.py`,
+  `preregistration_demo.py`): a sealed declaration — target metric, direction,
+  pre-registered threshold + significance rule, the exact evaluation plan, and
+  protected-metric tolerances — committed *before* a patch is generated. A frozen
+  evaluator later produces an improvement report from raw artifacts; the gate
+  (`evaluate_gate`) compares the sealed report to the sealed declaration. The gate
+  is **asymmetric** (it may only reject; no `promote` field exists — promotion
+  still needs a human token), **builder-blind** (every pass/fail is recomputed
+  from the report's raw numbers and the declared thresholds; the advisory
+  `builder_rationale` and any self-reported booleans are ignored), and
+  **deterministic** (canonical-hash-sealed declaration/report; pure function; no
+  wall-clock/network/model). Checks: declaration-hash binding, eval-plan
+  conformance, primary direction/threshold/decision-rule, and a **Pareto
+  no-regression** check over protected metrics. Ships sealed fixtures
+  (`examples/preregistration/`) — a passing report and a mismatch report that
+  regresses protected metrics and is rejected — and 20 deterministic tests. The
+  gate module is **gate policy**, so it is added to the frozen zone via the human
+  amendment channel: manifest → `fz-v0.2.0` (13 frozen files), resealed, with an
+  append-only amendment record `fz-v0.2.0-add-preregistration`. No verifier,
+  taxonomy, or version-of-record change. See
+  [docs/autolab-preregistration.md](docs/autolab-preregistration.md) and
+  [docs/checkpoints/autolab-item-2-preregistration.md](docs/checkpoints/autolab-item-2-preregistration.md).
+
 ### Added (AutoLab Item 1 — Frozen-zone manifest + enforcement)
 
 - **Frozen-zone manifest, attestation, and CI enforcement** (`autolab/frozen_zone.py`,

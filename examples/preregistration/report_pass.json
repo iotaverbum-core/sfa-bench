@@ -1,0 +1,50 @@
+{
+  "builder_rationale": "Refactored the retry policy composition; expected recurrence decline.",
+  "declaration_hash": "f51b249049ae4c7928f670f3670851c4e89fedfa07e238cd4b953bf8a9b5fc48",
+  "eval_plan": {
+    "arms": [
+      "candidate",
+      "incumbent",
+      "ancestor_anchor"
+    ],
+    "bootstrap": 2000,
+    "harness": "sfa.prior_state_trial.v1",
+    "n": 30,
+    "seeds": [
+      20260101,
+      20260102,
+      20260103
+    ],
+    "suite": "public+holdout"
+  },
+  "primary": {
+    "candidate_value": 0.72,
+    "ci95_high": 0.203,
+    "ci95_low": 0.041,
+    "comparator_value": 0.6,
+    "delta": 0.12,
+    "metric": "continual_learning_score"
+  },
+  "protected": [
+    {
+      "candidate_value": 0.94,
+      "comparator_value": 0.94,
+      "delta": 0.0,
+      "name": "public_suite_pass_rate"
+    },
+    {
+      "candidate_value": 7,
+      "comparator_value": 6,
+      "delta": 1,
+      "name": "holdout_lane_pass_count"
+    },
+    {
+      "candidate_value": 812.0,
+      "comparator_value": 809.0,
+      "delta": 3.0,
+      "name": "verifier_latency_ms"
+    }
+  ],
+  "report_hash": "cd3d1e813f26a101299167a6cd71b293d7574fb18bb20808ec9c52f8c3cd260d",
+  "schema": "sfa.autolab.improvement_report.v0"
+}
