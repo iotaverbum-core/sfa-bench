@@ -39,6 +39,13 @@
     "autolab/frozen_manifest.json": "frozen-zone manifest (self-protecting)",
     "autolab/frozen_zone.py": "frozen-zone enforcement (self-protecting)",
     "autolab/preregistration.py": "gate policy (pre-registration declaration + asymmetric gate)",
+  "manifest_version": "fz-v0.1.0",
+  "schema": "sfa.autolab.frozen_zone.v0",
+  "sealed_date": "2026-07-06",
+  "zone_hash": "e0c98d37379d07383ac70fd26ea9082013b75f52eb46822f35f3ddf2b828e662",
+  "zone_rationale": {
+    "autolab/frozen_manifest.json": "frozen-zone manifest (self-protecting)",
+    "autolab/frozen_zone.py": "frozen-zone enforcement (self-protecting)",
     "frozen_zone_check.py": "frozen-zone CI check (self-protecting)",
     "holdout/frontier-delta-holdout_hd-v0.1.0_PREREGISTRATION.md": "holdout access machinery (sealed public commitment)",
     "invariant_suite.py": "invariant suite runner",
