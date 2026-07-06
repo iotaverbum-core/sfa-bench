@@ -1,0 +1,13 @@
+{
+  "schema": "sfa.autolab.frozen_zone.amendment.v0",
+  "amendment_id": "fz-v0.5.0-add-meta-ledger",
+  "manifest_version": "fz-v0.5.0",
+  "prev_zone_hash": "410db5b21a5b76bb3299de49399438a84dbed56b1025f52fc9d9de1daa6a6118",
+  "new_zone_hash": "ba5ce1c56020bacde5f3f16dc12c7f809343c10d6485775dd688b1b0a5ec0eaf",
+  "applies_to": [
+    "autolab/meta_ledger.py"
+  ],
+  "reason": "Item 5 adds the meta-ledger and circuit breakers. This is ledger code and halt policy (invariant 1/4); it must be unpatchable by the loop, so add it to the frozen zone.",
+  "author": "Matthew Neal (human amendment channel)",
+  "authored_on": "2026-07-06"
+}

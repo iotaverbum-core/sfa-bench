@@ -4,6 +4,28 @@ All notable changes to SFA-Bench will be documented in this file.
 
 ## Unreleased — SFA-AutoLab v0
 
+### Added (AutoLab Item 5 — Meta-ledger + circuit breakers)
+
+- **Meta-ledger + circuit breakers** (`autolab/meta_ledger.py`,
+  `meta_ledger_demo.py`): an append-only, hash-chained record of AutoLab events
+  (proposals, rejections, promotions, rollbacks, halts) one level above the
+  occurrence ledger. Each event carries a **patch fingerprint**; **rejections are
+  inscribed** with their gate reasons; recurrence over the ledger drives
+  **caution directives** for the next proposal context (advisory,
+  `excluded_from_gate` — invariant 3), and a patch lineage rejected **K times
+  withers** to a terminal "do not re-propose." Six **circuit breakers** put the
+  loop into **halt-and-hold** on: zone hash mismatch, meta-ledger chain break,
+  holdout budget exhausted, N consecutive rejections, any proposed diff touching
+  a frozen (gate/policy) path, and cost/time budget exceeded. A halt sets
+  `requires_human_restart` and can only be cleared with a human restart token
+  (`SFA_AUTOLAB_RESTART_TOKEN`) — no autonomous un-halt. Chaining, recurrence, and
+  breaker evaluation are pure deterministic functions. The module is **frozen**
+  (invariant 1/4): manifest → `fz-v0.5.0` (16 frozen files) with an append-only
+  amendment record `fz-v0.5.0-add-meta-ledger`. 25 deterministic tests (each
+  breaker fixture + terminal wither). No verifier, taxonomy, or version-of-record
+  change. See [docs/autolab-meta-ledger.md](docs/autolab-meta-ledger.md) and
+  [docs/checkpoints/autolab-item-5-meta-ledger.md](docs/checkpoints/autolab-item-5-meta-ledger.md).
+
 ### Added (AutoLab Item 4 — Promotion / rollback)
 
 - **Promotion/rollback with tagged states** (`autolab/promotion.py`,

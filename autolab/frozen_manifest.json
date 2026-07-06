@@ -5,6 +5,7 @@
   "file_digests": {
     "autolab/controller.py": "c018233452573680a32cc55fa4285a27268124931f695f22d5efe5029cae7a99",
     "autolab/frozen_zone.py": "164bec3f10d586afb9481bb0a7c8fb5b6f79d893655708915a0954a6b59cab9b",
+    "autolab/meta_ledger.py": "ebcfb23077b0e3424ebb722be2c409eba3664d6e4ea26e29085867e72eeef0d0",
     "autolab/preregistration.py": "e67f94eb66b68946af576a882585064a4fd65b9e1262cf0548d38d1fa2a2b228",
     "autolab/promotion.py": "e3b05bd71ef95e542a6f07b6c78d6a847938e79c4915964ed55b72dd45cbed51",
     "frozen_zone_check.py": "1e3ffb7a334b4a198fa2961c182dd6941353d8d37f02f5e5603581d87c2a7273",
@@ -22,6 +23,7 @@
     "autolab/controller.py",
     "autolab/frozen_manifest.json",
     "autolab/frozen_zone.py",
+    "autolab/meta_ledger.py",
     "autolab/preregistration.py",
     "autolab/promotion.py",
     "frozen_zone_check.py",
@@ -35,14 +37,15 @@
     "sfa/ledger.py",
     "sfa/verifier.py"
   ],
-  "manifest_version": "fz-v0.4.0",
+  "manifest_version": "fz-v0.5.0",
   "schema": "sfa.autolab.frozen_zone.v0",
   "sealed_date": "2026-07-06",
-  "zone_hash": "410db5b21a5b76bb3299de49399438a84dbed56b1025f52fc9d9de1daa6a6118",
+  "zone_hash": "ba5ce1c56020bacde5f3f16dc12c7f809343c10d6485775dd688b1b0a5ec0eaf",
   "zone_rationale": {
     "autolab/controller.py": "AutoLab loop controller (orchestrator; unpatchable by the loop)",
     "autolab/frozen_manifest.json": "frozen-zone manifest (self-protecting)",
     "autolab/frozen_zone.py": "frozen-zone enforcement (self-protecting)",
+    "autolab/meta_ledger.py": "meta-ledger + circuit-breaker halt policy (ledger code)",
     "autolab/preregistration.py": "gate policy (pre-registration declaration + asymmetric gate)",
     "autolab/promotion.py": "promotion/rollback path (human-token promotion; tagged states; anchor pinned at v-root)",
     "frozen_zone_check.py": "frozen-zone CI check (self-protecting)",
