@@ -41,7 +41,7 @@ check.
 2. **Asymmetric gate.** *This item implements it.* `evaluate_gate` returns only
    `gate_green` or rejection reasons — no `promote`/`promoted` field exists
    (`test_gate_has_no_promotion_path`). Promotion still requires a human token
-   (Item 4); no autonomous promotion path is introduced. ✔ Enforced.
+   (implemented in Item 4); no autonomous promotion path is introduced. ✔ Enforced.
 
 3. **Builder cannot attest.** The gate recomputes every pass/fail from the raw
    frozen-evaluator numbers and the declared thresholds; builder-supplied

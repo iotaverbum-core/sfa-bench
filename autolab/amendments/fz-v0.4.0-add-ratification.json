@@ -1,0 +1,14 @@
+{
+  "schema": "sfa.autolab.frozen_zone.amendment.v0",
+  "amendment_id": "fz-v0.4.0-add-ratification",
+  "manifest_version": "fz-v0.4.0",
+  "prev_zone_hash": "61c6ee5a02483167047c4b3c9d469bba0734e4b441cf58dca5bc5640ba930c90",
+  "new_zone_hash": "438fcc34dbc3a7d73cf1e7d70d027cc3c14f9e796bf4d2e4a6dd0a4a70449871",
+  "applies_to": [
+    "autolab/frozen_manifest.json",
+    "autolab/ratification.py"
+  ],
+  "reason": "Item 4 adds the human ratification promotion layer. Promotion policy decides when a gate-green candidate may be promoted after human approval, so it must be unpatchable by the loop.",
+  "author": "Matthew Neal (human amendment channel)",
+  "authored_on": "2026-07-07"
+}

@@ -22,6 +22,7 @@ COMMANDS = (
     "frozen_zone_check.py",
     "preregistration_demo.py",
     "autolab_controller_demo.py",
+    "ratification_demo.py",
     "agent_demo.py",
     "external_candidate_demo.py",
     "transcript_demo.py",

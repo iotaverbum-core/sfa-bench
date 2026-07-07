@@ -7,10 +7,9 @@ AutoLab scaffolding; the parts of it that the loop must never rewrite live in
 the frozen zone (see ``autolab/frozen_zone.py`` and
 ``autolab/frozen_manifest.json``).
 
-Item 3 adds the frozen controller: a declaration is sealed into the append-only
-meta-ledger before the builder callback can run, and holdout access is consumed
-against a bounded budget.
+Item 4 adds human ratification: a deterministic gate-green candidate is still not
+promoted unless a sealed human approval record and matching token authorize it.
 """
 from __future__ import annotations
 
-__all__ = ["controller", "frozen_zone", "preregistration"]
+__all__ = ["controller", "frozen_zone", "preregistration", "ratification"]

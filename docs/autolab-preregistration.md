@@ -61,7 +61,8 @@ and a list of `reasons`. It embodies three invariants:
 
 - **It may only reject (invariant 2).** `gate_green` means "nothing to reject."
   There is no `promote` field. Promotion needs deterministic-gate-green **and** a
-  human token (Item 4); the gate never promotes on its own.
+  human ratification token (`autolab/ratification.py`, Item 4); the gate never
+  promotes on its own.
 - **The builder cannot attest (invariant 3).** Every pass/fail is **recomputed**
   from the report's raw numeric fields and the declaration's thresholds. Builder
   self-reported booleans and `builder_rationale` are ignored — a report cannot
@@ -89,7 +90,10 @@ conformance, recomputed primary + Pareto checks, determinism, and gate
 asymmetry. Enforced by Item 3: the loop controller seals the declaration into
 the append-only meta-ledger before invoking the builder, and consumes any
 declared holdout access against a bounded budget before the builder callback
-runs. See [`docs/autolab-controller.md`](autolab-controller.md).
+runs. Enforced by Item 4: gate-green still cannot promote without a sealed
+human ratification record and matching token. See
+[`docs/autolab-controller.md`](autolab-controller.md) and
+[`docs/autolab-ratification.md`](autolab-ratification.md).
 
 ## CLI / fixtures
 

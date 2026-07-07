@@ -52,8 +52,8 @@ fails any diff into the frozen zone absent a human amendment token.
 4. **Append-only lineage.** The amendment channel is append-only by convention
    (one record per authorized transition, each binding `prev_zone_hash ->
    new_zone_hash`), mirroring the ledger's hash-chain discipline. The full
-   meta-ledger and rollback are Item 5/4; this item lays the amendment-record
-   substrate without claiming them. ✔ Consistent; not yet complete (by design).
+   meta-ledger and human ratification are implemented by Items 3 and 4; this
+   item laid the amendment-record substrate without claiming them. Consistent.
 
 5. **Budgeted holdout.** Not exercised here, and not weakened: the holdout
    pre-registration commitment is *added to the frozen zone*, so its sealed
@@ -85,4 +85,4 @@ intended surface for AutoLab.
 ## Not in this item
 
 Version-of-record stays `v1.1.0` (the version bump is proposed in the final PR).
-The AutoLab controller path is added by the Item 3 amendment (`fz-v0.3.0-add-controller`).
+The AutoLab controller path is added by the Item 3 amendment (`fz-v0.3.0-add-controller`); the human ratification path is added by Item 4 (`fz-v0.4.0-add-ratification`).

@@ -4,6 +4,22 @@ All notable changes to SFA-Bench will be documented in this file.
 
 ## Unreleased — SFA-AutoLab v0
 
+### Added (AutoLab Item 4 - Human ratification)
+
+- **Human ratification promotion layer** (`autolab/ratification.py`,
+  `ratification_demo.py`): a deterministic promotion policy that recomputes the
+  pre-registration gate, requires it to be green, and then requires a sealed
+  human approval record plus a matching out-of-loop token before appending a
+  `human_ratification` event to the AutoLab meta-ledger. Gate-green alone does
+  not promote; a red deterministic gate cannot be overridden by a human token;
+  the ratification record binds the exact declaration hash, report hash, and
+  gate-decision hash; tampering with the ratification record is detected by its
+  seal. The builder cannot attest or talk its way through promotion because
+  builder rationale and self-reported booleans remain outside the recomputed gate
+  decision. The module is added to the frozen zone via amendment
+  `fz-v0.4.0-add-ratification`; no verifier, taxonomy, or version-of-record
+  change. See [docs/autolab-ratification.md](docs/autolab-ratification.md) and
+  [docs/checkpoints/autolab-item-4-ratification.md](docs/checkpoints/autolab-item-4-ratification.md).
 ### Added (AutoLab Item 3 - Controller + budgeted holdout)
 
 - **Frozen AutoLab controller** (`autolab/controller.py`,
