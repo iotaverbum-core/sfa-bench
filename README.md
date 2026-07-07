@@ -224,6 +224,7 @@ research instrument's release line or its DOI. See
 - [AutoLab Controller](docs/autolab-controller.md)
 - [AutoLab Human Ratification](docs/autolab-ratification.md)
 - [AutoLab Lineage + Rollback](docs/autolab-lineage.md)
+- [AutoLab Circuit Breakers](docs/autolab-circuit-breakers.md)
 - [Prior State Memory: Why AI Needs Memory Before the Next Mistake](docs/prior-state-memory.md)
 
 ## Citation

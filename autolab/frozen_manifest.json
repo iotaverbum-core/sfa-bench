@@ -3,6 +3,7 @@
   "amendment_token_env": "SFA_FROZEN_ZONE_AMENDMENT_TOKEN",
   "description": "Path manifest of the SFA-AutoLab frozen zone. These files are unpatchable by the loop; changes occur only via the human-only amendment channel (autolab/amendments/) with a human-supplied amendment token. Enforced by autolab/frozen_zone.py + frozen_zone_check.py.",
   "file_digests": {
+    "autolab/circuit_breakers.py": "5af87c63cbe391914570d32b2740ef09b79a855dfeb68cb09e3281f0d87e19f2",
     "autolab/controller.py": "4ef7ea40d3b7a2a9006825bb3083b976b9c04039ae5f64595fb2e39e2f805865",
     "autolab/frozen_zone.py": "164bec3f10d586afb9481bb0a7c8fb5b6f79d893655708915a0954a6b59cab9b",
     "autolab/lineage.py": "490e896a379a547b2e3401343411e0e49cd76ef0c3f3e26301cc581dc8bb56d8",
@@ -20,6 +21,7 @@
     "sfa/verifier.py": "144a79e2decf47a44c2f1972b02a8f0ef174de027f13c29a4d5517e99e3238cd"
   },
   "frozen_paths": [
+    "autolab/circuit_breakers.py",
     "autolab/controller.py",
     "autolab/frozen_manifest.json",
     "autolab/frozen_zone.py",
@@ -37,11 +39,12 @@
     "sfa/ledger.py",
     "sfa/verifier.py"
   ],
-  "manifest_version": "fz-v0.5.0",
+  "manifest_version": "fz-v0.6.0",
   "schema": "sfa.autolab.frozen_zone.v0",
   "sealed_date": "2026-07-07",
-  "zone_hash": "4ce7ccabc997436f631d834de04cc5dadcf16644211212d9f84e22e0e690ad09",
+  "zone_hash": "e77da23907a12f36ed03a294c4c9486ba3973ca84d1c3ac63d46c1885e6ade84",
   "zone_rationale": {
+    "autolab/circuit_breakers.py": "loop safety policy (circuit breakers and restart guard)",
     "autolab/controller.py": "controller, meta-ledger, and holdout budget guard",
     "autolab/frozen_manifest.json": "frozen-zone manifest (self-protecting)",
     "autolab/frozen_zone.py": "frozen-zone enforcement (self-protecting)",
