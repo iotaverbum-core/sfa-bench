@@ -1,0 +1,25 @@
+{
+  "schema": "sfa.autolab.item7.expected_outcomes.v0",
+  "release": "fz-v0.7.0",
+  "demo_command": "py -3 autolab_runner_demo.py",
+  "expected_outcomes": [
+    {
+      "name": "green path",
+      "expected_status": "promoted",
+      "expected_stage": "lineage",
+      "description": "The gate-green, human-ratified candidate is promoted and inscribed into lineage."
+    },
+    {
+      "name": "gate-red path",
+      "expected_status": "rejected",
+      "expected_stage": "gate",
+      "description": "The regression report is rejected by the deterministic pre-registration gate."
+    },
+    {
+      "name": "preflight breaker",
+      "expected_status": "halted",
+      "expected_reason": "frozen_path_change_proposed",
+      "description": "A proposed frozen-path change trips the preflight breaker before builder invocation."
+    }
+  ]
+}
