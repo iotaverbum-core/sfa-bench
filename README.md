@@ -67,7 +67,7 @@ python verify_all.py
 ```
 
 `verify_all.py` copies the current source into a temporary isolated worktree,
-runs all twelve commands in release order, stops on the first failure, and then
+runs the complete offline command set in release order, stops on the first failure, and then
 removes the temporary worktree. The checked-out occurrence ledger and runtime
 directories are not modified. The environment forces CI mode and disables
 adapter-selection environment variables. If operating-system permissions prevent
@@ -223,6 +223,7 @@ research instrument's release line or its DOI. See
 - [AutoLab Pre-registration Gate](docs/autolab-preregistration.md)
 - [AutoLab Controller](docs/autolab-controller.md)
 - [AutoLab Human Ratification](docs/autolab-ratification.md)
+- [AutoLab Lineage + Rollback](docs/autolab-lineage.md)
 - [Prior State Memory: Why AI Needs Memory Before the Next Mistake](docs/prior-state-memory.md)
 
 ## Citation

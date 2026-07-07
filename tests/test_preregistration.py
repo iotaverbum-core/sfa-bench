@@ -254,7 +254,12 @@ class FrozenZoneIntegrationTests(unittest.TestCase):
         next_record = amendments.get("fz-v0.4.0-add-ratification")
         self.assertIsNotNone(next_record, "v0.3.0 amendment must be linked by a successor")
         self.assertEqual(next_record["prev_zone_hash"], successor["new_zone_hash"])
-        self.assertEqual(next_record["new_zone_hash"], manifest["zone_hash"])
+        if next_record["new_zone_hash"] == manifest["zone_hash"]:
+            return
+        final_record = amendments.get("fz-v0.5.0-add-lineage-rollback")
+        self.assertIsNotNone(final_record, "v0.4.0 amendment must be linked by a successor")
+        self.assertEqual(final_record["prev_zone_hash"], next_record["new_zone_hash"])
+        self.assertEqual(final_record["new_zone_hash"], manifest["zone_hash"])
 
 
 if __name__ == "__main__":

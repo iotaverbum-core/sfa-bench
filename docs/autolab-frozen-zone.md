@@ -8,9 +8,9 @@ that to mean anything, the parts that decide, measure, and record must be
 This is scaffold-level self-improvement, not an autonomous agent editing its own
 judge. The frozen zone is the boundary that keeps the distinction honest.
 
-## What is frozen (v0.4.0)
+## What is frozen (v0.5.0)
 
-The manifest (`autolab/frozen_manifest.json`) declares the frozen paths. v0.4.0:
+The manifest (`autolab/frozen_manifest.json`) declares the frozen paths. v0.5.0:
 
 | Path | Why it is frozen |
 | --- | --- |
@@ -27,6 +27,7 @@ The manifest (`autolab/frozen_manifest.json`) declares the frozen paths. v0.4.0:
 | `autolab/preregistration.py` | gate policy (pre-registration declaration + asymmetric gate) |
 | `autolab/controller.py` | controller, meta-ledger, and holdout budget guard |
 | `autolab/ratification.py` | promotion policy (human ratification gate) |
+| `autolab/lineage.py` | promotion-history policy (lineage + rollback guard) |
 | `autolab/frozen_manifest.json` | frozen-zone manifest (self-protecting) |
 | `frozen_zone_check.py` | frozen-zone CI check (self-protecting) |
 

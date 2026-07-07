@@ -4,8 +4,9 @@ Item 4 is the promotion boundary. A deterministic gate-green result is necessary
 but not sufficient: a candidate may be promoted only when a human approval record
 is sealed and a matching human token is supplied outside the loop.
 
-`autolab/ratification.py` is frozen-zone promotion policy (manifest
-`fz-v0.4.0`). The loop cannot rewrite it without a frozen-zone amendment token.
+`autolab/ratification.py` is frozen-zone promotion policy, added in manifest
+`fz-v0.4.0` and still frozen in the current manifest. The loop cannot rewrite
+it without a frozen-zone amendment token.
 
 ## Promotion Inputs
 
@@ -53,6 +54,10 @@ considered.
 only after `evaluate_promotion` returns `promoted=true`. Rejected promotions do
 not append anything. The meta-ledger hash chain continues to detect deletion,
 insertion, reordering, or edits.
+
+Item 5 consumes this event through `append_promotion_inscription(...)`: a
+human-ratified target is not considered current lineage until the separate
+`promotion_inscribed` event is appended.
 
 ## CLI / Demo
 
