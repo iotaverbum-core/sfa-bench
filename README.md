@@ -228,6 +228,13 @@ research instrument's release line or its DOI. See
 - [AutoLab End-to-End Runner](docs/autolab-runner.md)
 - [Prior State Memory: Why AI Needs Memory Before the Next Mistake](docs/prior-state-memory.md)
 
+## AutoLab Item 7 Usage
+
+For the `fz-v0.7.0` runner workflow, see
+[AutoLab Item 7 Runner](docs/autolab-item-7-runner.md), the
+[minimal PowerShell flow](examples/autolab_item7_minimal_usage.md), and the
+[expected demo outcomes fixture](tests/fixtures/autolab_item7_expected_outcomes.json).
+
 ## Citation
 
 Use the repository metadata in [`CITATION.cff`](CITATION.cff). A plain-text form:
