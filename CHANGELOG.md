@@ -4,6 +4,21 @@ All notable changes to SFA-Bench will be documented in this file.
 
 ## Unreleased — SFA-AutoLab v0
 
+### Added (AutoLab Item 7 - End-to-end runner)
+
+- **End-to-end AutoLab runner** (`autolab/runner.py`,
+  `autolab_runner_demo.py`): a frozen orchestration policy that wires the
+  existing AutoLab primitives into one sequence. The runner refuses to start
+  while a halt is active, evaluates circuit breakers before invoking the builder,
+  runs the controller-ordered declaration/holdout/attestation path, seals and
+  gates the evaluator report, appends rejection events for red gates or failed
+  human ratification, requires sealed human approval plus matching token before
+  promotion, inscribes successful promotions into lineage, and evaluates
+  breakers again after the iteration. The module is added to the frozen zone via
+  amendment `fz-v0.7.0-add-runner`; no verifier, taxonomy, or version-of-record
+  change. See [docs/autolab-runner.md](docs/autolab-runner.md) and
+  [docs/checkpoints/autolab-item-7-runner.md](docs/checkpoints/autolab-item-7-runner.md).
+
 ### Added (AutoLab Item 6 - Circuit breakers)
 
 - **Circuit-breaker halt-and-hold layer** (`autolab/circuit_breakers.py`,

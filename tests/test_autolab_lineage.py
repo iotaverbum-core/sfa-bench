@@ -293,7 +293,12 @@ class FrozenZoneIntegrationTests(unittest.TestCase):
         successor = amendments.get("fz-v0.6.0-add-circuit-breakers")
         self.assertIsNotNone(successor, "v0.5.0 amendment must be linked by a successor")
         self.assertEqual(successor["prev_zone_hash"], record["new_zone_hash"])
-        self.assertEqual(successor["new_zone_hash"], manifest["zone_hash"])
+        if successor["new_zone_hash"] == manifest["zone_hash"]:
+            return
+        item7_record = amendments.get("fz-v0.7.0-add-runner")
+        self.assertIsNotNone(item7_record, "v0.6.0 amendment must be linked by a successor")
+        self.assertEqual(item7_record["prev_zone_hash"], successor["new_zone_hash"])
+        self.assertEqual(item7_record["new_zone_hash"], manifest["zone_hash"])
 
 
 if __name__ == "__main__":
