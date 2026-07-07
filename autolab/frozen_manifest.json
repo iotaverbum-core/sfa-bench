@@ -3,6 +3,7 @@
   "amendment_token_env": "SFA_FROZEN_ZONE_AMENDMENT_TOKEN",
   "description": "Path manifest of the SFA-AutoLab frozen zone. These files are unpatchable by the loop; changes occur only via the human-only amendment channel (autolab/amendments/) with a human-supplied amendment token. Enforced by autolab/frozen_zone.py + frozen_zone_check.py.",
   "file_digests": {
+    "autolab/controller.py": "4ef7ea40d3b7a2a9006825bb3083b976b9c04039ae5f64595fb2e39e2f805865",
     "autolab/frozen_zone.py": "164bec3f10d586afb9481bb0a7c8fb5b6f79d893655708915a0954a6b59cab9b",
     "autolab/preregistration.py": "e67f94eb66b68946af576a882585064a4fd65b9e1262cf0548d38d1fa2a2b228",
     "frozen_zone_check.py": "f91411fb58d17b0c05a41f16e04e0a9a176c1639575660f99e1e703fc11f5bf8",
@@ -17,6 +18,7 @@
     "sfa/verifier.py": "144a79e2decf47a44c2f1972b02a8f0ef174de027f13c29a4d5517e99e3238cd"
   },
   "frozen_paths": [
+    "autolab/controller.py",
     "autolab/frozen_manifest.json",
     "autolab/frozen_zone.py",
     "autolab/preregistration.py",
@@ -31,11 +33,12 @@
     "sfa/ledger.py",
     "sfa/verifier.py"
   ],
-  "manifest_version": "fz-v0.2.0",
+  "manifest_version": "fz-v0.3.0",
   "schema": "sfa.autolab.frozen_zone.v0",
   "sealed_date": "2026-07-06",
-  "zone_hash": "16f9cefb8ee4bd1c601bdc4e0933a37f4683bd0f725a5702a609ad7d1437cedb",
+  "zone_hash": "61c6ee5a02483167047c4b3c9d469bba0734e4b441cf58dca5bc5640ba930c90",
   "zone_rationale": {
+    "autolab/controller.py": "controller, meta-ledger, and holdout budget guard",
     "autolab/frozen_manifest.json": "frozen-zone manifest (self-protecting)",
     "autolab/frozen_zone.py": "frozen-zone enforcement (self-protecting)",
     "autolab/preregistration.py": "gate policy (pre-registration declaration + asymmetric gate)",

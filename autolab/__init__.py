@@ -1,4 +1,4 @@
-"""SFA-AutoLab v0 — auditable self-improvement under human ratification.
+"""SFA-AutoLab v0 - auditable self-improvement under human ratification.
 
 AutoLab lifts the SFA-Bench research pipeline one level: candidate patches to
 this repository may be *proposed* by a builder, *verified* by frozen evaluators,
@@ -7,10 +7,10 @@ AutoLab scaffolding; the parts of it that the loop must never rewrite live in
 the frozen zone (see ``autolab/frozen_zone.py`` and
 ``autolab/frozen_manifest.json``).
 
-Item 1 (this module set): the frozen-zone manifest, deterministic zone-hash
-attestation, and the CI enforcement that fails any diff into the zone absent a
-human amendment token.
+Item 3 adds the frozen controller: a declaration is sealed into the append-only
+meta-ledger before the builder callback can run, and holdout access is consumed
+against a bounded budget.
 """
 from __future__ import annotations
 
-__all__ = ["frozen_zone"]
+__all__ = ["controller", "frozen_zone", "preregistration"]

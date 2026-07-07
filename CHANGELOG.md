@@ -4,6 +4,23 @@ All notable changes to SFA-Bench will be documented in this file.
 
 ## Unreleased — SFA-AutoLab v0
 
+### Added (AutoLab Item 3 - Controller + budgeted holdout)
+
+- **Frozen AutoLab controller** (`autolab/controller.py`,
+  `autolab_controller_demo.py`): a deterministic controller that attests the
+  frozen zone before an iteration, seals the pre-registration declaration into an
+  append-only meta-ledger before invoking the builder callback, consumes declared
+  holdout use against a bounded budget, records the builder result hash, and
+  attests the frozen zone again after the builder returns. The meta-ledger is a
+  JSONL hash chain (`seq`, `prev_hash`, `entry_hash`) so insertion, deletion,
+  reordering, or edits are detected before another iteration can run. Holdout use
+  must be explicitly bound in `eval_plan.holdout` (`budget_id`, suite, version,
+  units); a suite that names holdout without a budget binding fails closed, and a
+  second consumption beyond `max_uses` rejects before the builder runs. The
+  controller is added to the frozen zone via amendment
+  `fz-v0.3.0-add-controller`; no verifier, taxonomy, or version-of-record change.
+  See [docs/autolab-controller.md](docs/autolab-controller.md) and
+  [docs/checkpoints/autolab-item-3-controller.md](docs/checkpoints/autolab-item-3-controller.md).
 ### Added (AutoLab Item 2 — Pre-registration module)
 
 - **Pre-registration declaration + asymmetric gate** (`autolab/preregistration.py`,

@@ -32,7 +32,7 @@ jobs:
           # amendment token. The gate still binds it to prev/new zone hashes.
           SFA_FROZEN_ZONE_AMENDMENT_TOKEN: ${{ secrets.SFA_FROZEN_ZONE_AMENDMENT_TOKEN }}
         run: |
-          : "${SFA_FROZEN_ZONE_AMENDMENT_TOKEN:=fz-v0.2.0-add-preregistration}"
+          : "${SFA_FROZEN_ZONE_AMENDMENT_TOKEN:=fz-v0.3.0-add-controller}"
           export SFA_FROZEN_ZONE_AMENDMENT_TOKEN
           python frozen_zone_check.py --ci
 
