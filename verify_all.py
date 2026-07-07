@@ -25,6 +25,7 @@ COMMANDS = (
     "ratification_demo.py",
     "lineage_demo.py",
     "circuit_breakers_demo.py",
+    "autolab_runner_demo.py",
     "agent_demo.py",
     "external_candidate_demo.py",
     "transcript_demo.py",

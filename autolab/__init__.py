@@ -11,7 +11,16 @@ Item 4 adds human ratification: a deterministic gate-green candidate is still no
 promoted unless a sealed human approval record and matching token authorize it.
 Item 5 adds explicit promotion lineage and human-token-gated rollback.
 Item 6 adds halt-and-hold circuit breakers with human-token restart.
+Item 7 adds the frozen end-to-end runner that wires the full loop together.
 """
 from __future__ import annotations
 
-__all__ = ["circuit_breakers", "controller", "frozen_zone", "lineage", "preregistration", "ratification"]
+__all__ = [
+    "circuit_breakers",
+    "controller",
+    "frozen_zone",
+    "lineage",
+    "preregistration",
+    "ratification",
+    "runner",
+]
