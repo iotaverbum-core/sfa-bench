@@ -4,6 +4,22 @@ All notable changes to SFA-Bench will be documented in this file.
 
 ## Unreleased — SFA-AutoLab v0
 
+### Added (AutoLab Item 6 - Circuit breakers)
+
+- **Circuit-breaker halt-and-hold layer** (`autolab/circuit_breakers.py`,
+  `circuit_breakers_demo.py`): a frozen safety policy that evaluates deterministic
+  stop conditions around the AutoLab loop, appends `autolab_halted` only for a
+  sealed halted breaker report, and requires a sealed human restart clearance
+  plus a matching out-of-loop token before appending `autolab_restart_authorized`.
+  Breakers cover frozen-zone mismatch, meta-ledger chain break, holdout budget
+  exhaustion, consecutive rejections, proposed frozen-path changes, cost/time
+  budget overrun, and re-proposal of a withered lineage. Caution/wither
+  directives are advisory and excluded from gate inputs. The module is added to
+  the frozen zone via amendment `fz-v0.6.0-add-circuit-breakers`; no verifier,
+  taxonomy, or version-of-record change. See
+  [docs/autolab-circuit-breakers.md](docs/autolab-circuit-breakers.md) and
+  [docs/checkpoints/autolab-item-6-circuit-breakers.md](docs/checkpoints/autolab-item-6-circuit-breakers.md).
+
 ### Added (AutoLab Item 5 - Lineage + rollback)
 
 - **Promotion lineage and rollback layer** (`autolab/lineage.py`,

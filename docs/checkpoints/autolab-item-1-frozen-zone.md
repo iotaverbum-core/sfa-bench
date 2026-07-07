@@ -85,4 +85,4 @@ intended surface for AutoLab.
 ## Not in this item
 
 Version-of-record stays `v1.1.0` (the version bump is proposed in the final PR).
-The AutoLab controller path is added by the Item 3 amendment (`fz-v0.3.0-add-controller`); the human ratification path is added by Item 4 (`fz-v0.4.0-add-ratification`); the lineage and rollback guard is added by Item 5 (`fz-v0.5.0-add-lineage-rollback`).
+The AutoLab controller path is added by the Item 3 amendment (`fz-v0.3.0-add-controller`); the human ratification path is added by Item 4 (`fz-v0.4.0-add-ratification`); the lineage and rollback guard is added by Item 5 (`fz-v0.5.0-add-lineage-rollback`); the circuit-breaker restart guard is added by Item 6 (`fz-v0.6.0-add-circuit-breakers`).

@@ -1,0 +1,14 @@
+{
+  "amendment_id": "fz-v0.6.0-add-circuit-breakers",
+  "applies_to": [
+    "autolab/frozen_manifest.json",
+    "autolab/circuit_breakers.py"
+  ],
+  "author": "Matthew Neal (human amendment channel)",
+  "authored_on": "2026-07-07",
+  "manifest_version": "fz-v0.6.0",
+  "new_zone_hash": "e77da23907a12f36ed03a294c4c9486ba3973ca84d1c3ac63d46c1885e6ade84",
+  "prev_zone_hash": "4ce7ccabc997436f631d834de04cc5dadcf16644211212d9f84e22e0e690ad09",
+  "reason": "Item 6 adds the frozen circuit-breaker halt-and-hold restart guard. Loop safety policy decides when AutoLab must halt and how human restart is authorized, so it must be unpatchable by the loop.",
+  "schema": "sfa.autolab.frozen_zone.amendment.v0"
+}
