@@ -1,0 +1,14 @@
+{
+  "amendment_id": "fz-v0.5.0-add-lineage-rollback",
+  "applies_to": [
+    "autolab/frozen_manifest.json",
+    "autolab/lineage.py"
+  ],
+  "author": "Matthew Neal (human amendment channel)",
+  "authored_on": "2026-07-07",
+  "manifest_version": "fz-v0.5.0",
+  "new_zone_hash": "4ce7ccabc997436f631d834de04cc5dadcf16644211212d9f84e22e0e690ad09",
+  "prev_zone_hash": "438fcc34dbc3a7d73cf1e7d70d027cc3c14f9e796bf4d2e4a6dd0a4a70449871",
+  "reason": "Item 5 adds the frozen promotion lineage and rollback guard. Promotion-history policy decides how human-ratified targets become current and how rollback is authorized, so it must be unpatchable by the loop.",
+  "schema": "sfa.autolab.frozen_zone.amendment.v0"
+}

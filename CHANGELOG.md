@@ -4,6 +4,20 @@ All notable changes to SFA-Bench will be documented in this file.
 
 ## Unreleased — SFA-AutoLab v0
 
+### Added (AutoLab Item 5 - Lineage + rollback)
+
+- **Promotion lineage and rollback layer** (`autolab/lineage.py`,
+  `lineage_demo.py`): a frozen promotion-history policy that turns an existing
+  `human_ratification` meta-ledger event into an explicit `promotion_inscribed`
+  event before the target becomes current, and that records rollback only as an
+  append-only `rollback_inscribed` event. Rollback requires a sealed rollback
+  record, a matching out-of-loop human rollback token, and a target ref that
+  matches the currently derived lineage target. Rejected or tampered rollback
+  attempts append nothing. The module is added to the frozen zone via amendment
+  `fz-v0.5.0-add-lineage-rollback`; no verifier, taxonomy, or
+  version-of-record change. See [docs/autolab-lineage.md](docs/autolab-lineage.md)
+  and [docs/checkpoints/autolab-item-5-lineage-rollback.md](docs/checkpoints/autolab-item-5-lineage-rollback.md).
+
 ### Added (AutoLab Item 4 - Human ratification)
 
 - **Human ratification promotion layer** (`autolab/ratification.py`,

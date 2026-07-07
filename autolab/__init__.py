@@ -9,7 +9,8 @@ the frozen zone (see ``autolab/frozen_zone.py`` and
 
 Item 4 adds human ratification: a deterministic gate-green candidate is still not
 promoted unless a sealed human approval record and matching token authorize it.
+Item 5 adds explicit promotion lineage and human-token-gated rollback.
 """
 from __future__ import annotations
 
-__all__ = ["controller", "frozen_zone", "preregistration", "ratification"]
+__all__ = ["controller", "frozen_zone", "lineage", "preregistration", "ratification"]
