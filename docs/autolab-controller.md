@@ -6,8 +6,8 @@ ordering executable: the declaration is sealed into an append-only meta-ledger
 before the builder callback can run, and any declared holdout use is consumed
 against a bounded budget in that same ledger.
 
-`autolab/controller.py` is frozen-zone machinery (manifest `fz-v0.3.0`). The
-loop cannot rewrite it without a human amendment token.
+`autolab/controller.py` is frozen-zone machinery (added in manifest `fz-v0.3.0`).
+The loop cannot rewrite it without a human amendment token.
 
 ## Iteration Order
 
@@ -24,7 +24,8 @@ loop cannot rewrite it without a human amendment token.
 
 The builder never writes the declaration, holdout receipt, zone attestation, or
 hash-chain links. It receives the sealed declaration only after those controller
-records exist.
+records exist. Promotion remains separate: Item 4 requires human ratification
+after the deterministic gate is green.
 
 ## Meta-ledger
 
