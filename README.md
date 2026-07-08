@@ -226,6 +226,7 @@ research instrument's release line or its DOI. See
 - [AutoLab Lineage + Rollback](docs/autolab-lineage.md)
 - [AutoLab Circuit Breakers](docs/autolab-circuit-breakers.md)
 - [AutoLab End-to-End Runner](docs/autolab-runner.md)
+- [External Candidate Harness](docs/external-candidate-harness.md)
 - [Prior State Memory: Why AI Needs Memory Before the Next Mistake](docs/prior-state-memory.md)
 
 ## AutoLab Item 7 Usage
@@ -234,6 +235,22 @@ For the `fz-v0.7.0` runner workflow, see
 [AutoLab Item 7 Runner](docs/autolab-item-7-runner.md), the
 [minimal PowerShell flow](examples/autolab_item7_minimal_usage.md), and the
 [expected demo outcomes fixture](tests/fixtures/autolab_item7_expected_outcomes.json).
+
+## External Candidate Harness
+
+Item 9 evaluates a committed candidate branch or SHA against `origin/main`,
+records changed paths and frozen-path touches, runs protected verification in a
+detached temporary worktree, and writes candidate packets under
+`out/candidate_packets/<run_id>/`.
+
+```bash
+py -3 external_candidate_harness.py --target <commit-sha>
+py -3 external_candidate_harness.py --branch <branch-name>
+```
+
+See [External Candidate Harness](docs/external-candidate-harness.md), the
+[minimal PowerShell flow](examples/external_candidate_harness_minimal_usage.md),
+and the [example packet fixture](tests/fixtures/external_candidate_packet_example.json).
 
 ## Citation
 
