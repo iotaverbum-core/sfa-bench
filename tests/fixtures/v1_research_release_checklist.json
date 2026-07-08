@@ -1,0 +1,69 @@
+{
+  "schema": "sfa.v1_research_release.checklist.v0",
+  "release_pack": "SFA-Bench v1.0 Research Release Pack",
+  "core_description": "SFA-Bench is a deterministic offline governance harness for candidate improvement.",
+  "documents": [
+    "docs/research/sfa-bench-v1-research-release.md",
+    "docs/research/sfa-bench-v1-claims-and-limits.md",
+    "docs/research/sfa-bench-v1-reproducibility-guide.md",
+    "docs/research/sfa-bench-v1-threat-model.md",
+    "docs/research/sfa-bench-v1-architecture.md",
+    "examples/v1_research_release_commands.md"
+  ],
+  "items_covered": [
+    {
+      "item": 7,
+      "summary": "Governed AutoLab runner with declaration, frozen-zone checks, deterministic gate, human ratification, lineage, and circuit-breaker accounting."
+    },
+    {
+      "item": 8,
+      "summary": "Documentation candidate showing an allowed non-frozen candidate path."
+    },
+    {
+      "item": 9,
+      "summary": "External candidate harness that writes candidate packets after protected verification."
+    },
+    {
+      "item": 10,
+      "summary": "Ratification packet and lineage CLI that records explicit human action without auto-promotion."
+    },
+    {
+      "item": 11,
+      "summary": "Adversarial candidate suite covering unsafe and malformed candidate paths."
+    }
+  ],
+  "required_commands": [
+    "py -3 verify_all.py",
+    "py -3 autolab_runner_demo.py",
+    "py -3 external_candidate_harness.py --help",
+    "py -3 ratification_packet_cli.py --help",
+    "py -3 adversarial_candidate_suite.py --ci",
+    "py -3 release_gate.py --ci",
+    "py -3 frozen_zone_check.py --ci --base origin/main"
+  ],
+  "rejected_overclaims": [
+    "not autonomous self-improving AI",
+    "not proof of alignment",
+    "not a safety guarantee",
+    "not a replacement for human judgment"
+  ],
+  "threat_model_coverage": [
+    "frozen-path tampering",
+    "metric gaming",
+    "malformed packets",
+    "ratification misuse",
+    "lineage spoofing",
+    "erased failure memory",
+    "dirty release artifacts"
+  ],
+  "architecture_flow": [
+    "external candidate",
+    "candidate packet",
+    "verification",
+    "outcome classification",
+    "ratification packet",
+    "explicit human action",
+    "lineage record",
+    "adversarial pressure"
+  ]
+}
