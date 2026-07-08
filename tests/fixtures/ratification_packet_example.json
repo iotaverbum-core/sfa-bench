@@ -1,0 +1,136 @@
+{
+  "lineage_record": {
+    "base_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "base_ref": "origin/main",
+    "changed_files": [
+      "docs/example-candidate-note.md"
+    ],
+    "created_utc": "2026-07-08T12:30:00Z",
+    "frozen_path_status": {
+      "frozen_path_count": 15,
+      "manifest_source": "origin/main:autolab/frozen_manifest.json",
+      "touched": false,
+      "touched_paths": []
+    },
+    "human_action": {
+      "action": "ratify",
+      "explicit": true,
+      "rationale": "Human review approved the promotion-ready packet.",
+      "timestamp_utc": "2026-07-08T12:30:00Z"
+    },
+    "lineage_record_id": "lineage-20260708T120000Z-0123456789ab-example1-ratify-20260708T123000Z-example2",
+    "outcome": {
+      "auto_promoted": false,
+      "class": "LINEAGE_RECORDED",
+      "promotion_effect": "none",
+      "reason": "decision lineage recorded; no promotion was performed"
+    },
+    "ratification_outcome": "RATIFIED",
+    "schema": "sfa.ratification_packet.lineage_record.v0",
+    "source_candidate_run_id": "20260708T120000Z-0123456789ab-example1",
+    "source_ratification_run_id": "20260708T120000Z-0123456789ab-example1-ratify-20260708T123000Z-example2",
+    "target_commit": "0123456789abcdef0123456789abcdef01234567",
+    "target_ref": "0123456789abcdef0123456789abcdef01234567",
+    "verification_results": [
+      {
+        "command": "py -3 verify_all.py",
+        "duration_seconds": 12.345,
+        "failure_outcome": "REJECTED_BY_TESTS",
+        "name": "verify_all",
+        "ok": true,
+        "returncode": 0
+      },
+      {
+        "command": "py -3 release_gate.py --ci",
+        "duration_seconds": 0.234,
+        "failure_outcome": "REJECTED_BY_RELEASE_GATE",
+        "name": "release_gate",
+        "ok": true,
+        "returncode": 0
+      },
+      {
+        "command": "py -3 frozen_zone_check.py --ci --base origin/main",
+        "duration_seconds": 0.456,
+        "failure_outcome": "REJECTED_BY_FROZEN_ZONE",
+        "name": "frozen_zone_check",
+        "ok": true,
+        "returncode": 0
+      }
+    ]
+  },
+  "ratification_packet": {
+    "artifacts": {
+      "lineage_record_json": "out/ratification_packets/20260708T120000Z-0123456789ab-example1-ratify-20260708T123000Z-example2/lineage_record.json",
+      "ratification_packet_json": "out/ratification_packets/20260708T120000Z-0123456789ab-example1-ratify-20260708T123000Z-example2/ratification_packet.json",
+      "ratification_packet_md": "out/ratification_packets/20260708T120000Z-0123456789ab-example1-ratify-20260708T123000Z-example2/ratification_packet.md"
+    },
+    "base": {
+      "base_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "base_ref": "origin/main"
+    },
+    "changed_files": [
+      "docs/example-candidate-note.md"
+    ],
+    "created_utc": "2026-07-08T12:30:00Z",
+    "frozen_path_status": {
+      "frozen_path_count": 15,
+      "manifest_source": "origin/main:autolab/frozen_manifest.json",
+      "touched": false,
+      "touched_paths": []
+    },
+    "human_action": {
+      "action": "ratify",
+      "explicit": true,
+      "rationale": "Human review approved the promotion-ready packet.",
+      "timestamp_utc": "2026-07-08T12:30:00Z"
+    },
+    "outcome": {
+      "auto_promoted": false,
+      "class": "RATIFIED",
+      "lineage_recorded": true,
+      "reason": "human explicitly ratified a promotion-ready candidate"
+    },
+    "run_id": "20260708T120000Z-0123456789ab-example1-ratify-20260708T123000Z-example2",
+    "schema": "sfa.ratification_packet.v0",
+    "source_candidate_packet": {
+      "outcome_class": "PROMOTION_READY",
+      "path": "tests/fixtures/external_candidate_packet_example.json",
+      "promotion_ready": true,
+      "run_id": "20260708T120000Z-0123456789ab-example1",
+      "sha256": "example-sha256"
+    },
+    "target": {
+      "candidate_input": "0123456789abcdef0123456789abcdef01234567",
+      "candidate_input_kind": "target",
+      "target_commit": "0123456789abcdef0123456789abcdef01234567",
+      "target_ref": "0123456789abcdef0123456789abcdef01234567"
+    },
+    "verification_results": [
+      {
+        "command": "py -3 verify_all.py",
+        "duration_seconds": 12.345,
+        "failure_outcome": "REJECTED_BY_TESTS",
+        "name": "verify_all",
+        "ok": true,
+        "returncode": 0
+      },
+      {
+        "command": "py -3 release_gate.py --ci",
+        "duration_seconds": 0.234,
+        "failure_outcome": "REJECTED_BY_RELEASE_GATE",
+        "name": "release_gate",
+        "ok": true,
+        "returncode": 0
+      },
+      {
+        "command": "py -3 frozen_zone_check.py --ci --base origin/main",
+        "duration_seconds": 0.456,
+        "failure_outcome": "REJECTED_BY_FROZEN_ZONE",
+        "name": "frozen_zone_check",
+        "ok": true,
+        "returncode": 0
+      }
+    ]
+  },
+  "schema": "sfa.ratification_packet.fixture.v0"
+}

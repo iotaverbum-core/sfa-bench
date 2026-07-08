@@ -227,6 +227,7 @@ research instrument's release line or its DOI. See
 - [AutoLab Circuit Breakers](docs/autolab-circuit-breakers.md)
 - [AutoLab End-to-End Runner](docs/autolab-runner.md)
 - [External Candidate Harness](docs/external-candidate-harness.md)
+- [Ratification Packet + Lineage CLI](docs/ratification-packet-lineage-cli.md)
 - [Prior State Memory: Why AI Needs Memory Before the Next Mistake](docs/prior-state-memory.md)
 
 ## AutoLab Item 7 Usage
@@ -251,6 +252,23 @@ py -3 external_candidate_harness.py --branch <branch-name>
 See [External Candidate Harness](docs/external-candidate-harness.md), the
 [minimal PowerShell flow](examples/external_candidate_harness_minimal_usage.md),
 and the [example packet fixture](tests/fixtures/external_candidate_packet_example.json).
+
+## Ratification Packet + Lineage CLI
+
+Item 10 consumes an Item 9 `candidate_packet.json`, records an explicit human
+review action, and writes a ratification packet plus lineage record under
+`out/ratification_packets/<run_id>/`. It does not auto-promote candidates.
+
+```bash
+py -3 ratification_packet_cli.py --packet <candidate_packet.json> --prepare
+py -3 ratification_packet_cli.py --packet <candidate_packet.json> --ratify
+py -3 ratification_packet_cli.py --packet <candidate_packet.json> --reject
+py -3 ratification_packet_cli.py --packet <candidate_packet.json> --halt
+```
+
+See [Ratification Packet + Lineage CLI](docs/ratification-packet-lineage-cli.md),
+the [minimal PowerShell flow](examples/ratification_packet_cli_minimal_usage.md),
+and the [example ratification fixture](tests/fixtures/ratification_packet_example.json).
 
 ## Citation
 
