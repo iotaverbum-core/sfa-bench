@@ -270,6 +270,20 @@ See [Ratification Packet + Lineage CLI](docs/ratification-packet-lineage-cli.md)
 the [minimal PowerShell flow](examples/ratification_packet_cli_minimal_usage.md),
 and the [example ratification fixture](tests/fixtures/ratification_packet_example.json).
 
+## Adversarial Candidate Suite
+
+Item 11 checks that unsafe or malformed external-candidate inputs halt or reject
+with predictable outcomes in temporary workspaces.
+
+```bash
+py -3 adversarial_candidate_suite.py
+py -3 adversarial_candidate_suite.py --ci
+```
+
+See [Adversarial Candidate Suite](docs/adversarial-candidate-suite.md), the
+[minimal PowerShell flow](examples/adversarial_candidate_suite_minimal_usage.md),
+and the [adversarial case fixture](tests/fixtures/adversarial_candidate_cases.json).
+
 ## Citation
 
 Use the repository metadata in [`CITATION.cff`](CITATION.cff). A plain-text form:
