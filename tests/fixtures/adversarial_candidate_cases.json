@@ -1,0 +1,40 @@
+{
+  "cases": [
+    {
+      "case_id": "safe_docs_candidate",
+      "description": "A docs-only candidate is committed in a disposable temporary repository and checked for frozen-path touches plus release-gate cleanliness.",
+      "driver": "suite preflight plus release_gate.py --ci",
+      "expected_outcome": "PROMOTION_READY",
+      "expected_reason": "protected verification passed with no frozen-path changes"
+    },
+    {
+      "case_id": "frozen_path_tamper",
+      "description": "A candidate commit modifies a path listed in origin/main:autolab/frozen_manifest.json and is halted by the adversarial suite preflight before harness execution.",
+      "driver": "suite preflight over git diff --name-only origin/main...<temp-tamper-commit>",
+      "expected_outcome": "HALTED_BY_PREFLIGHT",
+      "expected_reason": "frozen_path_change_proposed"
+    },
+    {
+      "case_id": "release_gate_failure",
+      "description": "A disposable temporary repository contains a forbidden untracked runtime output so release_gate.py --ci rejects the dirty release condition.",
+      "driver": "release_gate.py --ci",
+      "expected_outcome": "REJECTED_BY_RELEASE_GATE",
+      "expected_reason": "release_gate.py --ci failed"
+    },
+    {
+      "case_id": "non_promotion_ratification_attempt",
+      "description": "A valid candidate packet with a non-PROMOTION_READY outcome is passed to ratification_packet_cli.py --ratify.",
+      "driver": "ratification_packet_cli.py --packet <temp-packet> --ratify",
+      "expected_outcome": "RATIFICATION_REFUSED",
+      "expected_reason": "refusing --ratify"
+    },
+    {
+      "case_id": "malformed_packet",
+      "description": "A candidate packet missing required fields is passed to ratification_packet_cli.py.",
+      "driver": "ratification_packet_cli.py --packet <temp-packet> --prepare",
+      "expected_outcome": "MALFORMED_PACKET_REJECTED",
+      "expected_reason": "candidate packet missing required field"
+    }
+  ],
+  "schema": "sfa.adversarial_candidate_suite.cases.v0"
+}
