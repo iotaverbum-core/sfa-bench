@@ -284,6 +284,20 @@ See [Adversarial Candidate Suite](docs/adversarial-candidate-suite.md), the
 [minimal PowerShell flow](examples/adversarial_candidate_suite_minimal_usage.md),
 and the [adversarial case fixture](tests/fixtures/adversarial_candidate_cases.json).
 
+## v1.0 Research Release Pack
+
+Item 12 collects the governed candidate-improvement path into a reviewer-facing
+research release pack. The pack explains the system, bounded claims, limits,
+threat model, architecture, reproducibility path, and reviewer commands.
+
+- [Research Release Overview](docs/research/sfa-bench-v1-research-release.md)
+- [Claims and Limits](docs/research/sfa-bench-v1-claims-and-limits.md)
+- [Reproducibility Guide](docs/research/sfa-bench-v1-reproducibility-guide.md)
+- [Threat Model](docs/research/sfa-bench-v1-threat-model.md)
+- [Architecture](docs/research/sfa-bench-v1-architecture.md)
+- [Reviewer Commands](examples/v1_research_release_commands.md)
+- [Checklist Fixture](tests/fixtures/v1_research_release_checklist.json)
+
 ## Citation
 
 Use the repository metadata in [`CITATION.cff`](CITATION.cff). A plain-text form:
