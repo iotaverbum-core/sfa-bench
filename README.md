@@ -204,6 +204,7 @@ research instrument's release line or its DOI. See
 ## Documentation
 
 - [Researcher Guide](docs/researcher-guide.md)
+- [SFA-Bench White Paper v1: A Grammar for Governed Improvement](docs/research/sfa-bench-whitepaper-v1.md)
 - [Claims and Limitations](docs/claims-and-limitations.md)
 - [Architecture Stack](docs/architecture-stack.md)
 - [Concept](docs/concept.md)
