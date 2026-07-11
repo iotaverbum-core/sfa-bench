@@ -27,9 +27,9 @@ from .scorers import score_task
 from .tasks import load_tasks
 
 
-def load_output_fixture(path: str | Path) -> dict[str, dict[str, Any]]:
+def load_output_fixture(path: str | Path) -> dict[str, dict[str, Any] | None]:
     """Load a JSONL model-output fixture into {task_id: output}."""
-    outputs: dict[str, dict[str, Any]] = {}
+    outputs: dict[str, dict[str, Any] | None] = {}
     with open(path, "r", encoding="utf-8") as fh:
         for line_no, raw in enumerate(fh, start=1):
             line = raw.strip()
@@ -39,13 +39,13 @@ def load_output_fixture(path: str | Path) -> dict[str, dict[str, Any]]:
             task_id = record.get("task_id")
             if not task_id:
                 raise ValueError(f"{path}:{line_no}: record missing task_id")
-            outputs[task_id] = record.get("output", {})
+            outputs[task_id] = record.get("output")
     return outputs
 
 
 def run_suite(
     model: str,
-    outputs: dict[str, dict[str, Any]],
+    outputs: dict[str, dict[str, Any] | None],
     *,
     generated_at: str | None = None,
     suite_version: str = schemas.SUITE_VERSION,

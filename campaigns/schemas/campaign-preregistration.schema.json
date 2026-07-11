@@ -1,0 +1,130 @@
+{
+  "$id": "https://sfa-bench.invalid/schemas/campaign-preregistration.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "adapter_version": {"minLength": 1, "type": "string"},
+    "api_or_execution_surface": {"minLength": 1, "type": "string"},
+    "benchmark_commit_sha": {"pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$", "type": "string"},
+    "benchmark_inputs": {
+      "additionalProperties": false,
+      "properties": {
+        "adapter_paths": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array", "uniqueItems": true},
+        "case_paths": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array", "uniqueItems": true},
+        "declared_commands": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array", "uniqueItems": true},
+        "evidence_paths": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array", "uniqueItems": true},
+        "normalizer_paths": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array", "uniqueItems": true},
+        "rule_paths": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array", "uniqueItems": true},
+        "schema_paths": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array", "uniqueItems": true},
+        "taxonomy_paths": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array", "uniqueItems": true}
+      },
+      "required": ["adapter_paths", "case_paths", "declared_commands", "evidence_paths", "normalizer_paths", "rule_paths", "schema_paths", "taxonomy_paths"],
+      "type": "object"
+    },
+    "benchmark_lock": {
+      "additionalProperties": false,
+      "properties": {
+        "lock_digest": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "path": {"pattern": "^out/campaign_locks/", "type": "string"},
+        "repository_commit": {"minLength": 1, "type": "string"},
+        "status": {"const": "frozen"},
+        "verifier_commit": {"minLength": 1, "type": "string"}
+      },
+      "required": ["lock_digest", "path", "repository_commit", "status", "verifier_commit"],
+      "type": "object"
+    },
+    "campaign_id": {"minLength": 1, "type": "string"},
+    "campaign_title": {"minLength": 1, "type": "string"},
+    "candidate_provider": {"minLength": 1, "type": "string"},
+    "candidate_snapshot_or_alias_status": {"enum": ["fixed_snapshot", "mutable_alias", "to_be_confirmed"]},
+    "declared_limitations": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array"},
+    "exclusion_policy": {"$ref": "#/$defs/exclusionPolicy"},
+    "execution_plan": {"$ref": "execution-plan.schema.json"},
+    "failure_criteria": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array"},
+    "frozen_case_set_digest": {"minLength": 1, "type": "string"},
+    "frozen_rule_digest": {"minLength": 1, "type": "string"},
+    "frozen_taxonomy_digest": {"minLength": 1, "type": "string"},
+    "halt_conditions": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array"},
+    "holdout_commitment": {"$ref": "#/$defs/holdoutCommitment"},
+    "invalid_output_policy": {
+      "additionalProperties": false,
+      "properties": {
+        "canonicaliser_dispatch": {"const": "valid_json_objects_only"},
+        "empty_response": {"const": "no_model_output"},
+        "invalid_output_score": {"const": 0},
+        "no_json_object": {"const": "unparseable_model_output"},
+        "non_object_json": {"const": "invalid_model_output"},
+        "preserve_parse_notes": {"const": true},
+        "preserve_raw_response": {"const": true}
+      },
+      "required": ["canonicaliser_dispatch", "empty_response", "invalid_output_score", "no_json_object", "non_object_json", "preserve_parse_notes", "preserve_raw_response"],
+      "type": "object"
+    },
+    "mutable_alias_use_declared": {"type": "boolean"},
+    "normalizer_version": {"minLength": 1, "type": "string"},
+    "provider_model_identifier": {"minLength": 1, "type": "string"},
+    "release_identifier": {"pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+(-(alpha|beta|rc)\\.[0-9]+)?$", "type": "string"},
+    "ratification_policy": {"$ref": "ratification-policy.schema.json"},
+    "reasoning_configuration": {"type": "object"},
+    "research_question": {"minLength": 1, "type": "string"},
+    "retry_policy": {"$ref": "#/$defs/retryPolicy"},
+    "run_classification": {"enum": ["development", "pilot", "official"]},
+    "run_count": {"minimum": 1, "type": "integer"},
+    "sampling_configuration": {"type": "object"},
+    "schema_version": {"const": "sfa_bench.campaign.v1"},
+    "status": {"enum": ["draft_not_executed", "preregistered", "halted_before_execution"]},
+    "success_criteria": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array"},
+    "system_prompt": {"$ref": "#/$defs/reference"},
+    "tool_permissions": {"items": {"minLength": 1, "type": "string"}, "type": "array"},
+    "user_prompt_or_case_set": {"$ref": "#/$defs/reference"},
+    "verifier_commit_sha": {"pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$", "type": "string"}
+  },
+  "required": [
+    "adapter_version", "api_or_execution_surface", "benchmark_commit_sha", "benchmark_inputs", "campaign_id", "campaign_title", "candidate_provider", "candidate_snapshot_or_alias_status", "declared_limitations", "exclusion_policy", "execution_plan", "failure_criteria", "frozen_case_set_digest", "frozen_rule_digest", "frozen_taxonomy_digest", "halt_conditions", "holdout_commitment", "invalid_output_policy", "mutable_alias_use_declared", "normalizer_version", "provider_model_identifier", "ratification_policy", "reasoning_configuration", "release_identifier", "research_question", "retry_policy", "run_classification", "run_count", "sampling_configuration", "schema_version", "status", "success_criteria", "system_prompt", "tool_permissions", "user_prompt_or_case_set", "verifier_commit_sha"
+  ],
+  "$defs": {
+    "exclusionPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "declared_reasons": {"items": {"minLength": 1, "type": "string"}, "type": "array", "uniqueItems": true},
+        "post_observation_changes_forbidden": {"const": true},
+        "preserve_excluded_evidence": {"const": true}
+      },
+      "required": ["declared_reasons", "post_observation_changes_forbidden", "preserve_excluded_evidence"],
+      "type": "object"
+    },
+    "holdoutCommitment": {
+      "additionalProperties": false,
+      "properties": {
+        "access_policy": {"minLength": 1, "type": "string"},
+        "case_set_reference": {"minLength": 1, "type": "string"},
+        "commitment_digest": {"minLength": 1, "type": "string"},
+        "committed": {"type": "boolean"}
+      },
+      "required": ["access_policy", "case_set_reference", "commitment_digest", "committed"],
+      "type": "object"
+    },
+    "reference": {
+      "additionalProperties": false,
+      "properties": {
+        "reference": {"minLength": 1, "type": "string"},
+        "sha256": {"pattern": "^([0-9a-f]{64}|TO_BE_CONFIRMED_AT_EXECUTION)$", "type": "string"}
+      },
+      "required": ["reference", "sha256"],
+      "type": "object"
+    },
+    "retryPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "max_attempts": {"minimum": 1, "type": "integer"},
+        "preserve_all_attempts": {"const": true},
+        "retry_conditions": {"items": {"minLength": 1, "type": "string"}, "type": "array", "uniqueItems": true},
+        "retry_metadata_may_affect_verdict": {"const": false}
+      },
+      "required": ["max_attempts", "preserve_all_attempts", "retry_conditions", "retry_metadata_may_affect_verdict"],
+      "type": "object"
+    }
+  },
+  "title": "SFA-Bench V2 campaign pre-registration",
+  "type": "object"
+}

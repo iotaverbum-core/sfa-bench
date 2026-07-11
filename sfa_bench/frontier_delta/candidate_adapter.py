@@ -21,13 +21,17 @@ replaces the per-run inline normalization so there is a single source of truth.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
+import hashlib
 import json
 import re
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 from sfa.hashing import sha256_hex
 
 from . import schemas
+
+CANDIDATE_ADAPTER_VERSION = "sfa.frontier_delta.candidate_adapter.v1"
 
 # ---------------------------------------------------------------------------
 # Blinded prompt construction
@@ -136,25 +140,85 @@ def build_blinded_prompt(task: dict[str, Any], neutral_case_id: str,
 # Gold-blind extraction helpers (operate on the model output only)
 # ---------------------------------------------------------------------------
 
-def extract_json_object(text: str) -> tuple[dict[str, Any], str]:
-    """Parse the first JSON object from a model response (full or embedded)."""
-    text = (text or "").strip()
-    if not text:
-        return {}, "empty_response_text"
+CandidateOutputStatus = Literal[
+    "valid_model_output",
+    "no_model_output",
+    "unparseable_model_output",
+    "invalid_model_output",
+]
+
+
+@dataclass(frozen=True)
+class CandidateOutputValidation:
+    """Typed result of the only candidate-output validity boundary."""
+
+    status: CandidateOutputStatus
+    data: dict[str, Any] | None
+    parse_mode: str
+    response_text_sha256: str
+
+    @property
+    def valid(self) -> bool:
+        return self.status == "valid_model_output"
+
+    def parse_notes(self) -> dict[str, str]:
+        return {
+            "parse_mode": self.parse_mode,
+            "candidate_output_status": self.status,
+            "response_text_sha256": self.response_text_sha256,
+        }
+
+
+def validate_candidate_output(text: str | None) -> CandidateOutputValidation:
+    """Classify raw candidate text before any lane-specific code can see it.
+
+    A full non-object JSON value is invalid even if it contains an object (for
+    example, an array of objects). For non-JSON surrounding text, the existing
+    first-decodable-object contract is retained.
+    """
+    if text is None:
+        exact_text = ""
+    elif isinstance(text, str):
+        exact_text = text
+    else:
+        raise TypeError("candidate response text must be str or None")
+
+    response_hash = hashlib.sha256(exact_text.encode("utf-8")).hexdigest()
+    stripped = exact_text.strip()
+    if not stripped:
+        return CandidateOutputValidation(
+            "no_model_output", None, "empty_response_text", response_hash
+        )
     try:
-        parsed = json.loads(text)
-        return (parsed, "full_text_json") if isinstance(parsed, dict) else ({}, "full_text_json_non_object")
+        parsed = json.loads(stripped)
+        if isinstance(parsed, dict):
+            return CandidateOutputValidation(
+                "valid_model_output", parsed, "full_text_json", response_hash
+            )
+        return CandidateOutputValidation(
+            "invalid_model_output", None, "full_text_json_non_object", response_hash
+        )
     except json.JSONDecodeError:
         pass
     decoder = json.JSONDecoder()
-    for match in re.finditer(r"{", text):
+    for match in re.finditer(r"{", stripped):
         try:
-            parsed, _end = decoder.raw_decode(text[match.start():])
+            parsed, _end = decoder.raw_decode(stripped[match.start():])
         except json.JSONDecodeError:
             continue
         if isinstance(parsed, dict):
-            return parsed, "embedded_json_object"
-    return {}, "no_json_object_found"
+            return CandidateOutputValidation(
+                "valid_model_output", parsed, "embedded_json_object", response_hash
+            )
+    return CandidateOutputValidation(
+        "unparseable_model_output", None, "no_json_object_found", response_hash
+    )
+
+
+def extract_json_object(text: str | None) -> tuple[dict[str, Any] | None, str]:
+    """Return the validated object and parse mode for compatibility callers."""
+    validation = validate_candidate_output(text)
+    return validation.data, validation.parse_mode
 
 
 def _walk(value: Any):
@@ -448,31 +512,91 @@ _LANE_CANONICALIZERS: dict[str, Callable[[dict[str, Any], str], tuple[dict[str, 
 }
 
 
-def canonicalize(task: dict[str, Any], response_text: str) -> tuple[dict[str, Any], dict[str, Any]]:
+def _canonicalize_validated(
+    task: dict[str, Any], response_text: str | None
+) -> tuple[
+    dict[str, Any] | None,
+    dict[str, Any],
+    CandidateOutputValidation,
+]:
     """Map a free-form model response into the frozen scorer's input shape.
 
     Dispatches on the task's lane. The canonicalizer sees only the model output,
     never the task's rubric or expected values, so it is gold-blind by construction.
     """
-    data, parse_mode = extract_json_object(response_text)
+    validation = validate_candidate_output(response_text)
+    notes: dict[str, Any] = validation.parse_notes()
+    if not validation.valid:
+        return None, notes, validation
+
+    data = validation.data
+    if data is None:  # The typed gate makes this unreachable unless its contract changes.
+        raise RuntimeError("valid candidate output has no JSON object")
     lane = task.get("lane")
-    notes: dict[str, Any] = {"parse_mode": parse_mode}
     canonicalizer = _LANE_CANONICALIZERS.get(lane)
     if canonicalizer is None:
-        notes["error"] = f"no canonicalizer for lane {lane!r}"
-        return {}, notes
-    output, extra = canonicalizer(data, response_text)
+        raise ValueError(f"no canonicalizer for lane {lane!r}")
+    output, extra = canonicalizer(data, response_text or "")
     notes.update(extra)
     notes["canonical_output_sha256"] = sha256_hex(output)
+    return output, notes, validation
+
+
+def canonicalize(
+    task: dict[str, Any], response_text: str | None
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Map raw candidate text through the shared validity and lane boundary."""
+    output, notes, _validation = _canonicalize_validated(task, response_text)
     return output, notes
 
 
-def score_response(task: dict[str, Any], response_text: str) -> dict[str, Any]:
-    """Canonicalize a model response and score it with the frozen ``score_task``."""
-    from .scorers import score_task
+def _invalid_output_result(
+    task: dict[str, Any], validation: CandidateOutputValidation
+) -> dict[str, Any]:
+    """Build a deterministic zero-credit result without calling the scorer."""
+    task_id = task.get("task_id", "?")
+    lane = task.get("lane", "?")
+    declared_mode = task.get("scoring_rubric", {}).get("scoring_mode", "deterministic")
+    scoring_mode = (
+        "rubric_assisted" if lane in schemas.RUBRIC_ASSISTED_LANES else declared_mode
+    )
+    replay_possible = bool(
+        task.get("replay_requirements", {}).get("deterministic", False)
+    )
+    evidence_by_status = {
+        "no_model_output": "no model output text was provided for this task",
+        "unparseable_model_output": "candidate output contained no JSON object",
+        "invalid_model_output": "candidate output was valid JSON but not an object",
+    }
+    if validation.status not in evidence_by_status:
+        raise ValueError("invalid-output result requires an invalid validation status")
 
-    output, notes = canonicalize(task, response_text)
-    result = dict(score_task(task, output))
+    result: dict[str, Any] = {
+        "schema": schemas.RESULT_SCHEMA_VERSION,
+        "task_id": task_id,
+        "lane": lane,
+        "scoring_mode": scoring_mode,
+        "score": 0.0,
+        "verdict": "fail",
+        "detected_failure_modes": [validation.status],
+        "evidence_snippets": [evidence_by_status[validation.status]],
+        "explanation": f"{task_id}: FAIL ({validation.status})",
+        "replay_possible": replay_possible,
+        "checks": [],
+    }
+    result["result_hash"] = sha256_hex(result)
+    return result
+
+
+def score_response(task: dict[str, Any], response_text: str | None) -> dict[str, Any]:
+    """Reject invalid text or score a valid JSON object with the frozen scorer."""
+    output, notes, validation = _canonicalize_validated(task, response_text)
+    if output is None:
+        result = _invalid_output_result(task, validation)
+    else:
+        from .scorers import score_task
+
+        result = dict(score_task(task, output))
     result["canonical_output"] = output
     result["parse_notes"] = notes
     return result

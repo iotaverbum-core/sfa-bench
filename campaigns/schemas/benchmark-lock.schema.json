@@ -1,0 +1,73 @@
+{
+  "$id": "https://sfa-bench.invalid/schemas/benchmark-lock.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "bindings": {
+      "additionalProperties": false,
+      "properties": {
+        "adapter": {"$ref": "#/$defs/bindings"},
+        "cases": {"$ref": "#/$defs/bindings"},
+        "evidence": {"$ref": "#/$defs/bindings"},
+        "normalizer": {"$ref": "#/$defs/bindings"},
+        "protected_verifier": {"$ref": "#/$defs/bindings"},
+        "rules": {"$ref": "#/$defs/bindings"},
+        "schemas": {"$ref": "#/$defs/bindings"},
+        "taxonomy": {"$ref": "#/$defs/bindings"}
+      },
+      "required": ["adapter", "cases", "evidence", "normalizer", "protected_verifier", "rules", "schemas", "taxonomy"],
+      "type": "object"
+    },
+    "campaign_digest": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "campaign_id": {"minLength": 1, "type": "string"},
+    "declared_commands": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array", "uniqueItems": true},
+    "declared_input_digests": {
+      "additionalProperties": false,
+      "properties": {
+        "cases": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "rules": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "taxonomy": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+      },
+      "required": ["cases", "rules", "taxonomy"],
+      "type": "object"
+    },
+    "digest_scope": {
+      "const": {
+        "campaign_excluded_fields": ["benchmark_lock"],
+        "excluded_fields": ["envelope", "lock_digest"]
+      }
+    },
+    "envelope": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {"minLength": 1, "type": "string"},
+        "created_by": {"minLength": 1, "type": "string"},
+        "environment_note": {"minLength": 1, "type": "string"}
+      },
+      "type": "object"
+    },
+    "lock_digest": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "release_identifier": {"pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+(-(alpha|beta|rc)\\.[0-9]+)?$", "type": "string"},
+    "repository_commit": {"pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$", "type": "string"},
+    "schema_version": {"const": "sfa_bench.benchmark_lock.v1"},
+    "verifier_commit": {"pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$", "type": "string"}
+  },
+  "required": ["bindings", "campaign_digest", "campaign_id", "declared_commands", "declared_input_digests", "digest_scope", "lock_digest", "release_identifier", "repository_commit", "schema_version", "verifier_commit"],
+  "$defs": {
+    "bindings": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "path": {"minLength": 1, "type": "string"},
+          "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+        },
+        "required": ["path", "sha256"],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "title": "SFA-Bench V2 deterministic benchmark lock",
+  "type": "object"
+}

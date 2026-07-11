@@ -1,0 +1,176 @@
+{
+  "adapter_version": "sfa.frontier_delta.candidate_adapter.v1",
+  "api_or_execution_surface": "TO_BE_CONFIRMED_AT_EXECUTION",
+  "benchmark_commit_sha": "f09b02f7bd61f8ae8b7cb3e329752819d6c4e923",
+  "benchmark_inputs": {
+    "adapter_paths": [
+      "sfa_bench/frontier_delta/candidate_adapter.py"
+    ],
+    "case_paths": [
+      "sfa_bench/frontier_delta/tasks"
+    ],
+    "declared_commands": [
+      "py -3 campaign_cli.py validate --campaign campaigns/examples/gpt56-draft-preregistration.json",
+      "py -3 campaign_cli.py validate-candidate --manifest campaigns/examples/gpt56-draft-candidate-manifest.json",
+      "py -3 campaign_cli.py lock --campaign campaigns/examples/gpt56-draft-preregistration.json --output out/campaign_locks/gpt56-future-study-draft-alpha1.benchmark-lock.json",
+      "py -3 campaign_cli.py verify-lock --campaign campaigns/examples/gpt56-draft-preregistration.json --lock out/campaign_locks/gpt56-future-study-draft-alpha1.benchmark-lock.json"
+    ],
+    "evidence_paths": [
+      "cases"
+    ],
+    "normalizer_paths": [
+      "sfa_bench/frontier_delta/candidate_adapter.py"
+    ],
+    "rule_paths": [
+      "sfa_bench/frontier_delta/scorers"
+    ],
+    "schema_paths": [
+      "campaigns/schemas",
+      "campaign_cli.py",
+      "sfa_bench/campaigns/__init__.py",
+      "sfa_bench/campaigns/locking.py",
+      "sfa_bench/campaigns/protocol.py"
+    ],
+    "taxonomy_paths": [
+      "families.json"
+    ]
+  },
+  "campaign_id": "gpt56-future-study-draft-alpha1",
+  "campaign_title": "Future GPT-5.6 SFA-Bench Candidate Study",
+  "candidate_provider": "OpenAI",
+  "candidate_snapshot_or_alias_status": "to_be_confirmed",
+  "declared_limitations": [
+    "No live model run has occurred.",
+    "API access and a public provider model identifier are not confirmed.",
+    "Generation reproducibility may be limited; judgment reproducibility is mandatory.",
+    "Passing SFA-Bench would not establish legal or regulatory conformity."
+  ],
+  "exclusion_policy": {
+    "declared_reasons": [
+      "provider outage before any response is captured",
+      "pre-registered campaign halt condition"
+    ],
+    "post_observation_changes_forbidden": true,
+    "preserve_excluded_evidence": true
+  },
+  "execution_plan": {
+    "campaign_id": "gpt56-future-study-draft-alpha1",
+    "concurrency_policy": {
+      "max_workers": 1,
+      "mode": "serial"
+    },
+    "error_handling": {
+      "invalid_output_verdicts": [
+        "invalid_model_output",
+        "no_model_output",
+        "unparseable_model_output"
+      ],
+      "preserve_failures": true
+    },
+    "exclusion_rules": {
+      "declared_reasons": [
+        "provider outage before any response is captured",
+        "pre-registered campaign halt condition"
+      ],
+      "post_observation_changes_forbidden": true,
+      "preserve_excluded_evidence": true
+    },
+    "halt_conditions": [
+      "candidate identity cannot be resolved before execution",
+      "benchmark lock verification fails",
+      "capture boundary cannot preserve raw responses"
+    ],
+    "ordering_policy": "fixed",
+    "output_path": "out/campaign_runs/gpt56-future-study-draft-alpha1",
+    "planned_repetitions": 3,
+    "retry_rules": {
+      "max_attempts": 1,
+      "preserve_all_attempts": true,
+      "retry_conditions": [],
+      "retry_metadata_may_affect_verdict": false
+    },
+    "run_classification": "pilot",
+    "schema_version": "sfa_bench.execution_plan.v1"
+  },
+  "failure_criteria": [
+    "any invalid candidate output enters a lane canonicaliser",
+    "any campaign input fails benchmark-lock verification",
+    "any evidence is lost or silently repaired"
+  ],
+  "frozen_case_set_digest": "620acba1ba62d7ad9b58f75ffd07b4934df3dedd9caacf41e9a6e11c83db39e2",
+  "frozen_rule_digest": "4b391e6f1b8edcc7cdc63984abfb5f250ad78dbf9ae8265a4153c0142ffa129e",
+  "frozen_taxonomy_digest": "f42b1cef155370e2715f1ee56c87d5d7454ce1777da0c87549f637669ba4cc34",
+  "halt_conditions": [
+    "candidate identity cannot be resolved before execution",
+    "benchmark lock verification fails",
+    "capture boundary cannot preserve raw responses"
+  ],
+  "holdout_commitment": {
+    "access_policy": "not_available_in_alpha1",
+    "case_set_reference": "NOT_YET_COMMITTED",
+    "commitment_digest": "NOT_YET_COMMITTED",
+    "committed": false
+  },
+  "invalid_output_policy": {
+    "canonicaliser_dispatch": "valid_json_objects_only",
+    "empty_response": "no_model_output",
+    "invalid_output_score": 0,
+    "no_json_object": "unparseable_model_output",
+    "non_object_json": "invalid_model_output",
+    "preserve_parse_notes": true,
+    "preserve_raw_response": true
+  },
+  "mutable_alias_use_declared": false,
+  "normalizer_version": "sfa.frontier_delta.candidate_adapter.v1",
+  "provider_model_identifier": "TO_BE_CONFIRMED_AT_EXECUTION",
+  "release_identifier": "v2.0.0-alpha.1",
+  "ratification_policy": {
+    "allowed_decisions": [
+      "prepare",
+      "ratify",
+      "reject",
+      "halt"
+    ],
+    "automatic_promotion": false,
+    "automatic_ratification": false,
+    "evidence_references_required": true,
+    "lineage_linkage_required": true,
+    "reason_required": true,
+    "reviewer_identity_required": true,
+    "schema_version": "sfa_bench.ratification_policy.v1"
+  },
+  "reasoning_configuration": {
+    "status": "TO_BE_CONFIRMED_AT_EXECUTION"
+  },
+  "research_question": "Does a confirmed GPT-5.6 candidate preserve the frozen SFA grammar under provider-captured outputs?",
+  "retry_policy": {
+    "max_attempts": 1,
+    "preserve_all_attempts": true,
+    "retry_conditions": [],
+    "retry_metadata_may_affect_verdict": false
+  },
+  "run_classification": "pilot",
+  "run_count": 3,
+  "sampling_configuration": {
+    "status": "TO_BE_CONFIRMED_AT_EXECUTION"
+  },
+  "schema_version": "sfa_bench.campaign.v1",
+  "status": "draft_not_executed",
+  "success_criteria": [
+    "all captured attempts remain traceable",
+    "invalid outputs receive explicit zero-credit verdicts before lane dispatch",
+    "the frozen verifier reproduces every judgment offline"
+  ],
+  "system_prompt": {
+    "reference": "TO_BE_CONFIRMED_AT_EXECUTION",
+    "sha256": "TO_BE_CONFIRMED_AT_EXECUTION"
+  },
+  "tool_permissions": [
+    "none"
+  ],
+  "user_prompt_or_case_set": {
+    "reference": "sfa_bench/frontier_delta/tasks",
+    "sha256": "TO_BE_CONFIRMED_AT_EXECUTION"
+  },
+  "verifier_commit_sha": "f09b02f7bd61f8ae8b7cb3e329752819d6c4e923"
+}

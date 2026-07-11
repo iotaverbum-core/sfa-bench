@@ -1,0 +1,35 @@
+{
+  "campaign_id": "gpt56-future-study-draft-alpha1",
+  "campaign_reference": {
+    "campaign_id": "gpt56-future-study-draft-alpha1",
+    "path": "campaigns/examples/gpt56-draft-preregistration.json",
+    "sha256": "TO_BE_CONFIRMED_AT_EXECUTION"
+  },
+  "candidate_id": "gpt56-candidate-to-be-confirmed",
+  "capture_boundary_version": "sfa.frontier_delta.candidate_adapter.v1",
+  "configuration": {
+    "reasoning": "TO_BE_CONFIRMED_AT_EXECUTION",
+    "sampling": "TO_BE_CONFIRMED_AT_EXECUTION"
+  },
+  "environment": {
+    "execution_surface": "TO_BE_CONFIRMED_AT_EXECUTION",
+    "network_required_for_future_capture": true
+  },
+  "judgment_boundary": {
+    "adapter_metadata_may_affect_verdict": false,
+    "provider_metadata_may_affect_verdict": false,
+    "retry_metadata_may_affect_verdict": false
+  },
+  "model_string_supplied_at_execution": "TO_BE_CONFIRMED_AT_EXECUTION",
+  "mutable_alias_use_declared": false,
+  "observed_provider_model_metadata": null,
+  "provider": "OpenAI",
+  "schema_version": "sfa_bench.candidate_manifest.v1",
+  "snapshot_or_alias_status": "to_be_confirmed",
+  "status": "draft_not_executed",
+  "tool_state": {
+    "permissions": [
+      "none"
+    ]
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "$id": "https://sfa-bench.invalid/schemas/execution-plan.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "campaign_id": {"minLength": 1, "type": "string"},
+    "concurrency_policy": {
+      "additionalProperties": false,
+      "properties": {
+        "max_workers": {"minimum": 1, "type": "integer"},
+        "mode": {"enum": ["serial", "fixed"]}
+      },
+      "required": ["max_workers", "mode"],
+      "type": "object"
+    },
+    "error_handling": {
+      "additionalProperties": false,
+      "properties": {
+        "invalid_output_verdicts": {
+          "allOf": [
+            {"contains": {"const": "invalid_model_output"}},
+            {"contains": {"const": "no_model_output"}},
+            {"contains": {"const": "unparseable_model_output"}}
+          ],
+          "items": {"enum": ["invalid_model_output", "no_model_output", "unparseable_model_output"]},
+          "maxItems": 3,
+          "minItems": 3,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "preserve_failures": {"const": true}
+      },
+      "required": ["invalid_output_verdicts", "preserve_failures"],
+      "type": "object"
+    },
+    "exclusion_rules": {
+      "additionalProperties": false,
+      "properties": {
+        "declared_reasons": {"items": {"minLength": 1, "type": "string"}, "type": "array", "uniqueItems": true},
+        "post_observation_changes_forbidden": {"const": true},
+        "preserve_excluded_evidence": {"const": true}
+      },
+      "required": ["declared_reasons", "post_observation_changes_forbidden", "preserve_excluded_evidence"],
+      "type": "object"
+    },
+    "halt_conditions": {"items": {"minLength": 1, "type": "string"}, "minItems": 1, "type": "array"},
+    "ordering_policy": {"enum": ["fixed", "deterministic_shuffle_with_declared_seed", "provider_neutral_round_robin"]},
+    "ordering_seed": {"minimum": 1, "type": "integer"},
+    "output_path": {"pattern": "^out/campaign_runs/", "type": "string"},
+    "planned_repetitions": {"minimum": 1, "type": "integer"},
+    "retry_rules": {
+      "additionalProperties": false,
+      "properties": {
+        "max_attempts": {"minimum": 1, "type": "integer"},
+        "preserve_all_attempts": {"const": true},
+        "retry_conditions": {"items": {"minLength": 1, "type": "string"}, "type": "array", "uniqueItems": true},
+        "retry_metadata_may_affect_verdict": {"const": false}
+      },
+      "required": ["max_attempts", "preserve_all_attempts", "retry_conditions", "retry_metadata_may_affect_verdict"],
+      "type": "object"
+    },
+    "run_classification": {"enum": ["development", "pilot", "official"]},
+    "schema_version": {"const": "sfa_bench.execution_plan.v1"}
+  },
+  "required": ["campaign_id", "concurrency_policy", "error_handling", "exclusion_rules", "halt_conditions", "ordering_policy", "output_path", "planned_repetitions", "retry_rules", "run_classification", "schema_version"],
+  "allOf": [
+    {
+      "else": {"not": {"required": ["ordering_seed"]}},
+      "if": {"properties": {"ordering_policy": {"const": "deterministic_shuffle_with_declared_seed"}}, "required": ["ordering_policy"]},
+      "then": {"required": ["ordering_seed"]}
+    }
+  ],
+  "title": "SFA-Bench V2 execution plan",
+  "type": "object"
+}
