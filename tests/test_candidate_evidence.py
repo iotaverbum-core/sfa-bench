@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 from sfa.hashing import sha256_hex
 from sfa_bench.frontier_delta import candidate_adapter
@@ -36,7 +37,44 @@ def _build() -> dict:
     )
 
 
-class SuccessorBuildTests(unittest.TestCase):
+class EvidenceUnitTest(unittest.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        patcher = mock.patch.object(evidence, "_verify_repository_bindings")
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+
+class RepositoryProvenanceTests(unittest.TestCase):
+    def test_public_build_rejects_unresolved_benchmark_commit(self):
+        with self.assertRaises(evidence.CandidateEvidenceError) as caught:
+            evidence.build_successor(
+                RAW,
+                PREDECESSOR,
+                artifact_id=ARTIFACT_ID,
+                benchmark_commit="0" * 40,
+                verifier_commit=COMMIT,
+                reason=REASON,
+            )
+        self.assertEqual(caught.exception.code, "benchmark_commit_unresolved")
+
+    def test_public_build_rejects_commit_without_bound_implementation(self):
+        with self.assertRaises(evidence.CandidateEvidenceError) as caught:
+            evidence.build_successor(
+                RAW,
+                PREDECESSOR,
+                artifact_id=ARTIFACT_ID,
+                benchmark_commit=COMMIT,
+                verifier_commit=COMMIT,
+                reason=REASON,
+            )
+        self.assertEqual(
+            caught.exception.code,
+            "benchmark_commit_content_mismatch",
+        )
+
+
+class SuccessorBuildTests(EvidenceUnitTest):
     def test_build_is_deterministic_and_byte_identical(self):
         first = _build()
         second = _build()
@@ -155,7 +193,7 @@ class SuccessorBuildTests(unittest.TestCase):
         )
 
 
-class SuccessorVerifyTests(unittest.TestCase):
+class SuccessorVerifyTests(EvidenceUnitTest):
     def _build_from_copies(
         self,
         root: Path,
@@ -337,7 +375,7 @@ class SuccessorVerifyTests(unittest.TestCase):
         )
 
 
-class CandidateEvidenceCliTests(unittest.TestCase):
+class CandidateEvidenceCliTests(EvidenceUnitTest):
     def test_build_verify_and_no_overwrite_return_machine_readable_results(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

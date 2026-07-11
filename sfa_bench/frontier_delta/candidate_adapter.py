@@ -201,15 +201,60 @@ def validate_candidate_output(text: str | None) -> CandidateOutputValidation:
     except json.JSONDecodeError:
         pass
     decoder = json.JSONDecoder()
-    for match in re.finditer(r"{", stripped):
-        try:
-            parsed, _end = decoder.raw_decode(stripped[match.start():])
-        except json.JSONDecodeError:
-            continue
-        if isinstance(parsed, dict):
+    try:
+        leading, _end = decoder.raw_decode(stripped)
+    except json.JSONDecodeError:
+        pass
+    else:
+        if isinstance(leading, dict):
             return CandidateOutputValidation(
-                "valid_model_output", parsed, "embedded_json_object", response_hash
+                "valid_model_output", leading, "embedded_json_object", response_hash
             )
+        return CandidateOutputValidation(
+            "invalid_model_output", None, "leading_json_non_object", response_hash
+        )
+
+    brace_depth = 0
+    bracket_depth = 0
+    in_string = False
+    escaped = False
+    for index, character in enumerate(stripped):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+            continue
+        if character == '"':
+            in_string = True
+            continue
+        if character == "[":
+            bracket_depth += 1
+            continue
+        if character == "]":
+            bracket_depth = max(0, bracket_depth - 1)
+            continue
+        if character == "{":
+            top_level = brace_depth == 0 and bracket_depth == 0
+            if top_level:
+                try:
+                    parsed, _end = decoder.raw_decode(stripped[index:])
+                except json.JSONDecodeError:
+                    pass
+                else:
+                    if isinstance(parsed, dict):
+                        return CandidateOutputValidation(
+                            "valid_model_output",
+                            parsed,
+                            "embedded_json_object",
+                            response_hash,
+                        )
+            brace_depth += 1
+            continue
+        if character == "}":
+            brace_depth = max(0, brace_depth - 1)
     return CandidateOutputValidation(
         "unparseable_model_output", None, "no_json_object_found", response_hash
     )

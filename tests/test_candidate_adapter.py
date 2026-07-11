@@ -202,6 +202,25 @@ class CandidateValidityGateTests(unittest.TestCase):
         self.assertEqual(duplicate.data, {"answer": 1})
         self.assertEqual(duplicate.parse_mode, "embedded_json_object")
 
+    def test_non_object_container_cannot_expose_a_nested_object(self):
+        task = load_task("memory_boundary_001")
+        nested = (
+            '[{"claimed_state_keys":["customer_id"],'
+            '"used_off_limits_keys":[]}] trailing'
+        )
+        result = ca.score_response(task, nested)
+        self.assertEqual(result["score"], 0.0)
+        self.assertIsNone(result["canonical_output"])
+        self.assertEqual(result["detected_failure_modes"], ["invalid_model_output"])
+
+        surrounded = "prefix " + nested + " suffix"
+        result = ca.score_response(task, surrounded)
+        self.assertEqual(result["score"], 0.0)
+        self.assertIsNone(result["canonical_output"])
+        self.assertEqual(
+            result["detected_failure_modes"], ["unparseable_model_output"]
+        )
+
     def test_invalid_rederivation_is_deterministic(self):
         task = load_task("audit_replayability_001")
         first = ca.score_response(task, "not json")

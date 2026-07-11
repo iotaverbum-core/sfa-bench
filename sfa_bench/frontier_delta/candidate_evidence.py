@@ -12,13 +12,14 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
 import tempfile
 from typing import Any
 
 from sfa.hashing import sha256_hex
 
 from . import candidate_adapter, schemas
-from .tasks import TASKS_DIR, load_task
+from .tasks import TASKS_DIR, load_task, load_tasks
 
 
 SUCCESSOR_SCHEMA_VERSION = (
@@ -28,6 +29,22 @@ DEFAULT_OUTPUT_DIRECTORY = Path("out") / "candidate_evidence_successors"
 REPO_ROOT = Path(__file__).resolve().parents[2]
 _ARTIFACT_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 _COMMIT_RE = re.compile(r"[0-9a-fA-F]{40}\Z")
+_CANDIDATE_EVIDENCE_PATH = "sfa_bench/frontier_delta/candidate_evidence.py"
+_BENCHMARK_SOURCE_PATHS = (
+    "sfa/hashing.py",
+    "sfa_bench/frontier_delta/candidate_adapter.py",
+    _CANDIDATE_EVIDENCE_PATH,
+    "sfa_bench/frontier_delta/schemas.py",
+    "sfa_bench/frontier_delta/scorers/__init__.py",
+    "sfa_bench/frontier_delta/scorers/checks.py",
+)
+_VERIFIER_SOURCE_PATHS = (
+    "sfa/hashing.py",
+    "sfa/verifier.py",
+    "sfa_bench/frontier_delta/schemas.py",
+    "sfa_bench/frontier_delta/scorers/__init__.py",
+    "sfa_bench/frontier_delta/scorers/checks.py",
+)
 
 
 class CandidateEvidenceError(ValueError):
@@ -133,6 +150,88 @@ def _validate_commit(value: Any, field: str) -> str:
     return value.lower()
 
 
+def _resolve_git_commit(repo_root: Path, commit: str, field: str) -> str:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--verify", f"{commit}^{{commit}}"],
+            cwd=repo_root,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+    except OSError as exc:
+        raise CandidateEvidenceError(
+            f"{field}_unresolved",
+            f"{field} cannot be resolved in the repository",
+        ) from exc
+    if result.returncode or result.stdout.strip().lower() != commit:
+        raise CandidateEvidenceError(
+            f"{field}_unresolved",
+            f"{field} is not an available full Git commit",
+        )
+    return commit
+
+
+def _assert_paths_at_commit(
+    repo_root: Path,
+    commit: str,
+    paths: list[str],
+    *,
+    code: str,
+    label: str,
+) -> None:
+    for relative in sorted(set(paths)):
+        current = repo_root.joinpath(*relative.split("/"))
+        _require_file(current, label)
+        try:
+            result = subprocess.run(
+                ["git", "show", f"{commit}:{relative}"],
+                cwd=repo_root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+        except OSError as exc:
+            raise CandidateEvidenceError(
+                code,
+                f"{label} source cannot be read at {commit}: {relative}",
+            ) from exc
+        if result.returncode or result.stdout != current.read_bytes():
+            raise CandidateEvidenceError(
+                code,
+                f"{label} source does not match {commit}: {relative}",
+            )
+
+
+def _verify_repository_bindings(
+    benchmark_commit: str,
+    verifier_commit: str,
+    benchmark_bound_paths: list[str],
+    verifier_bound_paths: list[str],
+) -> None:
+    benchmark_commit = _resolve_git_commit(
+        REPO_ROOT, benchmark_commit, "benchmark_commit"
+    )
+    verifier_commit = _resolve_git_commit(
+        REPO_ROOT, verifier_commit, "verifier_commit"
+    )
+    _assert_paths_at_commit(
+        REPO_ROOT,
+        benchmark_commit,
+        benchmark_bound_paths,
+        code="benchmark_commit_content_mismatch",
+        label="benchmark",
+    )
+    _assert_paths_at_commit(
+        REPO_ROOT,
+        verifier_commit,
+        verifier_bound_paths,
+        code="verifier_commit_content_mismatch",
+        label="verifier",
+    )
+
+
 def _verify_predecessor_seal(predecessor: dict[str, Any]) -> None:
     declared = predecessor.get("scored_results_sha256")
     if not isinstance(declared, str):
@@ -184,7 +283,7 @@ def _predecessor_results(
     return results
 
 
-def build_successor(
+def _build_successor(
     raw_evidence_path: str | Path,
     predecessor_path: str | Path,
     *,
@@ -192,6 +291,7 @@ def build_successor(
     benchmark_commit: str,
     verifier_commit: str,
     reason: str,
+    verify_repository: bool = True,
 ) -> dict[str, Any]:
     """Re-score preserved raw evidence and return a sealed successor object."""
     _validate_artifact_id(artifact_id)
@@ -205,10 +305,13 @@ def build_successor(
     raw_path = Path(raw_evidence_path)
     old_path = Path(predecessor_path)
     current_adapter_path = Path(candidate_adapter.__file__).resolve()
+    current_evidence_path = Path(__file__).resolve()
     _require_file(raw_path, "raw_evidence")
     _require_file(old_path, "predecessor")
     _require_file(current_adapter_path, "candidate_adapter")
+    _require_file(current_evidence_path, "candidate_evidence")
     candidate_adapter_sha256 = _file_sha256(current_adapter_path)
+    candidate_evidence_sha256 = _file_sha256(current_evidence_path)
 
     raw_rows = _load_raw_rows(raw_path)
     predecessor = _load_json_object(old_path, label="predecessor")
@@ -220,18 +323,36 @@ def build_successor(
             "raw evidence and predecessor task sets do not match",
         )
 
+    known_tasks = {task["task_id"]: task for task in load_tasks()}
+    unknown_task_ids = sorted(set(raw_rows) - set(known_tasks))
+    if unknown_task_ids:
+        raise CandidateEvidenceError(
+            "raw_evidence_unknown_task_id",
+            f"raw evidence references unknown task {unknown_task_ids[0]!r}",
+        )
+
+    task_source_paths = [
+        f"sfa_bench/frontier_delta/tasks/{task_id}.json"
+        for task_id in sorted(raw_rows)
+    ]
+    benchmark_bound_paths = sorted(
+        set(_BENCHMARK_SOURCE_PATHS) | set(task_source_paths)
+    )
+    verifier_bound_paths = sorted(_VERIFIER_SOURCE_PATHS)
+    if verify_repository:
+        _verify_repository_bindings(
+            benchmark_commit,
+            verifier_commit,
+            benchmark_bound_paths,
+            verifier_bound_paths,
+        )
+
     per_task: list[dict[str, Any]] = []
     task_files: dict[str, dict[str, str | None]] = {}
     corrected_results: list[dict[str, Any]] = []
     for task_id in sorted(raw_rows):
         raw_row = raw_rows[task_id]
-        try:
-            task = load_task(task_id)
-        except KeyError as exc:
-            raise CandidateEvidenceError(
-                "raw_evidence_unknown_task_id",
-                f"raw evidence references unknown task {task_id!r}",
-            ) from exc
+        task = known_tasks[task_id]
         if raw_row.get("lane") not in (None, task["lane"]):
             raise CandidateEvidenceError(
                 "raw_evidence_lane_mismatch",
@@ -343,6 +464,10 @@ def build_successor(
                 "sfa_bench/frontier_delta/candidate_adapter.py"
             ),
             "candidate_adapter_sha256": candidate_adapter_sha256,
+            "candidate_evidence_path": _CANDIDATE_EVIDENCE_PATH,
+            "candidate_evidence_sha256": candidate_evidence_sha256,
+            "benchmark_bound_paths": benchmark_bound_paths,
+            "verifier_bound_paths": verifier_bound_paths,
             "scoring_entrypoint": (
                 "sfa_bench.frontier_delta.candidate_adapter.score_response"
             ),
@@ -376,6 +501,27 @@ def build_successor(
     }
     artifact["canonical_artifact_sha256"] = sha256_hex(artifact)
     return artifact
+
+
+def build_successor(
+    raw_evidence_path: str | Path,
+    predecessor_path: str | Path,
+    *,
+    artifact_id: str,
+    benchmark_commit: str,
+    verifier_commit: str,
+    reason: str,
+) -> dict[str, Any]:
+    """Build a successor only after resolving its Git provenance."""
+    return _build_successor(
+        raw_evidence_path,
+        predecessor_path,
+        artifact_id=artifact_id,
+        benchmark_commit=benchmark_commit,
+        verifier_commit=verifier_commit,
+        reason=reason,
+        verify_repository=True,
+    )
 
 
 def _verify_artifact_seal(artifact: dict[str, Any]) -> None:
@@ -463,20 +609,24 @@ def _assert_digest(actual: str, expected: Any, code: str, label: str) -> None:
         raise CandidateEvidenceError(code, f"{label} digest does not match")
 
 
-def verify_successor(
+def _verify_successor(
     artifact_path: str | Path,
     raw_evidence_path: str | Path,
     predecessor_path: str | Path,
+    *,
+    verify_repository: bool = True,
 ) -> dict[str, Any]:
     """Verify all bound inputs and rederive a successor without writing."""
     successor_path = Path(artifact_path)
     raw_path = Path(raw_evidence_path)
     old_path = Path(predecessor_path)
     current_adapter_path = Path(candidate_adapter.__file__).resolve()
+    current_evidence_path = Path(__file__).resolve()
     _require_file(successor_path, "successor")
     _require_file(raw_path, "raw_evidence")
     _require_file(old_path, "predecessor")
     _require_file(current_adapter_path, "candidate_adapter")
+    _require_file(current_evidence_path, "candidate_evidence")
 
     artifact = _load_json_object(successor_path, label="successor")
     _verify_artifact_seal(artifact)
@@ -527,6 +677,12 @@ def verify_successor(
         "candidate_adapter_digest_mismatch",
         "candidate adapter",
     )
+    _assert_digest(
+        _file_sha256(current_evidence_path),
+        implementation.get("candidate_evidence_sha256"),
+        "candidate_evidence_digest_mismatch",
+        "candidate evidence tool",
+    )
 
     task_files = source.get("task_files")
     if not isinstance(task_files, dict):
@@ -558,13 +714,14 @@ def verify_successor(
             f"canonical task {task_id}",
         )
 
-    rebuilt = build_successor(
+    rebuilt = _build_successor(
         raw_path,
         old_path,
         artifact_id=artifact.get("artifact_id"),
         benchmark_commit=implementation.get("benchmark_commit"),
         verifier_commit=implementation.get("verifier_commit"),
         reason=lineage.get("reason_for_regeneration"),
+        verify_repository=verify_repository,
     )
     if rebuilt != artifact:
         raise CandidateEvidenceError(
@@ -573,12 +730,44 @@ def verify_successor(
         )
     return {
         "ok": True,
-        "code": "candidate_evidence_verified",
+        "code": (
+            "candidate_evidence_verified"
+            if verify_repository
+            else "candidate_evidence_content_verified"
+        ),
         "artifact_id": artifact["artifact_id"],
         "canonical_artifact_sha256": artifact[
             "canonical_artifact_sha256"
         ],
     }
+
+
+def verify_successor(
+    artifact_path: str | Path,
+    raw_evidence_path: str | Path,
+    predecessor_path: str | Path,
+) -> dict[str, Any]:
+    """Verify bound Git provenance and deterministic evidence rederivation."""
+    return _verify_successor(
+        artifact_path,
+        raw_evidence_path,
+        predecessor_path,
+        verify_repository=True,
+    )
+
+
+def verify_successor_content(
+    artifact_path: str | Path,
+    raw_evidence_path: str | Path,
+    predecessor_path: str | Path,
+) -> dict[str, Any]:
+    """Rederive content in a documented isolated copy without Git metadata."""
+    return _verify_successor(
+        artifact_path,
+        raw_evidence_path,
+        predecessor_path,
+        verify_repository=False,
+    )
 
 
 def _resolve_cli_output_root(
