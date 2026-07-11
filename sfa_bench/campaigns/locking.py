@@ -92,6 +92,7 @@ class RepositoryContext:
     """Observed provenance supplied to deterministic lock construction."""
 
     repository_commit: str
+    verifier_commit: str
     release_identifier: str
 
 
@@ -151,15 +152,26 @@ def _git(repo_root: Path, *args: str) -> str:
 
 
 def observe_repository_context(
-    repo_root: Path, benchmark_commit: str
+    repo_root: Path, benchmark_commit: str, verifier_commit: str
 ) -> RepositoryContext:
     """Resolve a declared benchmark commit and the current release of record."""
-    resolved = _git(
-        repo_root,
-        "rev-parse",
-        "--verify",
-        f"{benchmark_commit}^{{commit}}",
-    ).strip().lower()
+    try:
+        resolved = _git(
+            repo_root,
+            "rev-parse",
+            "--verify",
+            f"{benchmark_commit}^{{commit}}",
+        ).strip().lower()
+    except LockingError as exc:
+        raise LockingError(
+            [
+                issue(
+                    "REPOSITORY_COMMIT_UNRESOLVED",
+                    "$.benchmark_commit_sha",
+                    "declared benchmark commit is not available in Git history",
+                )
+            ]
+        ) from exc
     if resolved != benchmark_commit.lower():
         raise LockingError(
             [
@@ -170,8 +182,36 @@ def observe_repository_context(
                 )
             ]
         )
+    try:
+        resolved_verifier = _git(
+            repo_root,
+            "rev-parse",
+            "--verify",
+            f"{verifier_commit}^{{commit}}",
+        ).strip().lower()
+    except LockingError as exc:
+        raise LockingError(
+            [
+                issue(
+                    "VERIFIER_COMMIT_UNRESOLVED",
+                    "$.verifier_commit_sha",
+                    "declared verifier commit is not available in Git history",
+                )
+            ]
+        ) from exc
+    if resolved_verifier != verifier_commit.lower():
+        raise LockingError(
+            [
+                issue(
+                    "VERIFIER_COMMIT_MISMATCH",
+                    "$.verifier_commit_sha",
+                    "declared verifier commit does not resolve exactly",
+                )
+            ]
+        )
     return RepositoryContext(
         repository_commit=resolved,
+        verifier_commit=resolved_verifier,
         release_identifier=package_release_identifier(repo_root),
     )
 
@@ -194,6 +234,14 @@ def _context_issues(
                 "RELEASE_IDENTIFIER_MISMATCH",
                 "$.release_identifier",
                 "campaign release does not match the package version of record",
+            )
+        )
+    if campaign.get("verifier_commit_sha") != context.verifier_commit:
+        issues.append(
+            issue(
+                "VERIFIER_COMMIT_MISMATCH",
+                "$.verifier_commit_sha",
+                "campaign verifier commit does not match observed repository context",
             )
         )
     return sort_issues(issues)
@@ -405,21 +453,14 @@ def _build_bindings(campaign: dict[str, Any], repo_root: Path) -> dict[str, Any]
     return bindings
 
 
-def _binding_commit_issues(
+def _changed_or_untracked_paths(
     repo_root: Path,
-    bindings: dict[str, Any],
-    repository_commit: str,
-) -> list[Issue]:
-    """Prove every bound worktree file is byte-identical to the declared commit."""
-    bound_paths = {
-        entry["path"]
-        for entries in bindings.values()
-        for entry in entries
-    }
+    commit: str,
+) -> set[str]:
     changed = {
         path.replace("\\", "/")
         for path in _git(
-            repo_root, "diff", "--name-only", repository_commit, "--"
+            repo_root, "diff", "--name-only", commit, "--"
         ).splitlines()
         if path
     }
@@ -430,15 +471,39 @@ def _binding_commit_issues(
         ).splitlines()
         if path
     }
-    drift = sorted(bound_paths & (changed | untracked))
+    return changed | untracked
+
+
+def _binding_commit_issues(
+    repo_root: Path,
+    bindings: dict[str, Any],
+    context: RepositoryContext,
+) -> list[Issue]:
+    """Prove bound files match their declared benchmark or verifier commit."""
+    verifier_paths = {entry["path"] for entry in bindings["protected_verifier"]}
+    benchmark_paths = {
+        entry["path"]
+        for group, entries in bindings.items()
+        if group != "protected_verifier"
+        for entry in entries
+    }
+    benchmark_drift = sorted(
+        benchmark_paths
+        & _changed_or_untracked_paths(repo_root, context.repository_commit)
+    )
+    verifier_drift = sorted(
+        verifier_paths
+        & _changed_or_untracked_paths(repo_root, context.verifier_commit)
+    )
+    drift = benchmark_drift + verifier_drift
     if not drift:
         return []
     return [
         issue(
             "LOCK_INPUT_NOT_AT_COMMIT",
             "$.bindings",
-            "bound inputs differ from the declared benchmark commit: "
-            + ", ".join(drift),
+            "bound inputs differ from their declared benchmark/verifier commit: "
+            + ", ".join(sorted(set(drift))),
         )
     ]
 
@@ -455,7 +520,7 @@ def _assemble_lock(
         "campaign_id": campaign["campaign_id"],
         "campaign_digest": sha256_value(campaign_lock_content(campaign)),
         "repository_commit": context.repository_commit,
-        "verifier_commit": campaign["verifier_commit_sha"],
+        "verifier_commit": context.verifier_commit,
         "release_identifier": context.release_identifier,
         "declared_commands": sorted(campaign["benchmark_inputs"]["declared_commands"]),
         "declared_input_digests": {
@@ -490,7 +555,9 @@ def build_benchmark_lock(
     if envelope_issues:
         raise LockingError(envelope_issues)
     observed = context or observe_repository_context(
-        repo_root, campaign["benchmark_commit_sha"]
+        repo_root,
+        campaign["benchmark_commit_sha"],
+        campaign["verifier_commit_sha"],
     )
     context_issues = _context_issues(campaign, observed)
     if context_issues:
@@ -498,7 +565,7 @@ def build_benchmark_lock(
     bindings = _build_bindings(campaign, repo_root)
     if context is None:
         commit_issues = _binding_commit_issues(
-            repo_root, bindings, observed.repository_commit
+            repo_root, bindings, observed
         )
         if commit_issues:
             raise LockingError(commit_issues)
@@ -742,14 +809,16 @@ def verify_benchmark_lock(
         return sort_issues(issues)
     try:
         observed = context or observe_repository_context(
-            repo_root, campaign["benchmark_commit_sha"]
+            repo_root,
+            campaign["benchmark_commit_sha"],
+            campaign["verifier_commit_sha"],
         )
         issues.extend(_context_issues(campaign, observed))
         current_bindings = _build_bindings(campaign, repo_root)
         if context is None:
             issues.extend(
                 _binding_commit_issues(
-                    repo_root, current_bindings, observed.repository_commit
+                    repo_root, current_bindings, observed
                 )
             )
     except LockingError as exc:

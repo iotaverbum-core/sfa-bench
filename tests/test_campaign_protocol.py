@@ -51,6 +51,7 @@ def _context(campaign: dict | None = None) -> RepositoryContext:
     declaration = campaign or _campaign()
     return RepositoryContext(
         repository_commit=declaration["benchmark_commit_sha"],
+        verifier_commit=declaration["verifier_commit_sha"],
         release_identifier=declaration["release_identifier"],
     )
 
@@ -345,6 +346,7 @@ class BenchmarkLockTests(unittest.TestCase):
         campaign = _campaign()
         wrong_commit = RepositoryContext(
             repository_commit="0" * 40,
+            verifier_commit=campaign["verifier_commit_sha"],
             release_identifier=campaign["release_identifier"],
         )
         with self.assertRaises(LockingError) as caught:
@@ -353,11 +355,28 @@ class BenchmarkLockTests(unittest.TestCase):
 
         wrong_release = RepositoryContext(
             repository_commit=campaign["benchmark_commit_sha"],
+            verifier_commit=campaign["verifier_commit_sha"],
             release_identifier="v1.1.0",
         )
         with self.assertRaises(LockingError) as caught:
             build_benchmark_lock(campaign, ROOT, context=wrong_release)
         self.assertIn("RELEASE_IDENTIFIER_MISMATCH", _codes(caught.exception.issues))
+
+        wrong_verifier = RepositoryContext(
+            repository_commit=campaign["benchmark_commit_sha"],
+            verifier_commit="0" * 40,
+            release_identifier=campaign["release_identifier"],
+        )
+        with self.assertRaises(LockingError) as caught:
+            build_benchmark_lock(campaign, ROOT, context=wrong_verifier)
+        self.assertIn("VERIFIER_COMMIT_MISMATCH", _codes(caught.exception.issues))
+
+    def test_nonexistent_verifier_commit_is_rejected(self):
+        campaign = _campaign()
+        campaign["verifier_commit_sha"] = "0" * 40
+        with self.assertRaises(LockingError) as caught:
+            build_benchmark_lock(campaign, ROOT)
+        self.assertIn("VERIFIER_COMMIT_UNRESOLVED", _codes(caught.exception.issues))
 
     def test_threshold_or_policy_change_is_detected(self):
         campaign = _campaign()
