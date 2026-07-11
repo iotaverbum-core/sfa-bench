@@ -73,6 +73,16 @@ class RepositoryProvenanceTests(unittest.TestCase):
             "benchmark_commit_content_mismatch",
         )
 
+    def test_public_verifier_has_no_repository_bypass(self):
+        with self.assertRaises(TypeError):
+            evidence.verify_successor(
+                "unused.json",
+                RAW,
+                PREDECESSOR,
+                verify_repository=False,
+            )
+        self.assertFalse(hasattr(evidence, "verify_successor_content"))
+
 
 class SuccessorBuildTests(EvidenceUnitTest):
     def test_build_is_deterministic_and_byte_identical(self):

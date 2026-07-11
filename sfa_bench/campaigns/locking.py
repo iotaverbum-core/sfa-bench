@@ -20,6 +20,7 @@ from .protocol import (
     issue,
     sort_issues,
     validate_campaign,
+    validate_finite_numbers,
     validate_repo_relative_path,
 )
 
@@ -66,6 +67,10 @@ _DECLARED_BINDING_FIELDS: tuple[tuple[str, str], ...] = (
     ("adapter", "adapter_paths"),
     ("schemas", "schema_paths"),
 )
+_REFERENCE_BINDING_FIELDS: tuple[tuple[str, str], ...] = (
+    ("system_prompt", "system_prompt"),
+    ("user_prompt_or_case_set", "user_prompt_or_case_set"),
+)
 
 _BINDING_MISMATCH_CODES = {
     "protected_verifier": "VERIFIER_BINDING_MISMATCH",
@@ -76,6 +81,8 @@ _BINDING_MISMATCH_CODES = {
     "normalizer": "NORMALIZER_BINDING_MISMATCH",
     "adapter": "ADAPTER_BINDING_MISMATCH",
     "schemas": "SCHEMA_BINDING_MISMATCH",
+    "system_prompt": "SYSTEM_PROMPT_BINDING_MISMATCH",
+    "user_prompt_or_case_set": "USER_PROMPT_BINDING_MISMATCH",
 }
 
 
@@ -285,13 +292,26 @@ def _validate_envelope(envelope: Any) -> list[Issue]:
 def canonical_bytes(value: Any) -> bytes:
     """Encode JSON content in the repository's canonical form."""
     return json.dumps(
-        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
     ).encode("utf-8")
 
 
 def canonical_json(value: Any) -> str:
     """Return stable, inspectable JSON text with a trailing newline."""
-    return json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    return (
+        json.dumps(
+            value,
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+        + "\n"
+    )
 
 
 def sha256_value(value: Any) -> str:
@@ -415,6 +435,22 @@ def binding_set_digest(entries: list[dict[str, str]]) -> str:
     return sha256_value(entries)
 
 
+def _reference_binding_digest(
+    reference: str, entries: list[dict[str, str]]
+) -> str:
+    if len(entries) == 1 and entries[0]["path"] == reference:
+        return entries[0]["sha256"]
+    return binding_set_digest(entries)
+
+
+def reference_digest(repo_root: Path, reference: str) -> str:
+    """Hash a safe file reference or canonical directory binding set."""
+    entries = _binding_entries(
+        repo_root, [reference], "$.reference"
+    )
+    return _reference_binding_digest(reference, entries)
+
+
 def _declared_digest_issues(
     campaign: dict[str, Any], bindings: dict[str, Any]
 ) -> list[Issue]:
@@ -434,6 +470,31 @@ def _declared_digest_issues(
                     f"declared digest does not match computed {binding_group} bindings",
                 )
             )
+    reference_checks = (
+        (
+            "system_prompt",
+            "system_prompt",
+            "DECLARED_SYSTEM_PROMPT_DIGEST_MISMATCH",
+        ),
+        (
+            "user_prompt_or_case_set",
+            "user_prompt_or_case_set",
+            "DECLARED_USER_PROMPT_DIGEST_MISMATCH",
+        ),
+    )
+    for campaign_field, binding_group, code in reference_checks:
+        declaration = campaign[campaign_field]
+        computed = _reference_binding_digest(
+            declaration["reference"], bindings[binding_group]
+        )
+        if declaration.get("sha256") != computed:
+            issues.append(
+                issue(
+                    code,
+                    f"$.{campaign_field}.sha256",
+                    "declared digest does not match referenced repository content",
+                )
+            )
     return sort_issues(issues)
 
 
@@ -449,6 +510,13 @@ def _build_bindings(campaign: dict[str, Any], repo_root: Path) -> dict[str, Any]
             repo_root,
             list(inputs[field]),
             f"$.benchmark_inputs.{field}",
+        )
+    for binding_name, field in _REFERENCE_BINDING_FIELDS:
+        reference = campaign[field]["reference"]
+        bindings[binding_name] = _binding_entries(
+            repo_root,
+            [reference],
+            f"$.{field}.reference",
         )
     return bindings
 
@@ -527,6 +595,10 @@ def _assemble_lock(
             "cases": campaign["frozen_case_set_digest"],
             "rules": campaign["frozen_rule_digest"],
             "taxonomy": campaign["frozen_taxonomy_digest"],
+            "system_prompt": campaign["system_prompt"]["sha256"],
+            "user_prompt_or_case_set": (
+                campaign["user_prompt_or_case_set"]["sha256"]
+            ),
         },
         "bindings": bindings,
         "digest_scope": {
@@ -540,12 +612,13 @@ def _assemble_lock(
     return lock
 
 
-def build_benchmark_lock(
+def _build_benchmark_lock(
     campaign: dict[str, Any],
     repo_root: Path,
     *,
     context: RepositoryContext | None = None,
     envelope: dict[str, Any] | None = None,
+    verify_repository: bool,
 ) -> dict[str, Any]:
     """Build a deterministic lock from a valid campaign and repository tree."""
     validation_issues = validate_campaign(campaign, for_lock_build=True)
@@ -563,7 +636,7 @@ def build_benchmark_lock(
     if context_issues:
         raise LockingError(context_issues)
     bindings = _build_bindings(campaign, repo_root)
-    if context is None:
+    if verify_repository:
         commit_issues = _binding_commit_issues(
             repo_root, bindings, observed
         )
@@ -577,11 +650,45 @@ def build_benchmark_lock(
     )
 
 
+def build_benchmark_lock(
+    campaign: dict[str, Any],
+    repo_root: Path,
+    *,
+    envelope: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build a governed lock only from Git-observed repository provenance."""
+    return _build_benchmark_lock(
+        campaign,
+        repo_root,
+        context=None,
+        envelope=envelope,
+        verify_repository=True,
+    )
+
+
+def _build_benchmark_lock_content(
+    campaign: dict[str, Any],
+    repo_root: Path,
+    *,
+    context: RepositoryContext,
+    envelope: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build deterministic test content without making a provenance claim."""
+    return _build_benchmark_lock(
+        campaign,
+        repo_root,
+        context=context,
+        envelope=envelope,
+        verify_repository=False,
+    )
+
+
 def validate_benchmark_lock(lock: Any) -> list[Issue]:
     """Validate the stable structure and self-digest of a benchmark lock."""
     if not isinstance(lock, dict):
         return [issue("MALFORMED_DOCUMENT", "$", "benchmark lock must be a JSON object")]
-    issues: list[Issue] = []
+    finite_issues = validate_finite_numbers(lock)
+    issues: list[Issue] = list(finite_issues)
     required = frozenset(
         {
             "schema_version",
@@ -686,17 +793,25 @@ def validate_benchmark_lock(lock: Any) -> list[Issue]:
     if not isinstance(declared_digests, dict) or set(declared_digests) != {
         "cases",
         "rules",
+        "system_prompt",
         "taxonomy",
+        "user_prompt_or_case_set",
     }:
         issues.append(
             issue(
                 "INVALID_DECLARED_DIGESTS",
                 "$.declared_input_digests",
-                "declared input digests must contain cases, rules, and taxonomy",
+                "declared input digests must contain cases, prompts, rules, and taxonomy",
             )
         )
     else:
-        for field in ("cases", "rules", "taxonomy"):
+        for field in (
+            "cases",
+            "rules",
+            "system_prompt",
+            "taxonomy",
+            "user_prompt_or_case_set",
+        ):
             value = declared_digests[field]
             if not isinstance(value, str) or not SHA256_RE.fullmatch(value):
                 issues.append(
@@ -709,7 +824,7 @@ def validate_benchmark_lock(lock: Any) -> list[Issue]:
     bindings = lock.get("bindings")
     expected_groups = {"protected_verifier"} | {
         binding for binding, _ in _DECLARED_BINDING_FIELDS
-    }
+    } | {binding for binding, _ in _REFERENCE_BINDING_FIELDS}
     if not isinstance(bindings, dict):
         issues.append(issue("INVALID_FIELD_TYPE", "$.bindings", "bindings must be an object"))
     else:
@@ -782,7 +897,11 @@ def validate_benchmark_lock(lock: Any) -> list[Issue]:
     if "envelope" in lock:
         issues.extend(_validate_envelope(lock["envelope"]))
     stated_digest = lock.get("lock_digest")
-    if isinstance(stated_digest, str) and SHA256_RE.fullmatch(stated_digest):
+    if (
+        not finite_issues
+        and isinstance(stated_digest, str)
+        and SHA256_RE.fullmatch(stated_digest)
+    ):
         if benchmark_lock_digest(lock) != stated_digest:
             issues.append(
                 issue(
@@ -794,12 +913,13 @@ def validate_benchmark_lock(lock: Any) -> list[Issue]:
     return sort_issues(issues)
 
 
-def verify_benchmark_lock(
+def _verify_benchmark_lock(
     campaign: dict[str, Any],
     lock: Any,
     repo_root: Path,
     *,
     context: RepositoryContext | None = None,
+    verify_repository: bool,
 ) -> list[Issue]:
     """Verify a lock against campaign content and current protected inputs."""
     issues = validate_benchmark_lock(lock)
@@ -815,7 +935,7 @@ def verify_benchmark_lock(
         )
         issues.extend(_context_issues(campaign, observed))
         current_bindings = _build_bindings(campaign, repo_root)
-        if context is None:
+        if verify_repository:
             issues.extend(
                 _binding_commit_issues(
                     repo_root, current_bindings, observed
@@ -885,6 +1005,38 @@ def verify_benchmark_lock(
                 )
             )
     return sort_issues(issues)
+
+
+def verify_benchmark_lock(
+    campaign: dict[str, Any],
+    lock: Any,
+    repo_root: Path,
+) -> list[Issue]:
+    """Verify a governed lock against Git-observed repository provenance."""
+    return _verify_benchmark_lock(
+        campaign,
+        lock,
+        repo_root,
+        context=None,
+        verify_repository=True,
+    )
+
+
+def _verify_benchmark_lock_content(
+    campaign: dict[str, Any],
+    lock: Any,
+    repo_root: Path,
+    *,
+    context: RepositoryContext,
+) -> list[Issue]:
+    """Verify deterministic test content without making a provenance claim."""
+    return _verify_benchmark_lock(
+        campaign,
+        lock,
+        repo_root,
+        context=context,
+        verify_repository=False,
+    )
 
 
 def approved_output_path(output: Path, approved_root: Path) -> Path:

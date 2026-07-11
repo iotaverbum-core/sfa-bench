@@ -13,9 +13,11 @@
         "protected_verifier": {"$ref": "#/$defs/bindings"},
         "rules": {"$ref": "#/$defs/bindings"},
         "schemas": {"$ref": "#/$defs/bindings"},
-        "taxonomy": {"$ref": "#/$defs/bindings"}
+        "system_prompt": {"$ref": "#/$defs/bindings"},
+        "taxonomy": {"$ref": "#/$defs/bindings"},
+        "user_prompt_or_case_set": {"$ref": "#/$defs/bindings"}
       },
-      "required": ["adapter", "cases", "evidence", "normalizer", "protected_verifier", "rules", "schemas", "taxonomy"],
+      "required": ["adapter", "cases", "evidence", "normalizer", "protected_verifier", "rules", "schemas", "system_prompt", "taxonomy", "user_prompt_or_case_set"],
       "type": "object"
     },
     "campaign_digest": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
@@ -26,9 +28,11 @@
       "properties": {
         "cases": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
         "rules": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
-        "taxonomy": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+        "system_prompt": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "taxonomy": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "user_prompt_or_case_set": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
       },
-      "required": ["cases", "rules", "taxonomy"],
+      "required": ["cases", "rules", "system_prompt", "taxonomy", "user_prompt_or_case_set"],
       "type": "object"
     },
     "digest_scope": {

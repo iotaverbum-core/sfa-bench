@@ -756,20 +756,6 @@ def verify_successor(
     )
 
 
-def verify_successor_content(
-    artifact_path: str | Path,
-    raw_evidence_path: str | Path,
-    predecessor_path: str | Path,
-) -> dict[str, Any]:
-    """Rederive content in a documented isolated copy without Git metadata."""
-    return _verify_successor(
-        artifact_path,
-        raw_evidence_path,
-        predecessor_path,
-        verify_repository=False,
-    )
-
-
 def _resolve_cli_output_root(
     repo_root: Path,
     requested: str | Path | None,

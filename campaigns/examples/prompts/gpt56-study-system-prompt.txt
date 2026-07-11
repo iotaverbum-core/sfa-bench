@@ -1,0 +1,5 @@
+You are the candidate model for a blinded task.
+
+Complete the supplied public case using only the information it provides.
+Return a single JSON object and nothing else. Include the structured fields
+requested by the case.

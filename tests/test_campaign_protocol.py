@@ -12,11 +12,16 @@ import unittest
 from unittest import mock
 
 import campaign_cli
+from sfa_bench.campaigns import locking
+from sfa_bench.frontier_delta import candidate_adapter
 from sfa_bench.campaigns.locking import (
     LockingError,
     RepositoryContext,
+    _build_benchmark_lock_content,
+    _verify_benchmark_lock_content,
     benchmark_lock_digest,
     build_benchmark_lock,
+    reference_digest,
     verify_benchmark_lock,
 )
 from sfa_bench.campaigns.protocol import (
@@ -57,13 +62,13 @@ def _context(campaign: dict | None = None) -> RepositoryContext:
 
 
 def _build(campaign: dict, repo: Path = ROOT, **kwargs) -> dict:
-    return build_benchmark_lock(
+    return _build_benchmark_lock_content(
         campaign, repo, context=_context(campaign), **kwargs
     )
 
 
 def _verify(campaign: dict, lock: dict, repo: Path = ROOT) -> list[dict[str, str]]:
-    return verify_benchmark_lock(
+    return _verify_benchmark_lock_content(
         campaign, lock, repo, context=_context(campaign)
     )
 
@@ -73,6 +78,10 @@ def _copy_lock_inputs(destination: Path) -> None:
         shutil.copytree(ROOT / relative, destination / relative)
     (destination / "campaigns").mkdir()
     shutil.copytree(ROOT / "campaigns" / "schemas", destination / "campaigns" / "schemas")
+    shutil.copytree(
+        ROOT / "campaigns" / "examples" / "prompts",
+        destination / "campaigns" / "examples" / "prompts",
+    )
     shutil.copy2(ROOT / "campaign_cli.py", destination / "campaign_cli.py")
     shutil.copy2(ROOT / "families.json", destination / "families.json")
 
@@ -84,8 +93,12 @@ def _official_campaign() -> dict:
     campaign["execution_plan"]["run_classification"] = "official"
     campaign["candidate_snapshot_or_alias_status"] = "fixed_snapshot"
     campaign["provider_model_identifier"] = "provider-snapshot-2026-07-10"
-    campaign["system_prompt"]["sha256"] = "1" * 64
-    campaign["user_prompt_or_case_set"]["sha256"] = "2" * 64
+    campaign["system_prompt"]["sha256"] = reference_digest(
+        ROOT, campaign["system_prompt"]["reference"]
+    )
+    campaign["user_prompt_or_case_set"]["sha256"] = reference_digest(
+        ROOT, campaign["user_prompt_or_case_set"]["reference"]
+    )
     campaign["benchmark_lock"] = {
         "path": "out/campaign_locks/official.benchmark-lock.json",
         "lock_digest": "6" * 64,
@@ -108,6 +121,13 @@ class ExampleValidationTests(unittest.TestCase):
         del invalid["invalid_output_policy"]
         invalid["run_count"] = "three"
         self.assertEqual(validate_campaign(invalid), validate_campaign(invalid))
+
+    def test_bound_example_system_prompt_is_blinded(self):
+        campaign = _campaign()
+        prompt = ROOT.joinpath(
+            *campaign["system_prompt"]["reference"].split("/")
+        ).read_text(encoding="utf-8")
+        candidate_adapter.assert_no_forbidden_tokens(prompt)
 
 
 class CampaignValidationTests(unittest.TestCase):
@@ -207,6 +227,28 @@ class CampaignValidationTests(unittest.TestCase):
         self.assertIn("AUTOMATIC_RATIFICATION_FORBIDDEN", codes)
         self.assertIn("AUTOMATIC_PROMOTION_FORBIDDEN", codes)
 
+    def test_nested_governance_claim_keys_are_normalized_and_rejected(self):
+        for surface, key in (
+            ("reasoning_configuration", "automatic_promotion"),
+            ("sampling_configuration", "automaticPromotion"),
+            ("reasoning_configuration", "ratification-status"),
+        ):
+            with self.subTest(surface=surface, key=key):
+                campaign = _campaign()
+                campaign[surface][key] = True
+                self.assertIn(
+                    "CAMPAIGN_GOVERNANCE_CLAIM_FORBIDDEN",
+                    _codes(validate_campaign(campaign)),
+                )
+
+    def test_nonfinite_campaign_numbers_are_rejected(self):
+        campaign = _campaign()
+        campaign["sampling_configuration"]["temperature"] = float("nan")
+        self.assertIn(
+            "NONFINITE_NUMBER_FORBIDDEN",
+            _codes(validate_campaign(campaign)),
+        )
+
     def test_retry_metadata_cannot_influence_verdict(self):
         campaign = _campaign()
         campaign["retry_policy"]["retry_metadata_may_affect_verdict"] = True
@@ -284,6 +326,29 @@ class CandidateManifestBoundaryTests(unittest.TestCase):
             _codes(validate_candidate_manifest(manifest)),
         )
 
+    def test_candidate_governance_key_variants_are_rejected(self):
+        for key in (
+            "ratification-status",
+            "ratificationStatus",
+            "promotionStatus",
+            "is_ratified",
+        ):
+            with self.subTest(key=key):
+                manifest = _manifest()
+                manifest["observed_provider_model_metadata"] = {key: True}
+                self.assertIn(
+                    "CANDIDATE_SELF_RATIFICATION_FORBIDDEN",
+                    _codes(validate_candidate_manifest(manifest)),
+                )
+
+    def test_nonfinite_manifest_numbers_are_rejected(self):
+        manifest = _manifest()
+        manifest["configuration"]["temperature"] = float("inf")
+        self.assertIn(
+            "NONFINITE_NUMBER_FORBIDDEN",
+            _codes(validate_candidate_manifest(manifest)),
+        )
+
     def test_candidate_manifest_rejects_nested_secret(self):
         manifest = _manifest()
         manifest["environment"]["authorization_token"] = "secret"
@@ -350,7 +415,9 @@ class BenchmarkLockTests(unittest.TestCase):
             release_identifier=campaign["release_identifier"],
         )
         with self.assertRaises(LockingError) as caught:
-            build_benchmark_lock(campaign, ROOT, context=wrong_commit)
+            _build_benchmark_lock_content(
+                campaign, ROOT, context=wrong_commit
+            )
         self.assertIn("REPOSITORY_COMMIT_MISMATCH", _codes(caught.exception.issues))
 
         wrong_release = RepositoryContext(
@@ -359,7 +426,9 @@ class BenchmarkLockTests(unittest.TestCase):
             release_identifier="v1.1.0",
         )
         with self.assertRaises(LockingError) as caught:
-            build_benchmark_lock(campaign, ROOT, context=wrong_release)
+            _build_benchmark_lock_content(
+                campaign, ROOT, context=wrong_release
+            )
         self.assertIn("RELEASE_IDENTIFIER_MISMATCH", _codes(caught.exception.issues))
 
         wrong_verifier = RepositoryContext(
@@ -368,7 +437,9 @@ class BenchmarkLockTests(unittest.TestCase):
             release_identifier=campaign["release_identifier"],
         )
         with self.assertRaises(LockingError) as caught:
-            build_benchmark_lock(campaign, ROOT, context=wrong_verifier)
+            _build_benchmark_lock_content(
+                campaign, ROOT, context=wrong_verifier
+            )
         self.assertIn("VERIFIER_COMMIT_MISMATCH", _codes(caught.exception.issues))
 
     def test_nonexistent_verifier_commit_is_rejected(self):
@@ -377,6 +448,27 @@ class BenchmarkLockTests(unittest.TestCase):
         with self.assertRaises(LockingError) as caught:
             build_benchmark_lock(campaign, ROOT)
         self.assertIn("VERIFIER_COMMIT_UNRESOLVED", _codes(caught.exception.issues))
+
+    def test_public_api_does_not_accept_injected_provenance_context(self):
+        campaign = _campaign()
+        false_context = RepositoryContext(
+            repository_commit="0" * 40,
+            verifier_commit="1" * 40,
+            release_identifier=campaign["release_identifier"],
+        )
+        with self.assertRaises(TypeError):
+            build_benchmark_lock(campaign, ROOT, context=false_context)
+        with self.assertRaises(TypeError):
+            verify_benchmark_lock(campaign, {}, ROOT, context=false_context)
+
+    def test_nonexistent_benchmark_commit_is_rejected(self):
+        campaign = _campaign()
+        campaign["benchmark_commit_sha"] = "0" * 40
+        with self.assertRaises(LockingError) as caught:
+            build_benchmark_lock(campaign, ROOT)
+        self.assertIn(
+            "REPOSITORY_COMMIT_UNRESOLVED", _codes(caught.exception.issues)
+        )
 
     def test_threshold_or_policy_change_is_detected(self):
         campaign = _campaign()
@@ -409,6 +501,25 @@ class BenchmarkLockTests(unittest.TestCase):
                     _build(campaign)
                 self.assertIn(expected_code, _codes(caught.exception.issues))
 
+    def test_declared_prompt_digests_are_enforced(self):
+        for field, expected_code in (
+            ("system_prompt", "DECLARED_SYSTEM_PROMPT_DIGEST_MISMATCH"),
+            (
+                "user_prompt_or_case_set",
+                "DECLARED_USER_PROMPT_DIGEST_MISMATCH",
+            ),
+        ):
+            with self.subTest(field=field):
+                campaign = _campaign()
+                campaign[field]["sha256"] = "0" * 64
+                with self.assertRaises(LockingError) as caught:
+                    _build(campaign)
+                self.assertIn(expected_code, _codes(caught.exception.issues))
+
+    def test_nonfinite_lock_content_cannot_be_canonicalized(self):
+        with self.assertRaises(ValueError):
+            benchmark_lock_digest({"temperature": float("nan")})
+
     def test_runtime_cache_files_do_not_change_lock(self):
         with tempfile.TemporaryDirectory() as temporary:
             repo = Path(temporary)
@@ -433,6 +544,14 @@ class BenchmarkLockTests(unittest.TestCase):
             ("sfa_bench/frontier_delta/candidate_adapter.py", "ADAPTER_BINDING_MISMATCH"),
             ("campaigns/schemas/candidate-manifest.schema.json", "SCHEMA_BINDING_MISMATCH"),
             ("sfa_bench/campaigns/protocol.py", "SCHEMA_BINDING_MISMATCH"),
+            (
+                "campaigns/examples/prompts/gpt56-study-system-prompt.txt",
+                "SYSTEM_PROMPT_BINDING_MISMATCH",
+            ),
+            (
+                "sfa_bench/frontier_delta/tasks/planning_drift_001.json",
+                "USER_PROMPT_BINDING_MISMATCH",
+            ),
         )
         with tempfile.TemporaryDirectory() as temporary:
             repo = Path(temporary)
@@ -452,12 +571,36 @@ class BenchmarkLockTests(unittest.TestCase):
                     finally:
                         target.write_bytes(original)
 
+    def test_post_lock_prompt_changes_are_detected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            _copy_lock_inputs(repo)
+            campaign = _campaign()
+            lock = _build(campaign, repo)
+            prompt = (
+                repo
+                / "campaigns"
+                / "examples"
+                / "prompts"
+                / "gpt56-study-system-prompt.txt"
+            )
+            prompt.write_bytes(prompt.read_bytes() + b"\nmutation")
+            codes = _codes(_verify(campaign, lock, repo))
+        self.assertIn("SYSTEM_PROMPT_BINDING_MISMATCH", codes)
+        self.assertIn("DECLARED_SYSTEM_PROMPT_DIGEST_MISMATCH", codes)
+
 
 class CampaignCliTests(unittest.TestCase):
     def _run(self, argv: list[str]) -> tuple[int, dict]:
         output = io.StringIO()
-        with contextlib.redirect_stdout(output), mock.patch.object(
-            campaign_cli, "LOCK_CONTEXT", _context()
+        with (
+            contextlib.redirect_stdout(output),
+            mock.patch.object(
+                locking, "observe_repository_context", return_value=_context()
+            ),
+            mock.patch.object(
+                locking, "_binding_commit_issues", return_value=[]
+            ),
         ):
             returncode = campaign_cli.main(argv)
         lines = output.getvalue().splitlines()
@@ -614,6 +757,22 @@ class CampaignCliTests(unittest.TestCase):
         self.assertEqual(returncode, 2)
         self.assertFalse(result["ok"])
         self.assertIn("MALFORMED_DOCUMENT", _codes(result["issues"]))
+
+    def test_nonstandard_json_constants_exit_two(self):
+        for constant in ("NaN", "Infinity", "-Infinity"):
+            with self.subTest(constant=constant):
+                with tempfile.TemporaryDirectory() as temporary:
+                    invalid = Path(temporary) / "invalid.json"
+                    invalid.write_text(
+                        '{"schema_version":' + constant + '}\n',
+                        encoding="utf-8",
+                    )
+                    returncode, result = self._run(
+                        ["validate", "--campaign", str(invalid)]
+                    )
+                self.assertEqual(returncode, 2)
+                self.assertFalse(result["ok"])
+                self.assertIn("MALFORMED_JSON", _codes(result["issues"]))
 
 
 if __name__ == "__main__":

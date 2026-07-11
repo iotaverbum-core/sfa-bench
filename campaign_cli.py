@@ -10,7 +10,6 @@ from typing import Any
 
 from sfa_bench.campaigns.locking import (
     LockingError,
-    RepositoryContext,
     build_benchmark_lock,
     canonical_json,
     verify_benchmark_lock,
@@ -25,9 +24,6 @@ from sfa_bench.campaigns.protocol import (
 
 ROOT = Path(__file__).resolve().parent
 LOCK_OUTPUT_ROOT = ROOT / "out" / "campaign_locks"
-# Tests and isolated verification may inject an already observed source context.
-# The user-facing CLI leaves this as None and observes Git/package state itself.
-LOCK_CONTEXT: RepositoryContext | None = None
 
 
 class JsonInputError(ValueError):
@@ -52,9 +48,19 @@ class JsonArgumentParser(argparse.ArgumentParser):
 
 def _emit(result: dict[str, Any]) -> None:
     sys.stdout.write(
-        json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        json.dumps(
+            result,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        )
         + "\n"
     )
+
+
+def _reject_json_constant(value: str) -> None:
+    raise ValueError(f"non-standard JSON constant: {value}")
 
 
 def _load_json(path_text: str) -> Any:
@@ -62,7 +68,10 @@ def _load_json(path_text: str) -> Any:
     if not path.is_absolute():
         path = ROOT / path
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return json.loads(
+            path.read_text(encoding="utf-8"),
+            parse_constant=_reject_json_constant,
+        )
     except FileNotFoundError as exc:
         raise JsonInputError("INPUT_NOT_FOUND", path, "input file does not exist") from exc
     except UnicodeDecodeError as exc:
@@ -72,6 +81,12 @@ def _load_json(path_text: str) -> Any:
             "MALFORMED_JSON",
             path,
             f"invalid JSON at line {exc.lineno}, column {exc.colno}",
+        ) from exc
+    except ValueError as exc:
+        raise JsonInputError(
+            "MALFORMED_JSON",
+            path,
+            str(exc),
         ) from exc
 
 
@@ -109,9 +124,7 @@ def _validate_campaign_command(args: argparse.Namespace) -> int:
             if isinstance(lock_path, str):
                 lock = _load_json(lock_path)
                 issues.extend(
-                    verify_benchmark_lock(
-                        campaign, lock, ROOT, context=LOCK_CONTEXT
-                    )
+                    verify_benchmark_lock(campaign, lock, ROOT)
                 )
     return _result("validate", issues)
 
@@ -123,7 +136,7 @@ def _validate_candidate_command(args: argparse.Namespace) -> int:
 
 def _lock_command(args: argparse.Namespace) -> int:
     campaign = _load_json(args.campaign)
-    lock = build_benchmark_lock(campaign, ROOT, context=LOCK_CONTEXT)
+    lock = build_benchmark_lock(campaign, ROOT)
     if args.output:
         output = Path(args.output)
         if not output.is_absolute():
@@ -142,7 +155,7 @@ def _lock_command(args: argparse.Namespace) -> int:
 def _verify_lock_command(args: argparse.Namespace) -> int:
     campaign = _load_json(args.campaign)
     lock = _load_json(args.lock)
-    issues = verify_benchmark_lock(campaign, lock, ROOT, context=LOCK_CONTEXT)
+    issues = verify_benchmark_lock(campaign, lock, ROOT)
     digest = lock.get("lock_digest") if isinstance(lock, dict) else None
     return _result("verify-lock", issues, lock_digest=digest)
 

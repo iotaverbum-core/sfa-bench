@@ -6,6 +6,7 @@ issues, in the same order, are produced offline on every run.
 """
 from __future__ import annotations
 
+import math
 import re
 from pathlib import PurePosixPath
 from typing import Any, Iterable
@@ -120,14 +121,16 @@ _CANDIDATE_FIELDS = frozenset(
 _SELF_RATIFICATION_KEYS = frozenset(
     {
         "ratified",
-        "ratification_decision",
-        "ratification_status",
+        "isratified",
+        "ratificationdecision",
+        "ratificationstatus",
         "promoted",
-        "promotion_ready",
-        "promotion_status",
-        "automatic_ratification",
-        "automatic_promotion",
-        "auto_promote",
+        "ispromoted",
+        "promotionready",
+        "promotionstatus",
+        "automaticratification",
+        "automaticpromotion",
+        "autopromote",
     }
 )
 
@@ -373,6 +376,28 @@ def _scan_secrets(value: Any, path: str = "$") -> list[Issue]:
                     "value resembles a credential and must not be stored here",
                 )
             )
+    return issues
+
+
+def validate_finite_numbers(value: Any, path: str = "$") -> list[Issue]:
+    """Reject non-standard JSON numbers throughout a protocol document."""
+    issues: list[Issue] = []
+    if isinstance(value, dict):
+        for key in sorted(value, key=str):
+            issues.extend(
+                validate_finite_numbers(value[key], _join(path, str(key)))
+            )
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            issues.extend(validate_finite_numbers(child, _join(path, index)))
+    elif isinstance(value, float) and not math.isfinite(value):
+        issues.append(
+            issue(
+                "NONFINITE_NUMBER_FORBIDDEN",
+                path,
+                "NaN and infinite values are not valid protocol numbers",
+            )
+        )
     return issues
 
 
@@ -949,7 +974,7 @@ def validate_campaign(campaign: Any, *, for_lock_build: bool = False) -> list[Is
         )
     _nonempty_string(campaign, "api_or_execution_surface", issues)
 
-    allow_placeholder = status == "draft_not_executed"
+    allow_placeholder = status == "draft_not_executed" and not for_lock_build
     system_prompt = _mapping(campaign, "system_prompt", issues)
     _validate_reference(
         system_prompt, issues, "$.system_prompt", allow_placeholder=allow_placeholder
@@ -1104,27 +1129,60 @@ def validate_campaign(campaign: Any, *, for_lock_build: bool = False) -> list[Is
                         "draft campaigns cannot contain execution or completion claims",
                     )
                 )
+    for field in sorted(campaign):
+        if field == "ratification_policy":
+            continue
+        issues.extend(
+            _scan_governance_claims(
+                campaign[field],
+                _join("$", field),
+                code="CAMPAIGN_GOVERNANCE_CLAIM_FORBIDDEN",
+                message=(
+                    "campaign configuration cannot assert ratification "
+                    "or automatic promotion"
+                ),
+            )
+        )
+    issues.extend(validate_finite_numbers(campaign))
     issues.extend(_scan_secrets(campaign))
     return sort_issues(issues)
 
 
-def _scan_self_ratification(value: Any, path: str = "$") -> list[Issue]:
+def _normalized_control_key(key: Any) -> str:
+    return re.sub(r"[^a-z0-9]", "", str(key).lower())
+
+
+def _scan_governance_claims(
+    value: Any,
+    path: str = "$",
+    *,
+    code: str,
+    message: str,
+) -> list[Issue]:
     issues: list[Issue] = []
     if isinstance(value, dict):
         for key in sorted(value, key=str):
             child_path = _join(path, str(key))
-            if str(key).lower() in _SELF_RATIFICATION_KEYS:
-                issues.append(
-                    issue(
-                        "CANDIDATE_SELF_RATIFICATION_FORBIDDEN",
-                        child_path,
-                        "candidate manifests cannot assert ratification or promotion",
-                    )
+            if _normalized_control_key(key) in _SELF_RATIFICATION_KEYS:
+                issues.append(issue(code, child_path, message))
+            issues.extend(
+                _scan_governance_claims(
+                    value[key],
+                    child_path,
+                    code=code,
+                    message=message,
                 )
-            issues.extend(_scan_self_ratification(value[key], child_path))
+            )
     elif isinstance(value, list):
         for index, child in enumerate(value):
-            issues.extend(_scan_self_ratification(child, _join(path, index)))
+            issues.extend(
+                _scan_governance_claims(
+                    child,
+                    _join(path, index),
+                    code=code,
+                    message=message,
+                )
+            )
     return issues
 
 
@@ -1228,7 +1286,14 @@ def validate_candidate_manifest(manifest: Any) -> list[Issue]:
                     )
                 )
 
-    issues.extend(_scan_self_ratification(manifest))
+    issues.extend(
+        _scan_governance_claims(
+            manifest,
+            code="CANDIDATE_SELF_RATIFICATION_FORBIDDEN",
+            message="candidate manifests cannot assert ratification or promotion",
+        )
+    )
+    issues.extend(validate_finite_numbers(manifest))
     issues.extend(_scan_secrets(manifest))
     return sort_issues(issues)
 
