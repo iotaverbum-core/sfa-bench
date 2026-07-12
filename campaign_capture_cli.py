@@ -20,6 +20,7 @@ from sfa_bench.campaigns.capture import (
     seal_run,
     strict_json_file,
     validate_authorization,
+    verify_judgment,
     verify_review_bundle,
     verify_run,
 )
@@ -187,6 +188,9 @@ def _bundle(args: argparse.Namespace) -> dict[str, Any]:
 def _verify(args: argparse.Namespace) -> dict[str, Any]:
     run_dir = _run_path(args.run)
     report = verify_run(run_dir, repo_root=ROOT)
+    if report["lifecycle_state"] == "judged":
+        verify_judgment(run_dir, repo_root=ROOT)
+        report["judgment"] = "verified"
     if (run_dir / "review-bundle.json").is_file():
         verify_review_bundle(run_dir, repo_root=ROOT)
         report["review_bundle"] = "verified"

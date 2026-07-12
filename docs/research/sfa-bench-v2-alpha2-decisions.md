@@ -184,6 +184,23 @@ model identity, or hidden reasoning.
 - Rollback or rejection condition: implementation claims alpha.2 release status
   before the human-authorized frozen amendment.
 
+## ADR-A2-010: Bind terminal artifacts with idempotent reconciliation
+
+- Problem: a process can stop between exclusive artifact publication and the
+  lifecycle event that makes the artifact terminal.
+- Alternatives: infer completion from file presence; overwrite on retry; add
+  mutable pending state; validate the immutable orphan and append its missing
+  binding event.
+- Selected option: stage initialization before an atomic directory rename;
+  publish capture, judgment, and review artifacts exclusively; verify an
+  orphaned artifact against its predecessor state; and append exactly one
+  digest-binding transition without regenerating the artifact.
+- Evidence: fault-injection tests stop after each artifact publication and prove
+  byte-identical recovery, one transition, and unchanged unratified status.
+- Affected trust boundary: durable storage to lifecycle truth.
+- Compatibility impact: additive alpha.2 behavior only.
+- Rollback or rejection condition: a retry rewrites prior bytes, invents a
+  terminal state without its artifact, or duplicates the binding transition.
 ## Claims boundary
 
 If supported by final tests, alpha.2 may claim deterministic synthetic lifecycle,

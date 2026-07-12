@@ -15,9 +15,10 @@ timestamps, and raw candidate content are untrusted evidence inputs.
 | Lock substitution or dirty bound file | Full Git commit/blob and directory-membership verification immediately before dispatch and judgment | Relies on local Git object integrity |
 | Altered capture/judgment code | Required alpha.2 package, CLI/check, and schemas must appear in lock bindings | Does not authenticate the Git hosting account |
 | Prompt or case drift | Exact prompt/case references and digests in authorization and lock | Does not prove semantic equivalence |
-| Duplicate execution/attempt | Exclusive directories and no-overwrite records | Denial-of-service remains possible |
+| Duplicate execution/attempt | Unique staged initialization, no-replace publication, and no-overwrite records | Execution-ID uniqueness is atomic only within one configured capture root; cross-store governance remains human-owned |
 | Concurrent ledger writers | Exclusive sequence file publication and chained verification | Filesystem durability depends on platform guarantees |
-| Crash or partial write | Fsync staging, partial blobs, explicit interruption/recovery/abort, no file-presence success inference | Sudden hardware failure may exceed OS durability promises |
+| Exclusive publication portability | Same-directory temporary files plus exclusive hard-link publication | Capture roots must use a filesystem that supports hard links; otherwise publication fails closed |
+| Crash or partial write | Fsync staging, partial blobs, explicit interruption/recovery/abort, and idempotent manifest/judgment/bundle reconciliation | Sudden hardware failure may exceed OS durability promises; abandoned initialization staging remains for operator inspection |
 | Response or manifest tamper | Raw byte, attempt, manifest, ledger-root, judgment, and bundle seals | SHA-256 is not a digital signature |
 | Secret leakage | Metadata allowlist, credential-pattern rejection, private raw blobs, hash-only public bundle | Pattern scanning cannot prove absence of every possible secret |
 | Fabricated provider provenance | Provider/model/request ID fields labelled declared and unverified | No provider-signed receipt is implemented |

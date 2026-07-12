@@ -49,6 +49,9 @@ Skipped, repeated, contradictory, unknown, removed, inserted, reordered, or
 hash-invalid transitions fail closed. File presence is never a completion
 signal. `captured` requires a complete immutable attempt record and response
 blob; `sealed` requires a verified manifest and lifecycle root.
+`judged` requires a reproducible judgment artifact, and `review_required` requires
+a source-bound review bundle. Orphaned manifest, judgment, and bundle files are
+verified and reconciled without rewriting their original bytes.
 
 ## Authorization boundary
 
@@ -96,10 +99,12 @@ objects in the judgment artifact. They cannot alter the deterministic result.
 
 ## Review boundary
 
-`build_review_bundle()` includes public preregistration, lock, authorization,
-lifecycle events, raw-evidence hashes, capture manifest, adapter provenance,
+`build_review_bundle()` includes public preregistration, lock, a digest-bound
+authorization projection with operator identity redacted, the pre-review
+lifecycle chain, raw-evidence hashes, capture manifest, adapter provenance,
 integrity report, judgment when available, warnings, limitations, and lineage
-placeholders. It excludes raw bodies and states:
+placeholders. Its immutable digest is bound by the subsequent
+`review_required` event. It excludes raw bodies and states:
 
 ```json
 {"packaging_is_approval":false,"ratification_status":"unratified","raw_bodies_included":false}

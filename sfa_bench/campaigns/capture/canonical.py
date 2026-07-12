@@ -243,7 +243,7 @@ def validate_repo_relative_path(value: Any, path: str) -> str:
             raise CaptureError("NONPORTABLE_PATH", "nonportable path segment", path)
         if part.split(".", 1)[0].upper() in _WINDOWS_RESERVED:
             raise CaptureError("RESERVED_PATH_SEGMENT", "reserved path segment", path)
-    if parts[0].casefold() in {".git", ".hg", ".svn"}:
+    if any(part.casefold() in {".git", ".hg", ".svn"} for part in parts):
         raise CaptureError("REPOSITORY_CONTROL_PATH", "repository-control paths are forbidden", path)
     return value
 

@@ -43,9 +43,13 @@ model identity, SDK/proxy transparency, or hidden reasoning.
 
 Every governed file is fully written and fsynced to a same-directory temporary
 file, then published through an exclusive hard link. Existing targets are never
-overwritten. Execution and attempt directories are created exclusively.
-Concurrent next-event writers target the same sequence filename; exactly one
-can publish and the other fails with a collision.
+overwritten. Initialization is assembled in a unique same-parent staging
+directory and exposed with one no-replace directory rename, so a crash cannot
+publish a partly initialized execution. A failed initializer can leave a hidden
+staging directory for operator inspection; it is not treated as a run. Attempt
+directories are created exclusively. Concurrent next-event writers target the
+same sequence filename; exactly one can publish and the other fails with a
+collision.
 
 Each lifecycle event seals its canonical content, sequence, prior event hash,
 execution ID, transition, timestamp, and payload. Verification rejects gaps,
@@ -92,6 +96,9 @@ manifest carries `SENSITIVE_RAW_PAYLOAD_WITHHELD` and only the digest.
 Operational diagnostics contain a bounded code and classification
 `derived_redaction`; they never contain an exception message, secret, request
 header, cookie, or raw body and never claim to be original evidence.
+The public review bundle contains a digest-bound execution-authorization
+projection, not the declared operator identity. The private authorization file
+remains available to the authorized human review process.
 
 ## Corrections and lineage
 

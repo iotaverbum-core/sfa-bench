@@ -25,13 +25,14 @@ from sfa_bench.campaigns.capture.authorization import (
 from sfa_bench.campaigns.capture.canonical import (
     CaptureError,
     canonical_bytes,
+    ensure_no_reparse_ancestors,
     sha256_bytes,
     strict_json_loads,
     validate_repo_relative_path,
     validate_safe_id,
     write_exclusive_json,
 )
-from sfa_bench.campaigns.capture.judgment import judge_run
+from sfa_bench.campaigns.capture.judgment import judge_run, verify_judgment
 from sfa_bench.campaigns.capture.lifecycle import (
     append_occurrence,
     append_transition,
@@ -170,9 +171,20 @@ class CanonicalBoundaryTests(CaptureUnitTest):
         self.assertEqual(canonical_bytes({"b": 2, "a": 1}), b'{"a":1,"b":2}')
 
     def test_portable_paths_reject_escape_reserved_and_control_paths(self):
-        for value in ("../x", "C:/x", "//host/x", ".git/config", "out/CON/file", "x:/ads"):
+        for value in ("../x", "C:/x", "//host/x", ".git/config", "out/.git/config", "out/CON/file", "x:/ads"):
             with self.subTest(value=value), self.assertRaises(CaptureError):
                 validate_repo_relative_path(value, "$.path")
+
+    def test_reparse_ancestor_is_rejected(self):
+        root = Path(self.temp.name) / "root"
+        link = root / "link"
+        link.mkdir(parents=True)
+        with mock.patch(
+            "sfa_bench.campaigns.capture.canonical._is_reparse_point",
+            side_effect=lambda path: path == link,
+        ), self.assertRaises(CaptureError) as caught:
+            ensure_no_reparse_ancestors(root, link / "artifact.json")
+        self.assertEqual(caught.exception.code, "REPARSE_POINT_REJECTED")
 
     def test_ids_reject_unicode_and_windows_reserved_names(self):
         for value in ("Upper", "é", "CON", ".."):
@@ -347,6 +359,8 @@ class CaptureFlowTests(CaptureUnitTest):
         self.assertEqual(bundle["ratification_status"], "unratified")
         self.assertFalse(bundle["packaging_is_approval"])
         self.assertFalse(bundle["raw_bodies_included"])
+        self.assertTrue(bundle["execution_authorization"]["operator_declaration"]["identity_redacted"])
+        self.assertNotIn("declared-test-operator", canonical_bytes(bundle).decode("utf-8"))
 
     def test_invalid_and_binary_outputs_get_explicit_zero_credit(self):
         modes = (
@@ -464,6 +478,20 @@ class CaptureFlowTests(CaptureUnitTest):
             verify_run(run, repo_root=ROOT)
         self.assertEqual(caught.exception.code, "PARTIAL_CAPTURE_DETECTED")
 
+    def test_explicit_abort_can_seal_attempt_directory_creation_crash(self):
+        run, _campaign, _lock, _authorization, _adapter, bindings = self.initialize(
+            execution_id="attempt-directory-crash"
+        )
+        append_transition(run, "capturing", observed_at=NOW, payload={"attempt_number": 1})
+        (run / "attempts/000001").mkdir()
+        recover_run(run, action="abort", reason="operator abort", observed_at=NOW)
+        with self.trusted(bindings):
+            manifest = seal_run(run, repo_root=ROOT, observed_at=NOW)
+            verify_run(run, repo_root=ROOT)
+        self.assertEqual(manifest["capture_state"], "aborted")
+        self.assertEqual(manifest["attempts"][0]["transport_status"], "interrupted_uncommitted")
+        self.assertIn(sha256_bytes(REQUEST), manifest["raw_evidence_hashes"])
+
     def test_review_bundle_tamper_cannot_claim_ratification(self):
         run, _attempt, bindings = self.full_run()
         with self.trusted(bindings):
@@ -476,6 +504,196 @@ class CaptureFlowTests(CaptureUnitTest):
         path.write_bytes(canonical_bytes(bundle))
         with self.trusted(bindings), self.assertRaises(CaptureError):
             verify_review_bundle(run, repo_root=ROOT)
+
+    def test_invented_terminal_states_and_deleted_artifacts_fail_closed(self):
+        run, _campaign, _lock, _authorization, _adapter, bindings = self.initialize(
+            execution_id="invented-captured"
+        )
+        append_transition(run, "capturing", observed_at=NOW, payload={"attempt_number": 1})
+        append_transition(run, "captured", observed_at=NOW, payload={"attempt_number": 1, "complete": True})
+        with self.trusted(bindings), self.assertRaises(CaptureError) as empty_capture:
+            verify_run(run, repo_root=ROOT)
+        self.assertEqual(empty_capture.exception.code, "FALSE_CAPTURE_COMPLETION")
+
+        judged, _attempt, judged_bindings = self.full_run(execution_id="missing-judgment")
+        with self.trusted(judged_bindings):
+            seal_run(judged, repo_root=ROOT, observed_at=NOW)
+            judge_run(judged, repo_root=ROOT, task_reference=TASK_REFERENCE, observed_at=NOW)
+        (judged / "judgment.json").unlink()
+        with self.trusted(judged_bindings), self.assertRaises(CaptureError) as missing_judgment:
+            verify_run(judged, repo_root=ROOT)
+        self.assertEqual(missing_judgment.exception.code, "MISSING_JUDGMENT")
+
+        bundled, _attempt, bundle_bindings = self.full_run(execution_id="missing-bundle")
+        with self.trusted(bundle_bindings):
+            seal_run(bundled, repo_root=ROOT, observed_at=NOW)
+            judge_run(bundled, repo_root=ROOT, task_reference=TASK_REFERENCE, observed_at=NOW)
+            build_review_bundle(bundled, repo_root=ROOT, observed_at=NOW)
+        (bundled / "review-bundle.json").unlink()
+        with self.trusted(bundle_bindings), self.assertRaises(CaptureError) as missing_bundle:
+            verify_run(bundled, repo_root=ROOT)
+        self.assertEqual(missing_bundle.exception.code, "MISSING_REVIEW_BUNDLE")
+
+    def test_seal_judgment_and_bundle_crash_windows_reconcile_idempotently(self):
+        later = "2026-07-12T20:05:00+02:00"
+        run, _attempt, bindings = self.full_run(execution_id="reconcile")
+        with self.trusted(bindings), mock.patch(
+            "sfa_bench.campaigns.capture.run.append_transition",
+            side_effect=RuntimeError("simulated crash after manifest publication"),
+        ), self.assertRaises(RuntimeError):
+            seal_run(run, repo_root=ROOT, observed_at=NOW)
+        manifest_bytes = (run / "capture-manifest.json").read_bytes()
+        with self.trusted(bindings):
+            manifest = seal_run(run, repo_root=ROOT, observed_at=later)
+        self.assertEqual((run / "capture-manifest.json").read_bytes(), manifest_bytes)
+        self.assertEqual(manifest["capture_completed_at"], NOW)
+        self.assertEqual(sum(event["to_state"] == "sealed" for event in verify_ledger(run).events), 1)
+
+        with self.trusted(bindings), mock.patch(
+            "sfa_bench.campaigns.capture.judgment.append_transition",
+            side_effect=RuntimeError("simulated crash after judgment publication"),
+        ), self.assertRaises(RuntimeError):
+            judge_run(run, repo_root=ROOT, task_reference=TASK_REFERENCE, observed_at=NOW)
+        judgment_bytes = (run / "judgment.json").read_bytes()
+        with self.trusted(bindings):
+            judgment = judge_run(run, repo_root=ROOT, task_reference=TASK_REFERENCE, observed_at=later)
+        self.assertEqual((run / "judgment.json").read_bytes(), judgment_bytes)
+        self.assertEqual(judgment["judged_at"], NOW)
+        self.assertEqual(sum(event["to_state"] == "judged" for event in verify_ledger(run).events), 1)
+
+        with self.trusted(bindings), mock.patch(
+            "sfa_bench.campaigns.capture.review.append_transition",
+            side_effect=RuntimeError("simulated crash after bundle publication"),
+        ), self.assertRaises(RuntimeError):
+            build_review_bundle(run, repo_root=ROOT, observed_at=NOW)
+        bundle_bytes = (run / "review-bundle.json").read_bytes()
+        with self.trusted(bindings):
+            bundle = build_review_bundle(run, repo_root=ROOT, observed_at=later)
+            verify_review_bundle(run, repo_root=ROOT)
+        self.assertEqual((run / "review-bundle.json").read_bytes(), bundle_bytes)
+        self.assertEqual(bundle["ratification_status"], "unratified")
+        self.assertEqual(sum(event["to_state"] == "review_required" for event in verify_ledger(run).events), 1)
+
+        with self.trusted(bindings):
+            self.assertEqual(seal_run(run, repo_root=ROOT, observed_at=later), manifest)
+            self.assertEqual(
+                judge_run(run, repo_root=ROOT, task_reference=TASK_REFERENCE, observed_at=later),
+                judgment,
+            )
+            self.assertEqual(build_review_bundle(run, repo_root=ROOT, observed_at=later), bundle)
+
+    def test_context_failure_prevents_transport_and_scoring(self):
+        run, _campaign, _lock, _authorization, adapter, _bindings = self.initialize(
+            execution_id="binding-before-transport"
+        )
+        with mock.patch(
+            "sfa_bench.campaigns.capture.run.verify_governed_context",
+            side_effect=CaptureError("BINDING_DIGEST_MISMATCH", "changed bound implementation"),
+        ), self.assertRaises(CaptureError):
+            capture_attempt(run, request_bytes=REQUEST, adapter=adapter, repo_root=ROOT, observed_at=NOW)
+        self.assertEqual(adapter.calls, 0)
+
+        judged, _attempt, bindings = self.full_run(execution_id="binding-before-score")
+        with self.trusted(bindings):
+            seal_run(judged, repo_root=ROOT, observed_at=NOW)
+        with mock.patch(
+            "sfa_bench.campaigns.capture.run.verify_governed_context",
+            side_effect=CaptureError("BINDING_DIGEST_MISMATCH", "changed bound schema"),
+        ), mock.patch(
+            "sfa_bench.frontier_delta.candidate_adapter.score_response"
+        ) as scorer, self.assertRaises(CaptureError):
+            judge_run(judged, repo_root=ROOT, task_reference=TASK_REFERENCE, observed_at=NOW)
+        scorer.assert_not_called()
+
+    def test_recovery_partial_bytes_are_verified_and_sealed(self):
+        run, _campaign, _lock, _authorization, adapter, bindings = self.initialize(
+            execution_id="recovery-evidence",
+            mode="timeout",
+        )
+        with self.trusted(bindings):
+            capture_attempt(run, request_bytes=REQUEST, adapter=adapter, repo_root=ROOT, observed_at=NOW)
+        record = recover_run(
+            run,
+            action="abort",
+            reason="operator abort",
+            observed_at=NOW,
+            partial_bytes=b"partial-response-evidence",
+        )
+        with self.trusted(bindings):
+            manifest = seal_run(run, repo_root=ROOT, observed_at=NOW)
+            verify_run(run, repo_root=ROOT)
+        self.assertIn(record["partial_blob"]["sha256"], manifest["raw_evidence_hashes"])
+        self.assertIn(sha256_bytes(REQUEST), manifest["raw_evidence_hashes"])
+
+    def test_resumed_success_detects_reused_provider_identifier(self):
+        class SequenceAdapter:
+            adapter_id = SyntheticAdapter.adapter_id
+            adapter_version = SyntheticAdapter.adapter_version
+            implementation_path = SyntheticAdapter.implementation_path
+
+            def __init__(self):
+                self.calls = 0
+
+            def transport(self, _request):
+                self.calls += 1
+                metadata = {
+                    "content_type": "application/json",
+                    "provider_request_id": "provider-declared-duplicate",
+                }
+                if self.calls == 1:
+                    return TransportResult(
+                        "interrupted",
+                        b'{"claimed_state_keys":[',
+                        metadata,
+                        "SYNTHETIC_INTERRUPTION",
+                    )
+                return TransportResult(
+                    "completed",
+                    b'{"claimed_state_keys":["customer_id"],"used_off_limits_keys":[]}',
+                    metadata,
+                )
+
+        campaign, lock, authorization, _adapter, bindings = self.context(
+            execution_id="resumed-duplicate",
+            max_attempts=2,
+            reasons=["timeout"],
+        )
+        adapter = SequenceAdapter()
+        with self.trusted(bindings):
+            run = initialize_run(
+                campaign=campaign, lock=lock, authorization=authorization, request_bytes=REQUEST,
+                adapter=adapter, repo_root=ROOT, output_root=self.output_root, observed_at=NOW,
+            )
+            first = capture_attempt(
+                run, request_bytes=REQUEST, adapter=adapter, repo_root=ROOT, observed_at=NOW,
+            )
+        self.assertFalse(first["complete"])
+        recover_run(run, action="resume", reason="timeout", observed_at=NOW)
+        with self.trusted(bindings):
+            second = capture_attempt(
+                run, request_bytes=REQUEST, adapter=adapter, repo_root=ROOT, observed_at=NOW,
+            )
+            manifest = seal_run(run, repo_root=ROOT, observed_at=NOW)
+        self.assertTrue(second["complete"])
+        self.assertEqual(adapter.calls, 2)
+        self.assertIn("PROVIDER_REQUEST_ID_REUSED", second["warnings"])
+        self.assertEqual(len(manifest["attempts"]), 2)
+
+    def test_execution_id_uniqueness_is_capture_store_local(self):
+        campaign, lock, authorization, adapter, bindings = self.context(execution_id="store-local")
+        second_root = Path(self.temp.name) / "other-runs"
+        with self.trusted(bindings):
+            first = initialize_run(
+                campaign=campaign, lock=lock, authorization=authorization, request_bytes=REQUEST,
+                adapter=adapter, repo_root=ROOT, output_root=self.output_root, observed_at=NOW,
+            )
+            second = initialize_run(
+                campaign=campaign, lock=lock, authorization=authorization, request_bytes=REQUEST,
+                adapter=SyntheticAdapter("valid_json_object"), repo_root=ROOT,
+                output_root=second_root, observed_at=NOW,
+            )
+        self.assertEqual(first.name, second.name)
+        self.assertNotEqual(first.parent.parent, second.parent.parent)
 
 
 class SyntheticLaboratoryTests(unittest.TestCase):

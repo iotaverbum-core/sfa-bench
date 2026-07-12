@@ -2,6 +2,12 @@
 
 An interruption is evidence, not a transient status to hide.
 
+Initialization is built in a hidden same-parent staging directory and atomically
+renamed only after authorization events are complete. A crash can leave staging
+for inspection, but never a partly initialized visible run. Execution-ID
+uniqueness is enforced within one configured capture root; operators must govern
+uniqueness across separate roots.
+
 ## Detection
 
 Verification fails closed when it finds an attempt directory without an
@@ -28,6 +34,10 @@ py -3 campaign_capture_cli.py recover --run <run-dir> --action record_interrupti
 py -3 campaign_capture_cli.py recover --run <run-dir> --action resume --reason "<exact preregistered reason>" --now 2026-07-12T20:01:00+02:00
 py -3 campaign_capture_cli.py recover --run <run-dir> --action abort --reason "execution outcome unknown" --now 2026-07-12T20:01:00+02:00
 ```
+
+If sealing, judgment, or review packaging stops after publishing its immutable
+artifact but before the next lifecycle event, rerun the same operation. It verifies
+and binds the existing bytes; it does not regenerate or overwrite them.
 
 The software never resends automatically. If a request may have reached a
 provider but no terminal response event exists, the recorded outcome remains

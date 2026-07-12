@@ -9,6 +9,7 @@ from typing import Any
 from .canonical import (
     CaptureError,
     canonical_bytes,
+    ensure_no_reparse_ancestors,
     require_exact_fields,
     sha256_value,
     strict_json_file,
@@ -87,6 +88,7 @@ class LedgerState:
 
 
 def _run_execution_id(run_dir: Path) -> str:
+    ensure_no_reparse_ancestors(run_dir, run_dir / "run.json")
     run = strict_json_file(run_dir / "run.json", require_canonical=True)
     if not isinstance(run, dict) or not isinstance(run.get("execution_id"), str):
         raise CaptureError("INVALID_RUN_METADATA", "run metadata has no execution ID")
@@ -147,6 +149,7 @@ def _validate_event(
 def verify_ledger(run_dir: Path) -> LedgerState:
     execution_id = _run_execution_id(run_dir)
     directory = run_dir / "ledger" / "events"
+    ensure_no_reparse_ancestors(run_dir, directory)
     if not directory.is_dir():
         return LedgerState(None, ZERO_HASH, ())
     paths = sorted(directory.iterdir(), key=lambda path: path.name)
@@ -157,6 +160,7 @@ def verify_ledger(run_dir: Path) -> LedgerState:
     previous = ZERO_HASH
     state: str | None = None
     for sequence, path in enumerate(paths):
+        ensure_no_reparse_ancestors(run_dir, path)
         if path.name != f"{sequence:08d}.json":
             raise CaptureError("LEDGER_SEQUENCE_GAP", "ledger filenames are not contiguous", str(path))
         event = strict_json_file(path, require_canonical=True)

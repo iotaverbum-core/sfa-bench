@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import re
 from typing import Any, Protocol, runtime_checkable
 
 from .canonical import (
@@ -87,9 +88,12 @@ def validate_transport_shape(result: Any) -> TransportResult:
     if not isinstance(result.metadata, dict):
         raise CaptureError("INVALID_TRANSPORT_METADATA", "transport metadata must be an object")
     if result.diagnostic_code is not None and (
-        not isinstance(result.diagnostic_code, str) or len(result.diagnostic_code) > 80
+        not isinstance(result.diagnostic_code, str)
+        or re.fullmatch(r"[A-Z0-9_]{1,80}", result.diagnostic_code) is None
     ):
         raise CaptureError("INVALID_DIAGNOSTIC_CODE", "diagnostic code is invalid")
+    assert_secret_free(result.diagnostic_code, "$.diagnostic_code")
+    assert_no_governance_claims(result.diagnostic_code, "$.diagnostic_code")
     return result
 
 

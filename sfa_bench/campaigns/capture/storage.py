@@ -1,7 +1,9 @@
 """Crash-safe append-only storage for campaign capture evidence."""
 from __future__ import annotations
 
+import os
 from pathlib import Path
+import tempfile
 from typing import Any
 
 from .canonical import (
@@ -60,6 +62,63 @@ def reserve_run(output_root: Path, campaign_id: str, execution_id: str) -> Path:
         target.mkdir(parents=True)
         ensure_no_reparse_ancestors(run_dir, target)
     return run_dir
+
+
+def prepare_run_staging(
+    output_root: Path,
+    campaign_id: str,
+    execution_id: str,
+) -> tuple[Path, Path]:
+    """Prepare a deterministic private staging directory for atomic initialization."""
+    validate_safe_id(campaign_id, "$.campaign_id")
+    validate_safe_id(execution_id, "$.execution_id")
+    output_root.mkdir(parents=True, exist_ok=True)
+    ensure_no_reparse_ancestors(output_root, output_root)
+    campaign_root = safe_child(output_root, campaign_id)
+    campaign_root.mkdir(exist_ok=True)
+    ensure_no_reparse_ancestors(output_root, campaign_root)
+    final = safe_child(output_root, campaign_id, execution_id)
+    if final.exists():
+        raise CaptureError(
+            "DUPLICATE_EXECUTION_ID",
+            "execution ID already has an immutable run directory",
+            str(final),
+        )
+    identity = f"{campaign_id}/{execution_id}".encode("utf-8")
+    staging = Path(
+        tempfile.mkdtemp(
+            prefix=f".capture-init-{sha256_bytes(identity)[:16]}-",
+            dir=campaign_root,
+        )
+    )
+    ensure_no_reparse_ancestors(output_root, staging)
+    for relative in (
+        Path("ledger/events"),
+        Path("attempts"),
+        Path("private/raw/blobs/sha256"),
+        Path("recovery"),
+    ):
+        target = staging / relative
+        target.mkdir(parents=True, exist_ok=True)
+        ensure_no_reparse_ancestors(staging, target)
+    return staging, final
+
+
+def publish_staged_run(staging: Path, final: Path) -> Path:
+    """Atomically expose a fully initialized run without replacing any target."""
+    if staging.parent != final.parent:
+        raise CaptureError("PATH_ESCAPE", "staging and final run must share a parent")
+    ensure_no_reparse_ancestors(staging.parent, staging)
+    ensure_no_reparse_ancestors(final.parent, final)
+    try:
+        os.rename(staging, final)
+    except FileExistsError as exc:
+        raise CaptureError("DUPLICATE_EXECUTION_ID", "execution ID was concurrently published", str(final)) from exc
+    except OSError as exc:
+        if final.exists():
+            raise CaptureError("DUPLICATE_EXECUTION_ID", "execution ID was concurrently published", str(final)) from exc
+        raise CaptureError("ATOMIC_RUN_PUBLICATION_FAILED", "initialized run could not be published", str(final)) from exc
+    return final
 
 
 def write_blob(
@@ -149,6 +208,7 @@ def write_record(path: Path, value: Any) -> Path:
 
 
 def read_record(path: Path) -> dict[str, Any]:
+    ensure_no_reparse_ancestors(path.parent, path)
     value = strict_json_file(path, require_canonical=True)
     if not isinstance(value, dict):
         raise CaptureError("MALFORMED_STORED_RECORD", "stored record must be an object", str(path))

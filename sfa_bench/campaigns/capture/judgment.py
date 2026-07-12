@@ -18,7 +18,7 @@ from .canonical import (
 )
 from .context import lock_binding_map, require_bound_reference
 from .lifecycle import append_transition, verify_ledger
-from .run import verify_run
+from .run import _verify_run_core, verify_run
 from .storage import read_blob, read_record, write_record
 
 
@@ -84,6 +84,33 @@ def judge_run(
 ) -> dict[str, Any]:
     """Verify all provenance, then invoke the existing fixed candidate path."""
     validate_timestamp(observed_at, "$.observed_at")
+    target = run_dir / "judgment.json"
+    ledger = verify_ledger(run_dir)
+    if target.is_file() and ledger.state == "sealed":
+        integrity = _verify_run_core(run_dir, repo_root=repo_root, allow_uncommitted="judgment")
+        artifact = _validate_judgment_artifact(
+            run_dir,
+            repo_root=repo_root,
+            integrity=integrity,
+            require_event=False,
+        )
+        if artifact["task_reference"] != task_reference:
+            raise CaptureError("TASK_REFERENCE_SUBSTITUTION", "judgment task differs from stored artifact")
+        append_transition(
+            run_dir,
+            "judged",
+            observed_at=artifact["judged_at"],
+            payload={
+                "judgment_sha256": artifact["judgment_sha256"],
+                "verifier_commit": artifact["verifier_commit"],
+            },
+        )
+        return artifact
+    if ledger.state in {"judged", "review_required"}:
+        artifact = verify_judgment(run_dir, repo_root=repo_root)
+        if artifact["task_reference"] != task_reference:
+            raise CaptureError("TASK_REFERENCE_SUBSTITUTION", "judgment task differs from stored artifact")
+        return artifact
     integrity = verify_run(run_dir, repo_root=repo_root)
     if integrity["lifecycle_state"] != "sealed":
         raise CaptureError("JUDGMENT_REQUIRES_SEALED_CAPTURE", "run must be sealed and unjudged")
@@ -141,13 +168,7 @@ def judge_run(
     artifact["judgment_content_sha256"] = _content_digest(artifact)
     artifact["judgment_sha256"] = _digest(artifact)
     assert_secret_free(artifact)
-    target = run_dir / "judgment.json"
-    if target.exists():
-        existing = read_record(target)
-        if existing != artifact:
-            raise CaptureError("JUDGMENT_NO_OVERWRITE", "different judgment artifact already exists")
-    else:
-        write_record(target, artifact)
+    write_record(target, artifact)
     append_transition(
         run_dir,
         "judged",
@@ -160,9 +181,14 @@ def judge_run(
     return artifact
 
 
-def verify_judgment(run_dir: Path, *, repo_root: Path) -> dict[str, Any]:
-    integrity = verify_run(run_dir, repo_root=repo_root)
-    if integrity["lifecycle_state"] not in {"judged", "review_required"}:
+def _validate_judgment_artifact(
+    run_dir: Path,
+    *,
+    repo_root: Path,
+    integrity: dict[str, Any],
+    require_event: bool,
+) -> dict[str, Any]:
+    if require_event and integrity["lifecycle_state"] not in {"judged", "review_required"}:
         raise CaptureError("MISSING_JUDGMENT_STATE", "lifecycle does not contain a sealed judgment")
     artifact = read_record(run_dir / "judgment.json")
     require_exact_fields(artifact, JUDGMENT_FIELDS)
@@ -174,8 +200,15 @@ def verify_judgment(run_dir: Path, *, repo_root: Path) -> dict[str, Any]:
         raise CaptureError("JUDGMENT_DIGEST_MISMATCH", "judgment artifact was modified")
     ledger = verify_ledger(run_dir)
     events = [event for event in ledger.events if event["to_state"] == "judged" and event["transition"]]
-    if len(events) != 1 or events[0]["payload"].get("judgment_sha256") != artifact["judgment_sha256"]:
-        raise CaptureError("JUDGMENT_SEAL_MISMATCH", "lifecycle does not bind judgment artifact")
+    if require_event:
+        expected_payload = {
+            "judgment_sha256": artifact["judgment_sha256"],
+            "verifier_commit": artifact["verifier_commit"],
+        }
+        if len(events) != 1 or events[0]["payload"] != expected_payload:
+            raise CaptureError("JUDGMENT_SEAL_MISMATCH", "lifecycle does not bind judgment artifact")
+    elif events:
+        raise CaptureError("JUDGMENT_SEAL_MISMATCH", "unexpected judgment event during reconciliation")
     run = read_record(run_dir / "run.json")
     lock = read_record(run_dir / "benchmark-lock.json")
     manifest = read_record(run_dir / "capture-manifest.json")
@@ -188,7 +221,53 @@ def verify_judgment(run_dir: Path, *, repo_root: Path) -> dict[str, Any]:
     ):
         raise CaptureError("JUDGMENT_BINDING_MISMATCH", "judgment binds different governed evidence")
     bindings = lock_binding_map(lock)
+    if artifact["task_reference"] != run["case_reference"]:
+        raise CaptureError("JUDGMENT_TASK_BINDING_MISMATCH", "judgment task differs from authorized case")
     if bindings.get(artifact["task_reference"]) != artifact["task_sha256"]:
         raise CaptureError("JUDGMENT_TASK_BINDING_MISMATCH", "judgment task is not lock-bound")
+    task_path = repo_root.joinpath(*artifact["task_reference"].split("/"))
+    if not task_path.is_file() or sha256_bytes(task_path.read_bytes()) != artifact["task_sha256"]:
+        raise CaptureError("JUDGMENT_TASK_BINDING_MISMATCH", "judgment task bytes changed")
+    task = strict_json_file(task_path)
+    attempt = _complete_attempt(run_dir)
+    if attempt["response_blob"]["sha256"] != artifact["response_blob_sha256"]:
+        raise CaptureError("JUDGMENT_RESPONSE_BINDING_MISMATCH", "judgment response differs from capture")
+    response_bytes = read_blob(run_dir, attempt["response_blob"])
+    try:
+        response_text = response_bytes.decode("utf-8")
+        decode_status = "utf8"
+    except UnicodeDecodeError:
+        response_text = "\x00"
+        decode_status = "binary_non_utf8"
+    expected_result = candidate_adapter.score_response(task, response_text)
+    validity = expected_result.get("parse_notes", {}).get("candidate_validity")
+    if not isinstance(validity, str):
+        failures = expected_result.get("detected_failure_modes", [])
+        validity = failures[0] if failures else "valid_object"
+    if (
+        artifact["candidate_decode_status"] != decode_status
+        or artifact["candidate_validity"] != validity
+        or artifact["deterministic_result"] != expected_result
+    ):
+        raise CaptureError("JUDGMENT_REPRODUCTION_MISMATCH", "stored deterministic judgment does not reproduce")
+    if artifact["judgment_input_projection"] != {
+        "provider_metadata": {},
+        "adapter_metadata": {},
+        "authorization_metadata": {},
+        "retry_metadata": {},
+    }:
+        raise CaptureError("JUDGMENT_METADATA_CONTAMINATION", "judgment projection contains metadata")
+    if artifact["provenance_class"] != "derived_deterministic" or artifact["ratification_status"] != "unratified":
+        raise CaptureError("JUDGMENT_AUTHORITY_CLAIM", "judgment contains an invalid authority claim")
     assert_secret_free(artifact)
     return artifact
+
+
+def verify_judgment(run_dir: Path, *, repo_root: Path) -> dict[str, Any]:
+    integrity = _verify_run_core(run_dir, repo_root=repo_root)
+    return _validate_judgment_artifact(
+        run_dir,
+        repo_root=repo_root,
+        integrity=integrity,
+        require_event=True,
+    )

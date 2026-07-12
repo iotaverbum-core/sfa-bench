@@ -14,6 +14,7 @@ from .adapters import (
 from .authorization import validate_authorization
 from .canonical import (
     CaptureError,
+    assert_no_governance_claims,
     assert_secret_free,
     bytes_may_contain_secret,
     canonical_bytes,
@@ -33,9 +34,10 @@ from .lifecycle import (
 from .storage import (
     attempt_directories,
     create_attempt_dir,
+    prepare_run_staging,
+    publish_staged_run,
     read_blob,
     read_record,
-    reserve_run,
     write_blob,
     write_record,
 )
@@ -63,6 +65,15 @@ RUN_FIELDS = frozenset(
         "retry_policy",
         "ratification_status",
         "authority_boundary",
+    }
+)
+REQUEST_FIELDS = frozenset(
+    {
+        "attempt_number",
+        "request_blob",
+        "request_sha256",
+        "byte_length",
+        "preserved_before_transport",
     }
 )
 ATTEMPT_FIELDS = frozenset(
@@ -110,6 +121,20 @@ MANIFEST_FIELDS = frozenset(
         "manifest_sha256",
     }
 )
+RECOVERY_FIELDS = frozenset(
+    {
+        "schema_version",
+        "action",
+        "reason",
+        "observed_at",
+        "state_before",
+        "attempt_number",
+        "partial_blob",
+        "execution_outcome",
+        "provenance_class",
+        "recovery_digest",
+    }
+)
 
 
 def _load_documents(run_dir: Path) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
@@ -135,6 +160,12 @@ def _manifest_digest(manifest: dict[str, Any]) -> str:
     return sha256_value(content)
 
 
+def _recovery_digest(record: dict[str, Any]) -> str:
+    content = dict(record)
+    content.pop("recovery_digest", None)
+    return sha256_value(content)
+
+
 def _attempt_summary(attempt: dict[str, Any]) -> dict[str, Any]:
     response = attempt["response_blob"]
     return {
@@ -151,20 +182,84 @@ def _attempt_summary(attempt: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _read_recovery_records(run_dir: Path) -> list[dict[str, Any]]:
+    paths = sorted((run_dir / "recovery").glob("*.json"))
+    records: list[dict[str, Any]] = []
+    for index, path in enumerate(paths):
+        if path.name != f"{index:06d}.json":
+            raise CaptureError("RECOVERY_SEQUENCE_MISMATCH", "recovery records are not contiguous", str(path))
+        record = read_record(path)
+        require_exact_fields(record, RECOVERY_FIELDS)
+        if record["schema_version"] != "sfa_bench.campaign_capture.recovery.v1":
+            raise CaptureError("UNSUPPORTED_RECOVERY_SCHEMA", "unsupported recovery record schema")
+        if record["recovery_digest"] != _recovery_digest(record):
+            raise CaptureError("RECOVERY_DIGEST_MISMATCH", "recovery record was modified")
+        if record["action"] not in {"record_interruption", "resume", "abort"}:
+            raise CaptureError("INVALID_RECOVERY_ACTION", "stored recovery action is invalid")
+        validate_timestamp(record["observed_at"], "$.observed_at")
+        attempt_number = record["attempt_number"]
+        if attempt_number is not None and (
+            not isinstance(attempt_number, int) or isinstance(attempt_number, bool) or attempt_number < 1
+        ):
+            raise CaptureError("INVALID_ATTEMPT_NUMBER", "stored recovery attempt number is invalid")
+        if record["partial_blob"] is not None:
+            read_blob(run_dir, record["partial_blob"])
+        records.append(record)
+    return records
+
+
+def _verify_recovery_events(records: list[dict[str, Any]], ledger) -> None:
+    referenced = {
+        value
+        for event in ledger.events
+        for key, value in event["payload"].items()
+        if key == "recovery_digest" and isinstance(value, str)
+    }
+    for record in records:
+        if record["recovery_digest"] not in referenced:
+            raise CaptureError("UNBOUND_RECOVERY_RECORD", "recovery record is not bound by the lifecycle")
+
+
 def _read_attempts(run_dir: Path, *, allow_partial: bool) -> list[dict[str, Any]]:
+    run = _load_documents(run_dir)[0]
     attempts: list[dict[str, Any]] = []
-    recovery_records = list((run_dir / "recovery").glob("*.json"))
+    recovery_records = _read_recovery_records(run_dir)
     for number, directory in enumerate(attempt_directories(run_dir), start=1):
+        matching_recovery = any(record["attempt_number"] == number for record in recovery_records)
+        request_path = directory / "request.json"
+        if request_path.is_file():
+            request_record = read_record(request_path)
+            require_exact_fields(request_record, REQUEST_FIELDS)
+            expected_request = run["authorized_request_blob"]
+            if (
+                request_record["attempt_number"] != number
+                or request_record["request_blob"] != expected_request
+                or request_record["request_sha256"] != expected_request["sha256"]
+                or request_record["byte_length"] != expected_request["byte_length"]
+                or request_record["preserved_before_transport"] is not True
+            ):
+                raise CaptureError(
+                    "REQUEST_PRESERVATION_MISMATCH",
+                    "attempt request record differs from authorized bytes",
+                    str(request_path),
+                )
+            read_blob(run_dir, request_record["request_blob"])
+        elif not (allow_partial and matching_recovery):
+            raise CaptureError(
+                "PARTIAL_CAPTURE_DETECTED",
+                "attempt directory exists without preserved request metadata",
+                str(request_path),
+            )
         record_path = directory / "attempt.json"
         if not record_path.is_file():
-            if allow_partial and recovery_records:
+            if allow_partial and matching_recovery:
                 attempts.append(
                     {
                         "schema_version": ATTEMPT_SCHEMA,
-                        "execution_id": _load_documents(run_dir)[0]["execution_id"],
+                        "execution_id": run["execution_id"],
                         "attempt_number": number,
                         "retry_reason": None,
-                        "request_blob": _load_documents(run_dir)[0]["authorized_request_blob"],
+                        "request_blob": run["authorized_request_blob"],
                         "response_blob": None,
                         "transport_status": "interrupted_uncommitted",
                         "complete": False,
@@ -208,9 +303,76 @@ def _read_attempts(run_dir: Path, *, allow_partial: bool) -> list[dict[str, Any]
                 raise CaptureError("PARTIAL_RESPONSE_AS_COMPLETE", "partial response was marked complete")
         elif attempt["complete"] is not False:
             raise CaptureError("INVALID_ATTEMPT_COMPLETION", "attempt complete flag must be boolean")
+        if attempt["execution_id"] != run["execution_id"]:
+            raise CaptureError("ATTEMPT_EXECUTION_MISMATCH", "attempt execution ID changed")
         assert_secret_free(attempt["allowlisted_transport_metadata"])
         attempts.append(attempt)
     return attempts
+
+
+def _verify_attempt_events(attempts: list[dict[str, Any]], ledger) -> None:
+    request_events = [event for event in ledger.events if event["event_type"] == "request_preserved"]
+    response_events = [event for event in ledger.events if event["event_type"] == "response_preserved"]
+    captured_events = [
+        event for event in ledger.events if event["to_state"] == "captured" and event["transition"]
+    ]
+    for attempt in attempts:
+        number = attempt["attempt_number"]
+        matching_requests = [event for event in request_events if event["payload"].get("attempt_number") == number]
+        if attempt["transport_status"] != "interrupted_uncommitted":
+            expected_request = {
+                "attempt_number": number,
+                "request_sha256": attempt["request_blob"]["sha256"],
+            }
+            if len(matching_requests) != 1 or matching_requests[0]["payload"] != expected_request:
+                raise CaptureError("REQUEST_EVENT_MISMATCH", "request preservation event is missing or inconsistent")
+        if attempt["complete"]:
+            expected_response = {
+                "attempt_number": number,
+                "response_sha256": attempt["response_blob"]["sha256"],
+            }
+            matching_responses = [
+                event for event in response_events if event["payload"].get("attempt_number") == number
+            ]
+            if len(matching_responses) != 1 or matching_responses[0]["payload"] != expected_response:
+                raise CaptureError("RESPONSE_EVENT_MISMATCH", "response preservation event is missing or inconsistent")
+            matching_capture = [event for event in captured_events if event["payload"].get("attempt_number") == number]
+            if len(matching_capture) != 1 or matching_capture[0]["payload"] != {
+                "attempt_number": number,
+                "complete": True,
+            }:
+                raise CaptureError("CAPTURE_EVENT_MISMATCH", "capture completion event is missing or inconsistent")
+    if len(captured_events) > 1:
+        raise CaptureError("CAPTURE_EVENT_MISMATCH", "lifecycle contains multiple capture completions")
+
+
+def _write_or_match_record(path: Path, value: dict[str, Any]) -> None:
+    if path.is_file():
+        if read_record(path) != value:
+            raise CaptureError("INITIALIZATION_CONTENT_CONFLICT", "staged initialization content differs", str(path))
+        return
+    write_record(path, value)
+
+
+def _ensure_initial_transition(
+    run_dir: Path,
+    to_state: str,
+    *,
+    observed_at: str,
+    payload: dict[str, Any],
+) -> None:
+    order = ["draft", "validated", "locked", "execution_authorized"]
+    ledger = verify_ledger(run_dir)
+    current_index = order.index(ledger.state) if ledger.state in order else -1
+    target_index = order.index(to_state)
+    if current_index >= target_index:
+        events = [event for event in ledger.events if event["to_state"] == to_state and event["transition"]]
+        if len(events) != 1 or events[0]["payload"] != payload:
+            raise CaptureError("INITIALIZATION_EVENT_CONFLICT", "staged initialization event differs")
+        return
+    if current_index != target_index - 1:
+        raise CaptureError("INCOMPLETE_INITIALIZATION", "staged initialization has a lifecycle gap")
+    append_transition(run_dir, to_state, observed_at=observed_at, payload=payload)
 
 
 def initialize_run(
@@ -235,7 +397,7 @@ def initialize_run(
         adapter=adapter,
     )
     execution_id = authorization["execution_id"]
-    run_dir = reserve_run(output_root, campaign["campaign_id"], execution_id)
+    run_dir, final_run_dir = prepare_run_staging(output_root, campaign["campaign_id"], execution_id)
     request_blob = write_blob(
         run_dir,
         request_bytes,
@@ -261,19 +423,19 @@ def initialize_run(
         "ratification_status": "unratified",
         "authority_boundary": "execution_only_declared_artifact",
     }
-    write_record(run_dir / "run.json", run)
-    write_record(run_dir / "preregistration.json", campaign)
-    write_record(run_dir / "benchmark-lock.json", lock)
-    write_record(run_dir / "execution-authorization.json", authorization)
-    append_transition(run_dir, "draft", observed_at=observed_at, payload={"campaign_id": campaign["campaign_id"]})
-    append_transition(run_dir, "validated", observed_at=observed_at, payload={"validation": "passed"})
-    append_transition(
+    _write_or_match_record(run_dir / "run.json", run)
+    _write_or_match_record(run_dir / "preregistration.json", campaign)
+    _write_or_match_record(run_dir / "benchmark-lock.json", lock)
+    _write_or_match_record(run_dir / "execution-authorization.json", authorization)
+    _ensure_initial_transition(run_dir, "draft", observed_at=observed_at, payload={"campaign_id": campaign["campaign_id"]})
+    _ensure_initial_transition(run_dir, "validated", observed_at=observed_at, payload={"validation": "passed"})
+    _ensure_initial_transition(
         run_dir,
         "locked",
         observed_at=observed_at,
         payload={"benchmark_lock_digest": lock["lock_digest"]},
     )
-    append_transition(
+    _ensure_initial_transition(
         run_dir,
         "execution_authorized",
         observed_at=observed_at,
@@ -283,7 +445,7 @@ def initialize_run(
             "ratification_status": "unratified",
         },
     )
-    return run_dir
+    return publish_staged_run(run_dir, final_run_dir)
 
 
 def _write_attempt(
@@ -344,6 +506,66 @@ def _retry_reason_for_current_state(run_dir: Path, attempt_number: int) -> str |
     raise CaptureError("MISSING_RETRY_AUTHORIZATION", "successor attempt has no recovery retry reason")
 
 
+def _reconcile_stored_attempt(
+    run_dir: Path,
+    attempt: dict[str, Any],
+    *,
+    observed_at: str,
+) -> dict[str, Any] | None:
+    """Commit a fully published attempt record without redispatching transport."""
+    ledger = verify_ledger(run_dir)
+    number = attempt["attempt_number"]
+    terminal_events = [
+        event
+        for event in ledger.events
+        if event["transition"]
+        and event["to_state"] in {"captured", "interrupted"}
+        and event["payload"].get("attempt_number") == number
+    ]
+    if terminal_events:
+        return None
+    if attempt["complete"]:
+        response_events = [
+            event
+            for event in ledger.events
+            if event["event_type"] == "response_preserved"
+            and event["payload"].get("attempt_number") == number
+        ]
+        expected_response = {
+            "attempt_number": number,
+            "response_sha256": attempt["response_blob"]["sha256"],
+        }
+        if not response_events:
+            append_occurrence(
+                run_dir,
+                "response_preserved",
+                observed_at=observed_at,
+                payload=expected_response,
+            )
+        elif len(response_events) != 1 or response_events[0]["payload"] != expected_response:
+            raise CaptureError("RESPONSE_EVENT_MISMATCH", "stored response event is inconsistent")
+        append_transition(
+            run_dir,
+            "captured",
+            observed_at=observed_at,
+            payload={"attempt_number": number, "complete": True},
+        )
+    else:
+        append_occurrence(
+            run_dir,
+            "attempt_interrupted",
+            observed_at=observed_at,
+            payload={"attempt_number": number, "transport_status": attempt["transport_status"]},
+        )
+        append_transition(
+            run_dir,
+            "interrupted",
+            observed_at=observed_at,
+            payload={"attempt_number": number, "execution_outcome": "unknown"},
+        )
+    return attempt
+
+
 def capture_attempt(
     run_dir: Path,
     *,
@@ -375,6 +597,22 @@ def capture_attempt(
     elif ledger.state != "capturing":
         raise CaptureError("CAPTURE_NOT_AUTHORIZED_STATE", "run is not ready to capture")
     existing = attempt_directories(run_dir)
+    if existing:
+        last_record = existing[-1] / "attempt.json"
+        if not last_record.is_file():
+            raise CaptureError(
+                "PARTIAL_CAPTURE_DETECTED",
+                "attempt directory has no terminal record; explicit recovery is required",
+                str(last_record),
+            )
+        stored_attempts = _read_attempts(run_dir, allow_partial=False)
+        reconciled = _reconcile_stored_attempt(
+            run_dir,
+            stored_attempts[-1],
+            observed_at=observed_at,
+        )
+        if reconciled is not None:
+            return reconciled
     expected_number = len(existing) + 1
     selected = expected_number if attempt_number is None else attempt_number
     if selected != expected_number:
@@ -586,6 +824,8 @@ def recover_run(
         raise CaptureError("INVALID_RECOVERY_ACTION", "unknown recovery action")
     if not isinstance(reason, str) or not reason.strip() or len(reason) > 200:
         raise CaptureError("INVALID_RECOVERY_REASON", "recovery reason is required")
+    assert_secret_free(reason, "$.reason")
+    assert_no_governance_claims(reason, "$.reason")
     validate_timestamp(observed_at, "$.observed_at")
     run = _load_documents(run_dir)[0]
     ledger = verify_ledger(run_dir)
@@ -602,6 +842,7 @@ def recover_run(
         "reason": reason,
         "observed_at": observed_at,
         "state_before": ledger.state,
+        "attempt_number": len(attempt_directories(run_dir)) or None,
         "partial_blob": None,
         "execution_outcome": "unknown",
         "provenance_class": "operator_declared",
@@ -609,7 +850,7 @@ def recover_run(
     if partial_bytes is not None:
         record["partial_blob"] = write_blob(run_dir, partial_bytes, disposition="partial")
     existing = sorted((run_dir / "recovery").glob("*.json"))
-    record["recovery_digest"] = sha256_value(record)
+    record["recovery_digest"] = _recovery_digest(record)
     write_record(run_dir / "recovery" / f"{len(existing):06d}.json", record)
     if ledger.state == "capturing":
         append_occurrence(
@@ -626,6 +867,16 @@ def recover_run(
         )
     elif ledger.state != "interrupted":
         raise CaptureError("RECOVERY_NOT_PERMITTED", "run is not capturing or interrupted")
+    append_occurrence(
+        run_dir,
+        "recovery_declared",
+        observed_at=observed_at,
+        payload={
+            "action": action,
+            "attempt_number": record["attempt_number"],
+            "recovery_digest": record["recovery_digest"],
+        },
+    )
     if record["partial_blob"] is not None:
         append_occurrence(
             run_dir,
@@ -638,12 +889,6 @@ def recover_run(
             raise CaptureError("RETRY_POLICY_MISMATCH", "recovery reason is not preregistered")
         if len(attempt_directories(run_dir)) >= run["retry_policy"]["max_attempts"]:
             raise CaptureError("RETRY_BUDGET_EXHAUSTED", "no successor attempt is authorized")
-        append_occurrence(
-            run_dir,
-            "recovery_declared",
-            observed_at=observed_at,
-            payload={"action": "resume", "retry_reason": reason},
-        )
         append_transition(
             run_dir,
             "capturing",
@@ -655,7 +900,10 @@ def recover_run(
             run_dir,
             "aborted",
             observed_at=observed_at,
-            payload={"reason": reason, "execution_outcome": "unknown"},
+            payload={
+                "recovery_digest": record["recovery_digest"],
+                "execution_outcome": "unknown",
+            },
         )
     return record
 
@@ -688,6 +936,93 @@ def _capture_content(run: dict[str, Any], attempts: list[dict[str, Any]], state:
     }
 
 
+def _raw_evidence_hashes(run_dir: Path, run: dict[str, Any], attempts: list[dict[str, Any]]) -> list[str]:
+    hashes = {run["authorized_request_blob"]["sha256"]}
+    for attempt in attempts:
+        hashes.add(attempt["request_blob"]["sha256"])
+        if isinstance(attempt["response_blob"], dict):
+            hashes.add(attempt["response_blob"]["sha256"])
+    for record in _read_recovery_records(run_dir):
+        if isinstance(record["partial_blob"], dict):
+            hashes.add(record["partial_blob"]["sha256"])
+    return sorted(hashes)
+
+
+def _capture_started_at(ledger) -> str | None:
+    events = [event for event in ledger.events if event["event_type"] == "capture_started"]
+    return events[0]["observed_at"] if events else None
+
+
+def _validate_capture_manifest(
+    run_dir: Path,
+    *,
+    run: dict[str, Any],
+    attempts: list[dict[str, Any]],
+    ledger,
+    require_seal_event: bool,
+) -> dict[str, Any]:
+    manifest = read_record(run_dir / "capture-manifest.json")
+    require_exact_fields(manifest, MANIFEST_FIELDS)
+    if manifest["schema_version"] != CAPTURE_MANIFEST_SCHEMA:
+        raise CaptureError("UNSUPPORTED_CAPTURE_MANIFEST", "unsupported capture manifest schema")
+    if manifest["manifest_sha256"] != _manifest_digest(manifest):
+        raise CaptureError("CAPTURE_MANIFEST_DIGEST_MISMATCH", "capture manifest was modified")
+    bindings = {
+        "campaign_id": run["campaign_id"],
+        "execution_id": run["execution_id"],
+        "benchmark_lock_digest": run["benchmark_lock_digest"],
+        "benchmark_commit": run["benchmark_commit"],
+        "verifier_commit": run["verifier_commit"],
+        "release_identifier": run["release_identifier"],
+        "authorization_digest": run["authorization_digest"],
+        "adapter": run["adapter"],
+        "prompt_reference": run["prompt_reference"],
+        "case_reference": run["case_reference"],
+        "attempts": [_attempt_summary(item) for item in attempts],
+        "raw_evidence_hashes": _raw_evidence_hashes(run_dir, run, attempts),
+        "capture_started_at": _capture_started_at(ledger),
+        "warnings": sorted({warning for item in attempts for warning in item["warnings"]}),
+        "provenance_classes": [
+            "git_verified",
+            "capture_observed",
+            "provider_declared_unverified",
+            "adapter_declared",
+            "operator_declared",
+        ],
+        "ratification_status": "unratified",
+    }
+    for field, expected in bindings.items():
+        if manifest[field] != expected:
+            raise CaptureError("CAPTURE_MANIFEST_BINDING_MISMATCH", f"manifest {field} is inconsistent")
+    if manifest["capture_state"] not in {"captured", "aborted"}:
+        raise CaptureError("INVALID_CAPTURE_STATE", "manifest capture state is invalid")
+    validate_timestamp(manifest["capture_completed_at"], "$.capture_completed_at")
+    expected_content = sha256_value(_capture_content(run, attempts, manifest["capture_state"]))
+    if manifest["capture_content_sha256"] != expected_content:
+        raise CaptureError("CAPTURE_CONTENT_DIGEST_MISMATCH", "capture content identity changed")
+    seal_events = [event for event in ledger.events if event["to_state"] == "sealed" and event["transition"]]
+    if require_seal_event:
+        if len(seal_events) != 1:
+            raise CaptureError("CAPTURE_SEAL_MISMATCH", "lifecycle does not contain one capture seal")
+        event = seal_events[0]
+        if event["from_state"] != manifest["capture_state"]:
+            raise CaptureError("CAPTURE_STATE_MISMATCH", "seal transition contradicts manifest state")
+        if event["payload"] != {
+            "manifest_sha256": manifest["manifest_sha256"],
+            "capture_content_sha256": manifest["capture_content_sha256"],
+        }:
+            raise CaptureError("CAPTURE_SEAL_MISMATCH", "seal event does not bind the capture manifest")
+        expected_preseal_root = event["previous_event_sha256"]
+    else:
+        if seal_events:
+            raise CaptureError("CAPTURE_SEAL_MISMATCH", "unexpected seal event during reconciliation")
+        expected_preseal_root = ledger.root_sha256
+    if manifest["ledger_root_before_seal"] != expected_preseal_root:
+        raise CaptureError("CAPTURE_LEDGER_ROOT_MISMATCH", "manifest binds the wrong pre-seal ledger root")
+    assert_secret_free(manifest)
+    return manifest
+
+
 def seal_run(run_dir: Path, *, repo_root: Path, observed_at: str) -> dict[str, Any]:
     """Seal captured or explicitly aborted evidence without judging it."""
     validate_timestamp(observed_at, "$.observed_at")
@@ -702,24 +1037,41 @@ def seal_run(run_dir: Path, *, repo_root: Path, observed_at: str) -> dict[str, A
         adapter=_StoredAdapter(run["adapter"]),
     )
     ledger = verify_ledger(run_dir)
+    target = run_dir / "capture-manifest.json"
+    if ledger.state in {"sealed", "judged", "review_required"}:
+        verify_run(run_dir, repo_root=repo_root)
+        return read_record(target)
+    if target.is_file() and ledger.state in {"captured", "aborted"}:
+        attempts = _read_attempts(run_dir, allow_partial=ledger.state == "aborted")
+        _verify_recovery_events(_read_recovery_records(run_dir), ledger)
+        _verify_attempt_events(attempts, ledger)
+        manifest = _validate_capture_manifest(
+            run_dir,
+            run=run,
+            attempts=attempts,
+            ledger=ledger,
+            require_seal_event=False,
+        )
+        append_transition(
+            run_dir,
+            "sealed",
+            observed_at=manifest["capture_completed_at"],
+            payload={
+                "manifest_sha256": manifest["manifest_sha256"],
+                "capture_content_sha256": manifest["capture_content_sha256"],
+            },
+        )
+        return manifest
     if ledger.state not in {"captured", "aborted"}:
         raise CaptureError("CAPTURE_NOT_SEALABLE", "only captured or explicitly aborted evidence can seal")
     attempts = _read_attempts(run_dir, allow_partial=ledger.state == "aborted")
+    _verify_recovery_events(_read_recovery_records(run_dir), ledger)
+    _verify_attempt_events(attempts, ledger)
     if ledger.state == "captured" and not any(item["complete"] for item in attempts):
         raise CaptureError("FALSE_CAPTURE_COMPLETION", "captured state has no complete attempt")
     warnings = sorted({warning for item in attempts for warning in item["warnings"]})
     summaries = [_attempt_summary(item) for item in attempts]
-    raw_hashes = sorted(
-        {
-            item["request_blob"]["sha256"]
-            for item in attempts
-        }
-        | {
-            item["response_blob"]["sha256"]
-            for item in attempts
-            if isinstance(item["response_blob"], dict)
-        }
-    )
+    raw_hashes = _raw_evidence_hashes(run_dir, run, attempts)
     content_hash = sha256_value(_capture_content(run, attempts, ledger.state))
     manifest: dict[str, Any] = {
         "schema_version": CAPTURE_MANIFEST_SCHEMA,
@@ -737,7 +1089,7 @@ def seal_run(run_dir: Path, *, repo_root: Path, observed_at: str) -> dict[str, A
         "raw_evidence_hashes": raw_hashes,
         "capture_state": ledger.state,
         "ledger_root_before_seal": ledger.root_sha256,
-        "capture_started_at": ledger.events[4]["observed_at"] if len(ledger.events) > 4 else None,
+        "capture_started_at": _capture_started_at(ledger),
         "capture_completed_at": observed_at,
         "warnings": warnings,
         "provenance_classes": [
@@ -752,7 +1104,7 @@ def seal_run(run_dir: Path, *, repo_root: Path, observed_at: str) -> dict[str, A
     }
     manifest["manifest_sha256"] = _manifest_digest(manifest)
     assert_secret_free(manifest)
-    write_record(run_dir / "capture-manifest.json", manifest)
+    write_record(target, manifest)
     append_transition(
         run_dir,
         "sealed",
@@ -775,8 +1127,13 @@ class _StoredAdapter:
         raise RuntimeError("stored adapter identity cannot transport")
 
 
-def verify_run(run_dir: Path, *, repo_root: Path) -> dict[str, Any]:
-    """Verify the complete stored capture without provider or network access."""
+def _verify_run_core(
+    run_dir: Path,
+    *,
+    repo_root: Path,
+    allow_uncommitted: str | None = None,
+) -> dict[str, Any]:
+    """Verify capture and lifecycle state without recursively verifying successors."""
     run, campaign, lock, authorization = _load_documents(run_dir)
     bindings = verify_governed_context(campaign, lock, repo_root)
     expected_run = {
@@ -804,32 +1161,51 @@ def verify_run(run_dir: Path, *, repo_root: Path) -> dict[str, Any]:
     require_bound_reference(lock, run["prompt_reference"], "$.prompt_reference")
     require_bound_reference(lock, run["case_reference"], "$.case_reference")
     ledger = verify_ledger(run_dir)
-    attempts = _read_attempts(run_dir, allow_partial=ledger.state in {"aborted", "interrupted", "capturing"})
     manifest_path = run_dir / "capture-manifest.json"
+    allow_partial_attempts = ledger.state in {"aborted", "interrupted", "capturing"}
+    if manifest_path.is_file() and ledger.state in {"sealed", "judged", "review_required"}:
+        allow_partial_attempts = read_record(manifest_path).get("capture_state") == "aborted"
+    attempts = _read_attempts(run_dir, allow_partial=allow_partial_attempts)
+    _verify_recovery_events(_read_recovery_records(run_dir), ledger)
+    _verify_attempt_events(attempts, ledger)
+    if ledger.state in {None, "draft", "validated", "locked"}:
+        raise CaptureError("INCOMPLETE_INITIALIZATION", "run initialization has no execution authorization state")
+    if ledger.state == "capturing":
+        raise CaptureError("UNRESOLVED_CAPTURE", "capturing state has no terminal capture event")
+    verification_status = "recovery_required" if ledger.state == "interrupted" else "verified"
+    manifest_path = run_dir / "capture-manifest.json"
+    judgment_path = run_dir / "judgment.json"
+    bundle_path = run_dir / "review-bundle.json"
     manifest_hash = None
     warnings = sorted({warning for item in attempts for warning in item["warnings"]})
+    if ledger.state == "captured" and not any(item["complete"] for item in attempts):
+        raise CaptureError("FALSE_CAPTURE_COMPLETION", "captured state has no complete attempt")
     if manifest_path.is_file():
-        manifest = read_record(manifest_path)
-        require_exact_fields(manifest, MANIFEST_FIELDS)
-        if manifest["schema_version"] != CAPTURE_MANIFEST_SCHEMA:
-            raise CaptureError("UNSUPPORTED_CAPTURE_MANIFEST", "unsupported capture manifest schema")
-        if manifest["manifest_sha256"] != _manifest_digest(manifest):
-            raise CaptureError("CAPTURE_MANIFEST_DIGEST_MISMATCH", "capture manifest was modified")
+        committed = ledger.state in {"sealed", "judged", "review_required"}
+        if not committed and allow_uncommitted != "manifest":
+            raise CaptureError("UNCOMMITTED_CAPTURE_MANIFEST", "capture manifest has no seal transition")
+        manifest = _validate_capture_manifest(
+            run_dir,
+            run=run,
+            attempts=attempts,
+            ledger=ledger,
+            require_seal_event=committed,
+        )
         manifest_hash = manifest["manifest_sha256"]
-        seal_events = [event for event in ledger.events if event["to_state"] == "sealed" and event["transition"]]
-        if len(seal_events) != 1 or seal_events[0]["payload"].get("manifest_sha256") != manifest_hash:
-            raise CaptureError("CAPTURE_SEAL_MISMATCH", "ledger does not bind the capture manifest")
-        if manifest["ledger_root_before_seal"] != seal_events[0]["previous_event_sha256"]:
-            raise CaptureError("CAPTURE_LEDGER_ROOT_MISMATCH", "manifest binds the wrong pre-seal ledger root")
-        expected_content = sha256_value(_capture_content(run, attempts, manifest["capture_state"]))
-        if manifest["capture_content_sha256"] != expected_content:
-            raise CaptureError("CAPTURE_CONTENT_DIGEST_MISMATCH", "capture content identity changed")
         warnings = sorted(set(warnings) | set(manifest["warnings"]))
     elif ledger.state in {"sealed", "judged", "review_required"}:
         raise CaptureError("MISSING_CAPTURE_MANIFEST", "sealed lifecycle has no capture manifest")
+    if judgment_path.is_file() and ledger.state == "sealed" and allow_uncommitted != "judgment":
+        raise CaptureError("UNCOMMITTED_JUDGMENT", "judgment artifact has no judged transition")
+    if ledger.state == "judged" and not judgment_path.is_file():
+        raise CaptureError("MISSING_JUDGMENT", "judged lifecycle has no judgment artifact")
+    if bundle_path.is_file() and ledger.state in {"sealed", "judged"} and allow_uncommitted != "bundle":
+        raise CaptureError("UNCOMMITTED_REVIEW_BUNDLE", "review bundle has no review transition")
+    if ledger.state == "review_required" and not bundle_path.is_file():
+        raise CaptureError("MISSING_REVIEW_BUNDLE", "review lifecycle has no review bundle")
     report: dict[str, Any] = {
         "schema_version": INTEGRITY_REPORT_SCHEMA,
-        "status": "verified",
+        "status": verification_status,
         "campaign_id": run["campaign_id"],
         "execution_id": run["execution_id"],
         "lifecycle_state": ledger.state,
@@ -844,4 +1220,23 @@ def verify_run(run_dir: Path, *, repo_root: Path) -> dict[str, Any]:
         "ratification_status": "unratified",
     }
     report["integrity_report_sha256"] = sha256_value(report)
+    return report
+
+
+def verify_run(run_dir: Path, *, repo_root: Path) -> dict[str, Any]:
+    """Verify the complete stored capture without provider or network access."""
+    report = _verify_run_core(run_dir, repo_root=repo_root)
+    if report["lifecycle_state"] == "judged":
+        from .judgment import _validate_judgment_artifact
+
+        _validate_judgment_artifact(run_dir, repo_root=repo_root, integrity=report, require_event=True)
+    elif report["lifecycle_state"] == "review_required":
+        from .review import _validate_review_bundle_artifact
+
+        _validate_review_bundle_artifact(
+            run_dir,
+            repo_root=repo_root,
+            integrity=report,
+            require_event=True,
+        )
     return report
