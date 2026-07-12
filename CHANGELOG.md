@@ -17,8 +17,9 @@ All notable changes to SFA-Bench will be documented in this file.
   and non-mutating release verification commands.
 - Benchmark-lock bindings for declared system prompts and user/case-set
   references, including deterministic directory digests.
-- Frozen LF checkout semantics so Windows Git cannot rewrite hash-bound research
-  evidence or campaign inputs.
+- Frozen LF checkout semantics so normal Windows Git checkouts that honor
+  repository attributes do not rewrite hash-bound research evidence or campaign
+  inputs.
 
 ### Fixed
 

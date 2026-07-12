@@ -20,6 +20,6 @@
   "manifest_version": "fz-v0.8.0",
   "new_zone_hash": "88025b343ddc27505fa3965cff8fc62b65f4b85823274dd9ca875226e159cfb8",
   "prev_zone_hash": "a4c3779bdf3e89bb1010730d15d03c654563df10371386b6353bc58245124ccc",
-  "reason": "The human-specified v2.0.0-alpha.1 release tranche requires prerelease-aware version agreement, direct candidate/campaign release checks, append-only preservation of the provisional Fable evidence plus its corrected lineage successor, and LF checkout enforcement so Git cannot rewrite hash-bound bytes on Windows. The verifier, taxonomy, occurrence history, and historical V1/V1.1 records are unchanged.",
+  "reason": "The human-specified v2.0.0-alpha.1 release tranche requires prerelease-aware version agreement, direct candidate/campaign release checks, append-only preservation of the provisional Fable evidence plus its corrected lineage successor, and LF checkout enforcement so normal Windows Git checkouts that honor repository attributes retain hash-bound bytes. The verifier, taxonomy, occurrence history, and historical V1/V1.1 records are unchanged.",
   "schema": "sfa.autolab.frozen_zone.amendment.v0"
 }

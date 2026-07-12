@@ -250,7 +250,8 @@ reasoning. A decision remains subject to rejection by tests or independent revie
   using LF checkout reproduced the candidate and campaign seals.
 - Affected trust boundary: Git object bytes to cross-platform checked-out
   evidence and benchmark inputs.
-- Compatibility impact: detected text files use LF in every checkout; binary
-  files remain subject to Git's `text=auto` classification.
+- Compatibility impact: normal checkouts that honor repository attributes use
+  LF for detected text files; binary files remain subject to Git's `text=auto`
+  classification.
 - Rollback or rejection condition: a normal Windows clone changes a protected
   evidence digest or fails the offline integrity checks.
