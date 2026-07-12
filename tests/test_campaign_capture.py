@@ -634,6 +634,71 @@ class CaptureFlowTests(CaptureUnitTest):
         self.assertIn(record["partial_blob"]["sha256"], manifest["raw_evidence_hashes"])
         self.assertIn(sha256_bytes(REQUEST), manifest["raw_evidence_hashes"])
 
+    def test_recovery_record_publication_crash_reconciles_and_deletion_is_detected(self):
+        later = "2026-07-12T20:05:00+02:00"
+        run, _campaign, _lock, _authorization, adapter, bindings = self.initialize(
+            execution_id="recovery-record-reconcile",
+            mode="timeout",
+        )
+        with self.trusted(bindings):
+            capture_attempt(run, request_bytes=REQUEST, adapter=adapter, repo_root=ROOT, observed_at=NOW)
+        with mock.patch(
+            "sfa_bench.campaigns.capture.run._reconcile_recovery_record",
+            side_effect=RuntimeError("simulated crash after recovery record publication"),
+        ), self.assertRaises(RuntimeError):
+            recover_run(run, action="abort", reason="operator abort", observed_at=NOW)
+        recovery_path = run / "recovery/000000.json"
+        original_record = recovery_path.read_bytes()
+        self.assertEqual(verify_ledger(run).state, "interrupted")
+
+        record = recover_run(run, action="abort", reason="operator abort", observed_at=later)
+        self.assertEqual(recovery_path.read_bytes(), original_record)
+        self.assertEqual(record["observed_at"], NOW)
+        self.assertEqual(len(list((run / "recovery").glob("*.json"))), 1)
+        self.assertEqual(verify_ledger(run).state, "aborted")
+        with self.trusted(bindings):
+            seal_run(run, repo_root=ROOT, observed_at=later)
+            verify_run(run, repo_root=ROOT)
+
+        recovery_path.unlink()
+        with self.trusted(bindings), self.assertRaises(CaptureError) as missing:
+            verify_run(run, repo_root=ROOT)
+        self.assertEqual(missing.exception.code, "MISSING_RECOVERY_RECORD")
+
+    def test_orphaned_response_blob_is_recovered_as_partial_evidence(self):
+        response_bytes = b'{"claimed_state_keys":["customer_id"],"used_off_limits_keys":[]}'
+        run, _campaign, _lock, _authorization, adapter, bindings = self.initialize(
+            execution_id="orphan-response"
+        )
+        with self.trusted(bindings), mock.patch(
+            "sfa_bench.campaigns.capture.run._write_attempt",
+            side_effect=RuntimeError("simulated crash after response blob publication"),
+        ), self.assertRaises(RuntimeError):
+            capture_attempt(run, request_bytes=REQUEST, adapter=adapter, repo_root=ROOT, observed_at=NOW)
+        response_hash = sha256_bytes(response_bytes)
+        self.assertTrue(
+            (run / "private" / "raw" / "blobs" / "sha256" / f"{response_hash}.bin").is_file()
+        )
+        with self.trusted(bindings), self.assertRaises(CaptureError):
+            verify_run(run, repo_root=ROOT)
+
+        record = recover_run(run, action="abort", reason="operator abort", observed_at=NOW)
+        self.assertEqual(record["partial_blob"]["sha256"], response_hash)
+        self.assertEqual(read_blob(run, record["partial_blob"]), response_bytes)
+        with self.trusted(bindings):
+            manifest = seal_run(run, repo_root=ROOT, observed_at=NOW)
+            verify_run(run, repo_root=ROOT)
+        self.assertIn(response_hash, manifest["raw_evidence_hashes"])
+
+    def test_unbound_raw_blob_fails_closed(self):
+        run, _attempt, bindings = self.full_run(execution_id="unbound-blob")
+        unbound = b"unbound-observed-bytes"
+        path = run / "private" / "raw" / "blobs" / "sha256" / f"{sha256_bytes(unbound)}.bin"
+        path.write_bytes(unbound)
+        with self.trusted(bindings), self.assertRaises(CaptureError) as caught:
+            seal_run(run, repo_root=ROOT, observed_at=NOW)
+        self.assertEqual(caught.exception.code, "UNBOUND_RAW_BLOB")
+
     def test_resumed_success_detects_reused_provider_identifier(self):
         class SequenceAdapter:
             adapter_id = SyntheticAdapter.adapter_id

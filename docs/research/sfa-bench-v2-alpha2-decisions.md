@@ -192,15 +192,19 @@ model identity, or hidden reasoning.
   mutable pending state; validate the immutable orphan and append its missing
   binding event.
 - Selected option: stage initialization before an atomic directory rename;
-  publish capture, judgment, and review artifacts exclusively; verify an
-  orphaned artifact against its predecessor state; and append exactly one
-  digest-binding transition without regenerating the artifact.
+  publish recovery, capture, judgment, and review artifacts exclusively; verify
+  an orphaned artifact against its predecessor state; inventory provisional raw
+  response bytes; and append exactly one digest-binding transition without
+  regenerating the artifact.
 - Evidence: fault-injection tests stop after each artifact publication and prove
-  byte-identical recovery, one transition, and unchanged unratified status.
+  byte-identical recovery, bidirectional record/event binding, exact raw-blob
+  inventory, one transition, and unchanged unratified status.
 - Affected trust boundary: durable storage to lifecycle truth.
 - Compatibility impact: additive alpha.2 behavior only.
 - Rollback or rejection condition: a retry rewrites prior bytes, invents a
-  terminal state without its artifact, or duplicates the binding transition.
+  terminal state without its artifact, duplicates the binding transition, drops
+  a referenced recovery record, or silently omits an observed raw blob.
+
 ## Claims boundary
 
 If supported by final tests, alpha.2 may claim deterministic synthetic lifecycle,

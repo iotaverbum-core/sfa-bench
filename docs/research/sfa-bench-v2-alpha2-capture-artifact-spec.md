@@ -51,6 +51,12 @@ directories are created exclusively. Concurrent next-event writers target the
 same sequence filename; exactly one can publish and the other fails with a
 collision.
 
+Recovery records are reconciled idempotently if their lifecycle append is
+interrupted. Verification requires an exact two-way match between stored
+recovery digests and ledger references. The raw blob inventory must exactly
+match governed descriptors; an unbound provisional response is recovered as
+partial evidence before abort/seal and is never inferred to be complete.
+
 Each lifecycle event seals its canonical content, sequence, prior event hash,
 execution ID, transition, timestamp, and payload. Verification rejects gaps,
 extra files, malformed/noncanonical JSON, chain mismatch, and illegal state

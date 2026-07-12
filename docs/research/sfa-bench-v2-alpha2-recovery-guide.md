@@ -35,9 +35,12 @@ py -3 campaign_capture_cli.py recover --run <run-dir> --action resume --reason "
 py -3 campaign_capture_cli.py recover --run <run-dir> --action abort --reason "execution outcome unknown" --now 2026-07-12T20:01:00+02:00
 ```
 
-If sealing, judgment, or review packaging stops after publishing its immutable
-artifact but before the next lifecycle event, rerun the same operation. It verifies
-and binds the existing bytes; it does not regenerate or overwrite them.
+If recovery, sealing, judgment, or review packaging stops after publishing an
+immutable artifact but before the next lifecycle event, rerun the same operation
+with the same action/reason. It verifies and binds the existing bytes; it does not
+regenerate or overwrite them. A provisional raw response left before attempt
+publication is inventory-checked and bound as partial recovery evidence; it is
+never promoted to completed capture.
 
 The software never resends automatically. If a request may have reached a
 provider but no terminal response event exists, the recorded outcome remains

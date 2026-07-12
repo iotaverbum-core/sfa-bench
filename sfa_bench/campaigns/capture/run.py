@@ -18,6 +18,7 @@ from .canonical import (
     assert_secret_free,
     bytes_may_contain_secret,
     canonical_bytes,
+    ensure_no_reparse_ancestors,
     require_exact_fields,
     sha256_bytes,
     sha256_value,
@@ -196,6 +197,14 @@ def _read_recovery_records(run_dir: Path) -> list[dict[str, Any]]:
             raise CaptureError("RECOVERY_DIGEST_MISMATCH", "recovery record was modified")
         if record["action"] not in {"record_interruption", "resume", "abort"}:
             raise CaptureError("INVALID_RECOVERY_ACTION", "stored recovery action is invalid")
+        if record["state_before"] not in {"capturing", "interrupted"}:
+            raise CaptureError("RECOVERY_STATE_MISMATCH", "stored recovery predecessor state is invalid")
+        if record["execution_outcome"] != "unknown" or record["provenance_class"] != "operator_declared":
+            raise CaptureError("RECOVERY_PROVENANCE_MISMATCH", "stored recovery provenance is invalid")
+        if not isinstance(record["reason"], str) or not record["reason"].strip() or len(record["reason"]) > 200:
+            raise CaptureError("INVALID_RECOVERY_REASON", "stored recovery reason is invalid")
+        assert_secret_free(record["reason"], "$.reason")
+        assert_no_governance_claims(record["reason"], "$.reason")
         validate_timestamp(record["observed_at"], "$.observed_at")
         attempt_number = record["attempt_number"]
         if attempt_number is not None and (
@@ -204,20 +213,168 @@ def _read_recovery_records(run_dir: Path) -> list[dict[str, Any]]:
             raise CaptureError("INVALID_ATTEMPT_NUMBER", "stored recovery attempt number is invalid")
         if record["partial_blob"] is not None:
             read_blob(run_dir, record["partial_blob"])
+            if record["partial_blob"]["capture_disposition"] != "partial":
+                raise CaptureError("INVALID_BLOB_DISPOSITION", "recovery evidence must be marked partial")
         records.append(record)
     return records
 
 
-def _verify_recovery_events(records: list[dict[str, Any]], ledger) -> None:
-    referenced = {
+def _recovery_event_digests(ledger) -> set[str]:
+    return {
         value
         for event in ledger.events
         for key, value in event["payload"].items()
         if key == "recovery_digest" and isinstance(value, str)
     }
+
+
+def _recovery_record_complete(record: dict[str, Any], ledger) -> bool:
+    digest = record["recovery_digest"]
+    declaration = {
+        "action": record["action"],
+        "attempt_number": record["attempt_number"],
+        "recovery_digest": digest,
+    }
+    declared = [
+        event
+        for event in ledger.events
+        if event["event_type"] == "recovery_declared" and event["payload"] == declaration
+    ]
+    if len(declared) > 1:
+        raise CaptureError("RECOVERY_EVENT_MISMATCH", "recovery declaration is duplicated")
+    if record["state_before"] == "capturing":
+        occurrence_payload = {"recovery_digest": digest}
+        occurrences = [
+            event
+            for event in ledger.events
+            if event["event_type"] == "attempt_interrupted" and event["payload"] == occurrence_payload
+        ]
+        if len(occurrences) > 1:
+            raise CaptureError("RECOVERY_EVENT_MISMATCH", "recovery interruption occurrence is duplicated")
+        if not occurrences:
+            return False
+        transition_payload = {"execution_outcome": "unknown", "recovery_digest": digest}
+        interrupted = [
+            event
+            for event in ledger.events
+            if event["event_type"] == "capture_interrupted" and event["payload"] == transition_payload
+        ]
+        if len(interrupted) > 1:
+            raise CaptureError("RECOVERY_EVENT_MISMATCH", "recovery interruption transition is duplicated")
+        if not interrupted:
+            return False
+    if record["partial_blob"] is not None:
+        partial_payload = {
+            "partial_sha256": record["partial_blob"]["sha256"],
+            "recovery_digest": digest,
+        }
+        partial = [
+            event
+            for event in ledger.events
+            if event["event_type"] == "recovery_evidence_preserved" and event["payload"] == partial_payload
+        ]
+        if len(partial) > 1:
+            raise CaptureError("RECOVERY_EVENT_MISMATCH", "recovery evidence event is duplicated")
+        if not partial:
+            return False
+    if not declared:
+        return False
+    if record["action"] == "resume":
+        final_payload = {"retry_reason": record["reason"], "recovery_digest": digest}
+        final_events = [
+            event
+            for event in ledger.events
+            if event["event_type"] == "capture_resumed" and event["payload"] == final_payload
+        ]
+    elif record["action"] == "abort":
+        final_payload = {"execution_outcome": "unknown", "recovery_digest": digest}
+        final_events = [
+            event
+            for event in ledger.events
+            if event["event_type"] == "capture_aborted" and event["payload"] == final_payload
+        ]
+    else:
+        final_events = [True]
+    if len(final_events) > 1:
+        raise CaptureError("RECOVERY_EVENT_MISMATCH", "recovery terminal event is duplicated")
+    return bool(final_events)
+
+
+def _verify_recovery_events(records: list[dict[str, Any]], ledger) -> None:
+    referenced = _recovery_event_digests(ledger)
+    stored = {record["recovery_digest"] for record in records}
+    if referenced - stored:
+        raise CaptureError("MISSING_RECOVERY_RECORD", "lifecycle references a missing recovery record")
+    if stored - referenced:
+        raise CaptureError("UNBOUND_RECOVERY_RECORD", "recovery record is not bound by the lifecycle")
     for record in records:
-        if record["recovery_digest"] not in referenced:
-            raise CaptureError("UNBOUND_RECOVERY_RECORD", "recovery record is not bound by the lifecycle")
+        if not _recovery_record_complete(record, ledger):
+            raise CaptureError("INCOMPLETE_RECOVERY_RECORD", "recovery lifecycle binding is incomplete")
+
+
+def _raw_blob_inventory(run_dir: Path) -> dict[str, bytes]:
+    directory = run_dir / "private" / "raw" / "blobs" / "sha256"
+    ensure_no_reparse_ancestors(run_dir, directory)
+    inventory: dict[str, bytes] = {}
+    for path in sorted(directory.iterdir(), key=lambda item: item.name):
+        ensure_no_reparse_ancestors(run_dir, path)
+        if not path.is_file() or path.suffix != ".bin" or len(path.stem) != 64:
+            raise CaptureError("UNEXPECTED_RAW_BLOB_ENTRY", "raw blob store contains an unexpected entry", str(path))
+        try:
+            int(path.stem, 16)
+        except ValueError as exc:
+            raise CaptureError("UNEXPECTED_RAW_BLOB_ENTRY", "raw blob filename is not a digest", str(path)) from exc
+        data = path.read_bytes()
+        if sha256_bytes(data) != path.stem:
+            raise CaptureError("RAW_BLOB_DIGEST_MISMATCH", "raw blob filename does not match bytes", str(path))
+        inventory[path.stem] = data
+    return inventory
+
+
+def _loosely_referenced_raw_hashes(run_dir: Path, records: list[dict[str, Any]]) -> set[str]:
+    run = _load_documents(run_dir)[0]
+    referenced = {run["authorized_request_blob"]["sha256"]}
+    for directory in attempt_directories(run_dir):
+        request_path = directory / "request.json"
+        if request_path.is_file():
+            request = read_record(request_path)
+            descriptor = request.get("request_blob")
+            if isinstance(descriptor, dict) and isinstance(descriptor.get("sha256"), str):
+                referenced.add(descriptor["sha256"])
+        attempt_path = directory / "attempt.json"
+        if attempt_path.is_file():
+            attempt = read_record(attempt_path)
+            for field in ("request_blob", "response_blob"):
+                descriptor = attempt.get(field)
+                if isinstance(descriptor, dict) and isinstance(descriptor.get("sha256"), str):
+                    referenced.add(descriptor["sha256"])
+    for record in records:
+        descriptor = record["partial_blob"]
+        if isinstance(descriptor, dict):
+            referenced.add(descriptor["sha256"])
+    return referenced
+
+
+def _recover_orphan_blob(
+    run_dir: Path,
+    records: list[dict[str, Any]],
+    partial_bytes: bytes | None,
+) -> dict[str, Any] | None:
+    inventory = _raw_blob_inventory(run_dir)
+    referenced = _loosely_referenced_raw_hashes(run_dir, records)
+    descriptor = None
+    if partial_bytes is not None:
+        descriptor = write_blob(run_dir, partial_bytes, disposition="partial")
+        referenced.add(descriptor["sha256"])
+    orphans = sorted(set(inventory) - referenced)
+    if len(orphans) > 1:
+        raise CaptureError("AMBIGUOUS_ORPHAN_BLOBS", "multiple unbound raw blobs require manual review")
+    if orphans:
+        orphan = orphans[0]
+        if descriptor is not None and descriptor["sha256"] != orphan:
+            raise CaptureError("ORPHAN_BLOB_CONFLICT", "supplied partial bytes differ from preserved orphan bytes")
+        descriptor = write_blob(run_dir, inventory[orphan], disposition="partial")
+    return descriptor
 
 
 def _read_attempts(run_dir: Path, *, allow_partial: bool) -> list[dict[str, Any]]:
@@ -811,6 +968,122 @@ def capture_attempt(
     return attempt
 
 
+def _exact_recovery_event(ledger, event_type: str, payload: dict[str, Any]) -> bool:
+    matches = [
+        event
+        for event in ledger.events
+        if event["event_type"] == event_type and event["payload"] == payload
+    ]
+    if len(matches) > 1:
+        raise CaptureError("RECOVERY_EVENT_MISMATCH", f"{event_type} is duplicated")
+    return bool(matches)
+
+
+def _ensure_recovery_occurrence(
+    run_dir: Path,
+    event_type: str,
+    *,
+    observed_at: str,
+    payload: dict[str, Any],
+) -> None:
+    ledger = verify_ledger(run_dir)
+    if _exact_recovery_event(ledger, event_type, payload):
+        return
+    append_occurrence(run_dir, event_type, observed_at=observed_at, payload=payload)
+
+
+def _ensure_recovery_transition(
+    run_dir: Path,
+    event_type: str,
+    to_state: str,
+    *,
+    observed_at: str,
+    payload: dict[str, Any],
+) -> None:
+    ledger = verify_ledger(run_dir)
+    if _exact_recovery_event(ledger, event_type, payload):
+        return
+    event = append_transition(run_dir, to_state, observed_at=observed_at, payload=payload)
+    if event["event_type"] != event_type:
+        raise CaptureError("RECOVERY_EVENT_MISMATCH", "recovery transition type is inconsistent")
+
+
+def _reconcile_recovery_record(run_dir: Path, record: dict[str, Any]) -> dict[str, Any]:
+    digest = record["recovery_digest"]
+    observed_at = record["observed_at"]
+    if record["state_before"] == "capturing":
+        _ensure_recovery_occurrence(
+            run_dir,
+            "attempt_interrupted",
+            observed_at=observed_at,
+            payload={"recovery_digest": digest},
+        )
+        _ensure_recovery_transition(
+            run_dir,
+            "capture_interrupted",
+            "interrupted",
+            observed_at=observed_at,
+            payload={"execution_outcome": "unknown", "recovery_digest": digest},
+        )
+    elif record["state_before"] != "interrupted":
+        raise CaptureError("RECOVERY_STATE_MISMATCH", "stored recovery predecessor state is invalid")
+    _ensure_recovery_occurrence(
+        run_dir,
+        "recovery_declared",
+        observed_at=observed_at,
+        payload={
+            "action": record["action"],
+            "attempt_number": record["attempt_number"],
+            "recovery_digest": digest,
+        },
+    )
+    if record["partial_blob"] is not None:
+        _ensure_recovery_occurrence(
+            run_dir,
+            "recovery_evidence_preserved",
+            observed_at=observed_at,
+            payload={
+                "partial_sha256": record["partial_blob"]["sha256"],
+                "recovery_digest": digest,
+            },
+        )
+    if record["action"] == "resume":
+        _ensure_recovery_transition(
+            run_dir,
+            "capture_resumed",
+            "capturing",
+            observed_at=observed_at,
+            payload={"retry_reason": record["reason"], "recovery_digest": digest},
+        )
+    elif record["action"] == "abort":
+        _ensure_recovery_transition(
+            run_dir,
+            "capture_aborted",
+            "aborted",
+            observed_at=observed_at,
+            payload={"execution_outcome": "unknown", "recovery_digest": digest},
+        )
+    if not _recovery_record_complete(record, verify_ledger(run_dir)):
+        raise CaptureError("INCOMPLETE_RECOVERY_RECORD", "recovery reconciliation did not reach a terminal binding")
+    return record
+
+
+def _recovery_request_matches(
+    run_dir: Path,
+    record: dict[str, Any],
+    *,
+    action: str,
+    reason: str,
+    partial_bytes: bytes | None,
+) -> bool:
+    if record["action"] != action or record["reason"] != reason:
+        return False
+    if partial_bytes is not None:
+        if record["partial_blob"] is None or read_blob(run_dir, record["partial_blob"]) != partial_bytes:
+            return False
+    return True
+
+
 def recover_run(
     run_dir: Path,
     *,
@@ -829,6 +1102,32 @@ def recover_run(
     validate_timestamp(observed_at, "$.observed_at")
     run = _load_documents(run_dir)[0]
     ledger = verify_ledger(run_dir)
+    records = _read_recovery_records(run_dir)
+    incomplete = [record for record in records if not _recovery_record_complete(record, ledger)]
+    if len(incomplete) > 1:
+        raise CaptureError("AMBIGUOUS_RECOVERY_STATE", "multiple incomplete recovery records exist")
+    if incomplete:
+        record = incomplete[0]
+        if not _recovery_request_matches(
+            run_dir,
+            record,
+            action=action,
+            reason=reason,
+            partial_bytes=partial_bytes,
+        ):
+            raise CaptureError("RECOVERY_CONTENT_CONFLICT", "retry differs from immutable recovery record")
+        return _reconcile_recovery_record(run_dir, record)
+    attempt_number = len(attempt_directories(run_dir)) or None
+    if records and _recovery_request_matches(
+        run_dir,
+        records[-1],
+        action=action,
+        reason=reason,
+        partial_bytes=partial_bytes,
+    ) and records[-1]["attempt_number"] == attempt_number:
+        expected_state = {"resume": "capturing", "abort": "aborted", "record_interruption": "interrupted"}[action]
+        if ledger.state == expected_state:
+            return records[-1]
     if ledger.state not in {"capturing", "interrupted"}:
         raise CaptureError("RECOVERY_NOT_PERMITTED", "run is not capturing or interrupted")
     if action == "resume":
@@ -836,77 +1135,21 @@ def recover_run(
             raise CaptureError("RETRY_POLICY_MISMATCH", "recovery reason is not preregistered")
         if len(attempt_directories(run_dir)) >= run["retry_policy"]["max_attempts"]:
             raise CaptureError("RETRY_BUDGET_EXHAUSTED", "no successor attempt is authorized")
+    partial_blob = _recover_orphan_blob(run_dir, records, partial_bytes)
     record: dict[str, Any] = {
         "schema_version": "sfa_bench.campaign_capture.recovery.v1",
         "action": action,
         "reason": reason,
         "observed_at": observed_at,
         "state_before": ledger.state,
-        "attempt_number": len(attempt_directories(run_dir)) or None,
-        "partial_blob": None,
+        "attempt_number": attempt_number,
+        "partial_blob": partial_blob,
         "execution_outcome": "unknown",
         "provenance_class": "operator_declared",
     }
-    if partial_bytes is not None:
-        record["partial_blob"] = write_blob(run_dir, partial_bytes, disposition="partial")
-    existing = sorted((run_dir / "recovery").glob("*.json"))
     record["recovery_digest"] = _recovery_digest(record)
-    write_record(run_dir / "recovery" / f"{len(existing):06d}.json", record)
-    if ledger.state == "capturing":
-        append_occurrence(
-            run_dir,
-            "attempt_interrupted",
-            observed_at=observed_at,
-            payload={"recovery_digest": record["recovery_digest"]},
-        )
-        append_transition(
-            run_dir,
-            "interrupted",
-            observed_at=observed_at,
-            payload={"execution_outcome": "unknown", "recovery_digest": record["recovery_digest"]},
-        )
-    elif ledger.state != "interrupted":
-        raise CaptureError("RECOVERY_NOT_PERMITTED", "run is not capturing or interrupted")
-    append_occurrence(
-        run_dir,
-        "recovery_declared",
-        observed_at=observed_at,
-        payload={
-            "action": action,
-            "attempt_number": record["attempt_number"],
-            "recovery_digest": record["recovery_digest"],
-        },
-    )
-    if record["partial_blob"] is not None:
-        append_occurrence(
-            run_dir,
-            "recovery_evidence_preserved",
-            observed_at=observed_at,
-            payload={"partial_sha256": record["partial_blob"]["sha256"]},
-        )
-    if action == "resume":
-        if reason not in run["retry_policy"]["allowed_reasons"]:
-            raise CaptureError("RETRY_POLICY_MISMATCH", "recovery reason is not preregistered")
-        if len(attempt_directories(run_dir)) >= run["retry_policy"]["max_attempts"]:
-            raise CaptureError("RETRY_BUDGET_EXHAUSTED", "no successor attempt is authorized")
-        append_transition(
-            run_dir,
-            "capturing",
-            observed_at=observed_at,
-            payload={"retry_reason": reason},
-        )
-    elif action == "abort":
-        append_transition(
-            run_dir,
-            "aborted",
-            observed_at=observed_at,
-            payload={
-                "recovery_digest": record["recovery_digest"],
-                "execution_outcome": "unknown",
-            },
-        )
-    return record
-
+    write_record(run_dir / "recovery" / f"{len(records):06d}.json", record)
+    return _reconcile_recovery_record(run_dir, record)
 
 def _capture_content(run: dict[str, Any], attempts: list[dict[str, Any]], state: str) -> dict[str, Any]:
     return {
@@ -946,6 +1189,18 @@ def _raw_evidence_hashes(run_dir: Path, run: dict[str, Any], attempts: list[dict
         if isinstance(record["partial_blob"], dict):
             hashes.add(record["partial_blob"]["sha256"])
     return sorted(hashes)
+
+
+def _verify_raw_blob_inventory(
+    run_dir: Path,
+    run: dict[str, Any],
+    attempts: list[dict[str, Any]],
+) -> None:
+    expected = set(_raw_evidence_hashes(run_dir, run, attempts))
+    actual = set(_raw_blob_inventory(run_dir))
+    if actual != expected:
+        code = "UNBOUND_RAW_BLOB" if actual - expected else "MISSING_RAW_BLOB"
+        raise CaptureError(code, "raw blob inventory differs from governed evidence descriptors")
 
 
 def _capture_started_at(ledger) -> str | None:
@@ -1045,6 +1300,7 @@ def seal_run(run_dir: Path, *, repo_root: Path, observed_at: str) -> dict[str, A
         attempts = _read_attempts(run_dir, allow_partial=ledger.state == "aborted")
         _verify_recovery_events(_read_recovery_records(run_dir), ledger)
         _verify_attempt_events(attempts, ledger)
+        _verify_raw_blob_inventory(run_dir, run, attempts)
         manifest = _validate_capture_manifest(
             run_dir,
             run=run,
@@ -1067,6 +1323,7 @@ def seal_run(run_dir: Path, *, repo_root: Path, observed_at: str) -> dict[str, A
     attempts = _read_attempts(run_dir, allow_partial=ledger.state == "aborted")
     _verify_recovery_events(_read_recovery_records(run_dir), ledger)
     _verify_attempt_events(attempts, ledger)
+    _verify_raw_blob_inventory(run_dir, run, attempts)
     if ledger.state == "captured" and not any(item["complete"] for item in attempts):
         raise CaptureError("FALSE_CAPTURE_COMPLETION", "captured state has no complete attempt")
     warnings = sorted({warning for item in attempts for warning in item["warnings"]})
@@ -1168,6 +1425,7 @@ def _verify_run_core(
     attempts = _read_attempts(run_dir, allow_partial=allow_partial_attempts)
     _verify_recovery_events(_read_recovery_records(run_dir), ledger)
     _verify_attempt_events(attempts, ledger)
+    _verify_raw_blob_inventory(run_dir, run, attempts)
     if ledger.state in {None, "draft", "validated", "locked"}:
         raise CaptureError("INCOMPLETE_INITIALIZATION", "run initialization has no execution authorization state")
     if ledger.state == "capturing":
