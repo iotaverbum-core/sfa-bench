@@ -114,8 +114,8 @@ reasoning. A decision remains subject to rejection by tests or independent revie
 - Selected option: resolve the full Git commit, compare bound files and untracked
   paths against it, and derive the public release from `sfa.__version__`.
 - Evidence: independent review reproduced a valid lock with a false all-zero
-  commit before remediation; the accepted core is commit
-  `12276fa235e9147c160bd8e9280cfeb130c4354c`.
+  commit before remediation; the accepted release implementation anchor is
+  `c5212a9cf0bde6a367a4059af77e6f1cc3895931`.
 - Affected trust boundary: pre-registration to benchmark lock.
 - Compatibility impact: public lock creation now requires Git provenance and a
   matching package release. Pure tests use explicitly private content helpers;
@@ -255,3 +255,37 @@ reasoning. A decision remains subject to rejection by tests or independent revie
   classification.
 - Rollback or rejection condition: a normal Windows clone changes a protected
   evidence digest or fails the offline integrity checks.
+
+## ADR-V2-017: Classify Semantic Draft And Governance Assertions
+
+- Problem: exact normalized-key lists missed obvious variants such as
+  `run_finished`, `final_score`, and `human_approved`.
+- Alternatives: add each observed spelling; reject every key containing broad
+  roots; classify bounded marker, prefix, and suffix combinations.
+- Selected option: classify completion, execution, result, approval, acceptance,
+  and endorsement assertions while explicitly allowing planning fields such as
+  `execution_timeout`, `ranking_policy`, and `score_threshold`.
+- Evidence: campaign and candidate-manifest matrices cover the reported variants
+  plus planning-field counterexamples.
+- Affected trust boundary: untrusted campaign and provider metadata to declared
+  execution and human-governance state.
+- Compatibility impact: semantic self-approval and completed-run assertions now
+  fail closed even when separators or prefixes differ.
+- Rollback or rejection condition: a draft accepts an execution, result, or
+  governance assertion, or a documented planning counterexample is rejected.
+
+## ADR-V2-018: Preserve Embedded Objects After Leading Scalars
+
+- Problem: an incidental leading JSON scalar in surrounding prose caused an
+  early non-object verdict and suppressed a later top-level object.
+- Alternatives: reject every leading JSON value; scan through all values; scan
+  past scalars while retaining the container boundary.
+- Selected option: continue the existing top-level object scan after leading
+  strings, numbers, booleans, or null, while rejecting leading arrays so nested
+  objects cannot escape their container.
+- Evidence: scalar-prefix and leading-array regression tests pass.
+- Affected trust boundary: raw candidate response to the single validity gate.
+- Compatibility impact: valid embedded-object responses retain the documented
+  extraction contract without weakening non-object-container rejection.
+- Rollback or rejection condition: a leading scalar suppresses a later top-level
+  object, or an array exposes a nested object to canonicalisation.

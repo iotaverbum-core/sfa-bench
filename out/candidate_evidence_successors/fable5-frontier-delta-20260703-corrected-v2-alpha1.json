@@ -1,7 +1,7 @@
 {
   "artifact_id": "fable5-frontier-delta-20260703-corrected-v2-alpha1",
   "artifact_kind": "candidate_integrity_scoring_successor",
-  "canonical_artifact_sha256": "13c6663705b60cb78f06344ff9ab1f23d7b61039549506713310b48d36dabe15",
+  "canonical_artifact_sha256": "8e2722b41581157403aa1b3d40863aab4365866c97d43eebe16c7fb5fa16419c",
   "implementation": {
     "benchmark_bound_paths": [
       "sfa/hashing.py",
@@ -19,9 +19,9 @@
       "sfa_bench/frontier_delta/tasks/planning_drift_001.json",
       "sfa_bench/frontier_delta/tasks/tool_false_completion_001.json"
     ],
-    "benchmark_commit": "12276fa235e9147c160bd8e9280cfeb130c4354c",
+    "benchmark_commit": "c5212a9cf0bde6a367a4059af77e6f1cc3895931",
     "candidate_adapter_path": "sfa_bench/frontier_delta/candidate_adapter.py",
-    "candidate_adapter_sha256": "85f40b7f4db122dc6d166cd11ae144cc0b6d1476f673f1ae0cd23cf64bc4df68",
+    "candidate_adapter_sha256": "2f175abc47458918dda2ae359d021d52ad13d508f098a2274852aa2a8e27e7df",
     "candidate_adapter_version": "sfa.frontier_delta.candidate_adapter.v1",
     "candidate_evidence_path": "sfa_bench/frontier_delta/candidate_evidence.py",
     "candidate_evidence_sha256": "29549ffdeb16e4d08749d412dccdcd1d923fb430e5a48e852773897d07990499",

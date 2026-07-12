@@ -31,6 +31,10 @@ All notable changes to SFA-Bench will be documented in this file.
   closed with stable validation codes.
 - Unpaired Unicode surrogates, recursive draft-completion claims, and
   noncanonical portable paths now fail before dispatch or serialization.
+- Semantic execution, result, approval, acceptance, and endorsement key variants
+  now fail closed without rejecting declared planning controls.
+- Incidental leading JSON scalars in prose no longer suppress a later valid
+  top-level candidate object; leading containers remain invalid.
 - Historical task-capture hashes must match exact bytes or a deterministic
   LF/CRLF-normalized equivalent.
 - Every campaign lock binding and declared directory membership must match its

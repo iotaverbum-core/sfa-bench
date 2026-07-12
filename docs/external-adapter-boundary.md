@@ -74,7 +74,8 @@ canonicalisation:
 Invalid text receives zero credit and never reaches a canonicaliser or scorer.
 For surrounding prose, extraction uses the first decodable top-level object;
 when multiple top-level objects occur, the first wins. Objects nested inside a
-non-object container such as an array are not extracted.
+non-object container such as an array are not extracted. An incidental leading
+JSON scalar in prose does not suppress a later top-level object.
 The gate preserves a deterministic response-text SHA-256 and parse notes; it does not
 repair invalid text or invent a replacement object. Valid objects retain the
 legacy canonicalisation contract, including its lane-specific normalization.

@@ -52,7 +52,8 @@ classified before dispatch:
 
 For surrounding prose, the first decodable top-level object is used. The first
 of multiple top-level objects wins; an object nested inside an array or another
-non-object container is not extracted.
+non-object container is not extracted. An incidental leading JSON scalar in
+prose does not suppress a later top-level object.
 
 The original raw response remains referenced by its deterministic response-text
 SHA-256. The
