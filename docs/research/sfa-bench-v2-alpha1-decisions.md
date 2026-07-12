@@ -111,11 +111,12 @@ reasoning. A decision remains subject to rejection by tests or independent revie
   attribute uncommitted worktree bytes to an unrelated revision.
 - Alternatives: treat declarations as trusted; record dirty state; resolve the
   commit and prove every bound file matches it before lock creation.
-- Selected option: resolve the full Git commit, compare bound files and untracked
-  paths against it, and derive the public release from `sfa.__version__`.
+- Selected option: resolve the full Git commit, compare every bound blob and
+  declared directory membership against it, and derive the public release from
+  the version source at that commit.
 - Evidence: independent review reproduced a valid lock with a false all-zero
   commit before remediation; the accepted release implementation anchor is
-  `c5212a9cf0bde6a367a4059af77e6f1cc3895931`.
+  `9744d547e80cc0ad8ad72e598ea9ca19e4458b51`.
 - Affected trust boundary: pre-registration to benchmark lock.
 - Compatibility impact: public lock creation now requires Git provenance and a
   matching package release. Pure tests use explicitly private content helpers;
@@ -260,11 +261,14 @@ reasoning. A decision remains subject to rejection by tests or independent revie
 
 - Problem: exact normalized-key lists missed obvious variants such as
   `run_finished`, `final_score`, and `human_approved`.
-- Alternatives: add each observed spelling; reject every key containing broad
-  roots; classify bounded marker, prefix, and suffix combinations.
-- Selected option: classify completion, execution, result, approval, acceptance,
-  and endorsement assertions while explicitly allowing planning fields such as
-  `execution_timeout`, `ranking_policy`, and `score_threshold`.
+- Alternatives: add each observed spelling; whitelist actor/domain prefixes;
+  classify semantic markers at key endings or followed by event and
+  `by<actor>` suffixes.
+- Selected option: use prefix-agnostic semantic marker detection for completion,
+  execution, result, approval, acceptance, certification, and endorsement
+  assertions, with explicit policy-boundary exceptions and planning
+  counterexamples such as `execution_timeout`, `ranking_policy`,
+  `result_schema`, and `score_threshold`.
 - Evidence: campaign and candidate-manifest matrices cover the reported variants
   plus planning-field counterexamples.
 - Affected trust boundary: untrusted campaign and provider metadata to declared
