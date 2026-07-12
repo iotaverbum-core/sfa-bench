@@ -520,7 +520,8 @@ RELEASE_GATE_FILENAME = "release_gate.py"
 PACKAGE_INIT_RELATIVE = ("sfa", "__init__.py")
 _PACKAGE_VERSION_RE = re.compile(r"^__version__\s*=\s*[\"']([^\"']+)[\"']", re.MULTILINE)
 _HEADER_VERSION_RE = re.compile(
-    r"print\(\s*(?:f)?[\"']#?\s*(?:SFA-Bench|SFA-Agent)\s+v(\d+\.\d+(?:\.\d+)?)",
+    r"print\(\s*(?:f)?[\"']#?\s*(?:SFA-Bench|SFA-Agent)\s+v"
+    r"(\d+\.\d+(?:\.\d+)?(?:-(?:alpha|beta|rc)\.\d+)?)",
     re.MULTILINE,
 )
 
@@ -530,6 +531,16 @@ def _read_package_version(init_path: Path) -> str | None:
         return None
     match = _PACKAGE_VERSION_RE.search(init_path.read_text(encoding="utf-8"))
     return match.group(1) if match else None
+
+
+def _public_release_label(package_version: str) -> str | None:
+    if re.fullmatch(r"\d+\.\d+\.\d+", package_version):
+        return "v" + package_version
+    match = re.fullmatch(r"(\d+\.\d+\.\d+)(a|b|rc)(\d+)", package_version)
+    if match is None:
+        return None
+    stage = {"a": "alpha", "b": "beta", "rc": "rc"}[match.group(2)]
+    return f"v{match.group(1)}-{stage}.{match.group(3)}"
 
 
 def _read_release_gate_constants(gate_path: Path) -> tuple[str, list[str]]:
@@ -889,7 +900,7 @@ def assert_repository_version_consistency(repo_root: str | Path) -> dict[str, An
     package_version = _read_package_version(root.joinpath(*PACKAGE_INIT_RELATIVE))
     if package_version is None:
         raise InvariantFailure("sfa/__init__.py declares no __version__")
-    package_label = f"v{package_version}"
+    package_label = _public_release_label(package_version)
     if package_label != expected_release:
         raise InvariantFailure(
             f"package __version__ {package_label!r} does not match release "
@@ -918,6 +929,7 @@ def assert_repository_version_consistency(repo_root: str | Path) -> dict[str, An
     return {
         "expected_release": expected_release,
         "package_version": package_version,
+        "public_release": package_label,
         "command_files_checked": len(command_files),
     }
 

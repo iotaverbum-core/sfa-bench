@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v1.1.0 pre-registration gate demo (SFA-AutoLab v0, Item 2).
+"""SFA-Bench v2.0.0-alpha.1 pre-registration gate demo (SFA-AutoLab v0, Item 2).
 
 Offline, deterministic. Loads a sealed pre-registration declaration and two
 sealed improvement reports (one that meets it, one that violates the Pareto
@@ -31,7 +31,7 @@ def _load(name: str) -> dict:
 
 
 def main() -> int:
-    print("# SFA-Bench v1.1.0 pre-registration gate demo")
+    print("# SFA-Bench v2.0.0-alpha.1 pre-registration gate demo")
     print("=" * 56)
 
     declaration = _load("declaration.json")

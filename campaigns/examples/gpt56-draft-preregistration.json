@@ -1,7 +1,7 @@
 {
   "adapter_version": "sfa.frontier_delta.candidate_adapter.v1",
   "api_or_execution_surface": "TO_BE_CONFIRMED_AT_EXECUTION",
-  "benchmark_commit_sha": "f09b02f7bd61f8ae8b7cb3e329752819d6c4e923",
+  "benchmark_commit_sha": "12276fa235e9147c160bd8e9280cfeb130c4354c",
   "benchmark_inputs": {
     "adapter_paths": [
       "sfa_bench/frontier_delta/candidate_adapter.py"
@@ -162,15 +162,15 @@
     "the frozen verifier reproduces every judgment offline"
   ],
   "system_prompt": {
-    "reference": "TO_BE_CONFIRMED_AT_EXECUTION",
-    "sha256": "TO_BE_CONFIRMED_AT_EXECUTION"
+    "reference": "campaigns/examples/prompts/gpt56-study-system-prompt.txt",
+    "sha256": "e3623983d0680058b6ca60e136dfed2521557169f01bb7c20d344aee1510efd5"
   },
   "tool_permissions": [
     "none"
   ],
   "user_prompt_or_case_set": {
     "reference": "sfa_bench/frontier_delta/tasks",
-    "sha256": "TO_BE_CONFIRMED_AT_EXECUTION"
+    "sha256": "620acba1ba62d7ad9b58f75ffd07b4934df3dedd9caacf41e9a6e11c83db39e2"
   },
   "verifier_commit_sha": "f09b02f7bd61f8ae8b7cb3e329752819d6c4e923"
 }

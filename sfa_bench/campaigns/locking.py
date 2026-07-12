@@ -100,14 +100,48 @@ class RepositoryContext:
     release_identifier: str
 
 
-def package_release_identifier(repo_root: Path) -> str:
-    """Read the package version of record and return its public release label."""
-    init_path = repo_root / "sfa" / "__init__.py"
+def package_release_identifier(
+    repo_root: Path, benchmark_commit: str
+) -> str:
+    """Read the package version from the declared benchmark commit."""
     try:
-        text = init_path.read_text(encoding="utf-8")
+        result = subprocess.run(
+            [
+                "git",
+                "show",
+                f"{benchmark_commit}:sfa/__init__.py",
+            ],
+            cwd=repo_root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
     except OSError as exc:
         raise LockingError(
             [issue("RELEASE_SOURCE_UNAVAILABLE", "$.release_identifier", str(exc))]
+        ) from exc
+    if result.returncode:
+        detail = result.stderr.decode("utf-8", errors="replace").strip()
+        raise LockingError(
+            [
+                issue(
+                    "RELEASE_SOURCE_UNAVAILABLE",
+                    "$.release_identifier",
+                    detail or "sfa/__init__.py is unavailable at the benchmark commit",
+                )
+            ]
+        )
+    try:
+        text = result.stdout.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise LockingError(
+            [
+                issue(
+                    "RELEASE_SOURCE_INVALID",
+                    "$.release_identifier",
+                    "sfa/__init__.py at the benchmark commit is not UTF-8",
+                )
+            ]
         ) from exc
     match = _PACKAGE_VERSION_RE.search(text)
     if match is None:
@@ -216,7 +250,7 @@ def observe_repository_context(
     return RepositoryContext(
         repository_commit=resolved,
         verifier_commit=resolved_verifier,
-        release_identifier=package_release_identifier(repo_root),
+        release_identifier=package_release_identifier(repo_root, resolved),
     )
 
 
@@ -375,6 +409,17 @@ def _safe_repo_path(repo_root: Path, relative: str, issue_path: str) -> Path:
     return resolved
 
 
+def _ignored_directory_member(parts: tuple[str, ...]) -> bool:
+    if not parts:
+        return False
+    name = parts[-1]
+    return (
+        any(part in _IGNORED_DIRECTORY_NAMES for part in parts)
+        or name in _IGNORED_FILE_NAMES
+        or Path(name).suffix.lower() in _IGNORED_FILE_SUFFIXES
+    )
+
+
 def _binding_entries(
     repo_root: Path, declared_paths: list[str], issue_path: str
 ) -> list[dict[str, str]]:
@@ -399,11 +444,7 @@ def _binding_entries(
         discovered = 0
         for child in sorted(resolved.rglob("*"), key=lambda item: item.as_posix()):
             relative_child = child.relative_to(resolved)
-            if (
-                any(part in _IGNORED_DIRECTORY_NAMES for part in relative_child.parts)
-                or child.name in _IGNORED_FILE_NAMES
-                or child.suffix.lower() in _IGNORED_FILE_SUFFIXES
-            ):
+            if _ignored_directory_member(relative_child.parts):
                 continue
             if child.is_symlink():
                 raise LockingError(
@@ -502,25 +543,37 @@ def _declared_digest_issues(
     return sort_issues(issues)
 
 
-def _build_bindings(campaign: dict[str, Any], repo_root: Path) -> dict[str, Any]:
+def _binding_declarations(
+    campaign: dict[str, Any],
+) -> dict[str, list[str]]:
     inputs = campaign["benchmark_inputs"]
-    bindings: dict[str, Any] = {
-        "protected_verifier": _binding_entries(
-            repo_root, list(FIXED_VERIFIER_PATHS), "$.protected_verifier_paths"
-        )
+    declarations: dict[str, list[str]] = {
+        "protected_verifier": list(FIXED_VERIFIER_PATHS)
     }
     for binding_name, field in _DECLARED_BINDING_FIELDS:
-        bindings[binding_name] = _binding_entries(
-            repo_root,
-            list(inputs[field]),
-            f"$.benchmark_inputs.{field}",
-        )
+        declarations[binding_name] = list(inputs[field])
     for binding_name, field in _REFERENCE_BINDING_FIELDS:
-        reference = campaign[field]["reference"]
-        bindings[binding_name] = _binding_entries(
+        declarations[binding_name] = [campaign[field]["reference"]]
+    return declarations
+
+
+def _build_bindings(campaign: dict[str, Any], repo_root: Path) -> dict[str, Any]:
+    declarations = _binding_declarations(campaign)
+    bindings: dict[str, Any] = {}
+    for group in sorted(declarations):
+        if group == "protected_verifier":
+            issue_path = "$.protected_verifier_paths"
+        else:
+            declared_field = dict(_DECLARED_BINDING_FIELDS).get(group)
+            issue_path = (
+                f"$.benchmark_inputs.{declared_field}"
+                if declared_field is not None
+                else f"$.{dict(_REFERENCE_BINDING_FIELDS)[group]}.reference"
+            )
+        bindings[group] = _binding_entries(
             repo_root,
-            [reference],
-            f"$.{field}.reference",
+            declarations[group],
+            issue_path,
         )
     return bindings
 
@@ -529,9 +582,12 @@ def _binding_commit_issues(
     repo_root: Path,
     bindings: dict[str, Any],
     context: RepositoryContext,
+    *,
+    declared_paths: dict[str, list[str]] | None = None,
 ) -> list[Issue]:
-    """Compare every bound byte sequence with its assigned Git commit blob."""
+    """Compare bound bytes and declared directory membership with Git."""
     drift: set[str] = set()
+    membership_drift: dict[str, set[str]] = {}
     for group in sorted(bindings):
         commit = (
             context.verifier_commit
@@ -557,16 +613,98 @@ def _binding_commit_issues(
                 != entry["sha256"]
             ):
                 drift.add(relative)
-    if not drift:
-        return []
-    return [
-        issue(
-            "LOCK_INPUT_NOT_AT_COMMIT",
-            "$.bindings",
-            "bound inputs differ from their declared benchmark/verifier commit: "
-            + ", ".join(sorted(drift)),
+        for relative in (declared_paths or {}).get(group, []):
+            resolved = repo_root.joinpath(*relative.split("/"))
+            try:
+                object_type = subprocess.run(
+                    ["git", "cat-file", "-t", f"{commit}:{relative}"],
+                    cwd=repo_root,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+            except OSError:
+                membership_drift.setdefault(group, set()).add(relative)
+                continue
+            if object_type.returncode:
+                membership_drift.setdefault(group, set()).add(relative)
+                continue
+            commit_type = object_type.stdout.decode(
+                "ascii", errors="replace"
+            ).strip()
+            if not resolved.is_dir():
+                if commit_type != "blob":
+                    membership_drift.setdefault(group, set()).add(relative)
+                continue
+            if commit_type != "tree":
+                membership_drift.setdefault(group, set()).add(relative)
+                continue
+            try:
+                tree = subprocess.run(
+                    [
+                        "git",
+                        "--literal-pathspecs",
+                        "ls-tree",
+                        "-r",
+                        "--name-only",
+                        "-z",
+                        commit,
+                        "--",
+                        relative,
+                    ],
+                    cwd=repo_root,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+            except OSError:
+                membership_drift.setdefault(group, set()).add(relative)
+                continue
+            if tree.returncode:
+                membership_drift.setdefault(group, set()).add(relative)
+                continue
+            try:
+                committed_paths = tree.stdout.decode("utf-8").split("\0")
+            except UnicodeDecodeError:
+                membership_drift.setdefault(group, set()).add(relative)
+                continue
+            prefix = relative + "/"
+            committed_members = {
+                member
+                for member in committed_paths
+                if member.startswith(prefix)
+                and member
+                and not _ignored_directory_member(
+                    tuple(member[len(prefix) :].split("/"))
+                )
+            }
+            current_members = {
+                entry["path"]
+                for entry in bindings[group]
+                if entry["path"].startswith(prefix)
+            }
+            if committed_members != current_members:
+                membership_drift.setdefault(group, set()).add(relative)
+    issues: list[Issue] = []
+    if drift:
+        issues.append(
+            issue(
+                "LOCK_INPUT_NOT_AT_COMMIT",
+                "$.bindings",
+                "bound inputs differ from their declared benchmark/verifier commit: "
+                + ", ".join(sorted(drift)),
+            )
         )
-    ]
+    for group in sorted(membership_drift):
+        issues.append(
+            issue(
+                "LOCK_DIRECTORY_MEMBERSHIP_MISMATCH",
+                f"$.bindings.{group}",
+                "declared directory membership differs from its assigned commit: "
+                + ", ".join(sorted(membership_drift[group])),
+            )
+        )
+    return sort_issues(issues)
 
 
 def _assemble_lock(
@@ -631,7 +769,10 @@ def _build_benchmark_lock(
     bindings = _build_bindings(campaign, repo_root)
     if verify_repository:
         commit_issues = _binding_commit_issues(
-            repo_root, bindings, observed
+            repo_root,
+            bindings,
+            observed,
+            declared_paths=_binding_declarations(campaign),
         )
         if commit_issues:
             raise LockingError(commit_issues)
@@ -935,7 +1076,10 @@ def _verify_benchmark_lock(
         if verify_repository:
             issues.extend(
                 _binding_commit_issues(
-                    repo_root, current_bindings, observed
+                    repo_root,
+                    current_bindings,
+                    observed,
+                    declared_paths=_binding_declarations(campaign),
                 )
             )
     except LockingError as exc:

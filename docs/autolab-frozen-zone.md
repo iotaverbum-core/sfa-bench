@@ -8,9 +8,9 @@ that to mean anything, the parts that decide, measure, and record must be
 This is scaffold-level self-improvement, not an autonomous agent editing its own
 judge. The frozen zone is the boundary that keeps the distinction honest.
 
-## What is frozen (v0.7.0)
+## What is frozen (v0.8.0)
 
-The manifest (`autolab/frozen_manifest.json`) declares the frozen paths. v0.7.0:
+The manifest (`autolab/frozen_manifest.json`) declares the frozen paths. v0.8.0:
 
 | Path | Why it is frozen |
 | --- | --- |
@@ -32,6 +32,8 @@ The manifest (`autolab/frozen_manifest.json`) declares the frozen paths. v0.7.0:
 | `autolab/runner.py` | loop orchestration policy (end-to-end runner) |
 | `autolab/frozen_manifest.json` | frozen-zone manifest (self-protecting) |
 | `frozen_zone_check.py` | frozen-zone CI check (self-protecting) |
+| `out/fable5_failure_delta/*` (six named files) | byte-preserved provisional external candidate evidence |
+| `out/candidate_evidence_successors/fable5-frontier-delta-20260703-corrected-v2-alpha1.json` | append-only corrected successor evidence |
 
 The zone is intentionally tight: it covers verdict logic and integrity machinery,
 not the improvable scaffold (task families, taxonomy tree, metrics, generators,
@@ -80,11 +82,10 @@ current computed zone hash and the sealed manifest `zone_hash`, and whose
 `prev_zone_hash` equals the base's sealed `zone_hash`. This binds one human
 authorization to exactly one `prev -> new` transition.
 
-When PR CI cannot receive the protected input, `frozen_zone_check.py --ci` may
-infer the token only from a checked-in amendment record that already binds the
-trusted base zone hash to the current sealed zone hash. The lower-level
-amendment gate still validates the same token/record/hash binding; no unmatched
-or future frozen-zone transition is authorized by this fallback.
+CI does not infer a token from a checked-in amendment record. A frozen-path
+change without the protected input fails even when its amendment record and
+manifest hashes are internally consistent. Local reviewers may supply the same
+out-of-loop token explicitly with `--amendment-token`.
 
 If the base has no frozen manifest (genesis), the gate passes — you cannot
 violate a zone that did not yet exist.
@@ -96,8 +97,8 @@ rewriting both a frozen file and the manifest in one commit. That is *why* the
 amendment token exists (the human channel), why the zone includes its own
 enforcement code so tampering with the check is itself a zone change, and why CI
 runs the gate against a trusted base. The guarantee is: **no green CI path exists
-that mutates the zone without a human token committed through the amendment
-channel.**
+that mutates the zone without the protected human token and its matching
+committed amendment record.**
 
 ## The human amendment workflow
 

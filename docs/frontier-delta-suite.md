@@ -1,129 +1,140 @@
-# Frontier Delta Suite: GPT-5.5 Baseline Protocol
+# Frontier Delta Suite: Historical Fixture Protocol
 
-> SFA-Bench freezes a GPT-5.5 frontier baseline so future GPT-5.6 results can be
-> measured as behavioural deltas rather than accepted as marketing claims.
+> SFA-Bench freezes a stored fixture baseline so a later, confirmed candidate
+> can be measured as a behavioural delta rather than accepted as a provider
+> claim.
 
 The Frontier Delta Suite is an experimental research suite (package
-`sfa_bench.frontier_delta`) built on the SFA-Bench deterministic core. It does not
-modify the frozen `sfa` research instrument; it reuses its conventions (canonical
-hashing, sealed artifacts, deterministic replay).
+`sfa_bench.frontier_delta`) built on the SFA-Bench deterministic core. It does
+not modify the frozen `sfa` research instrument; it reuses its conventions:
+canonical hashing, sealed artifacts, and deterministic replay.
 
-## Why a GPT-5.5 baseline
+## Status of historical model names
 
-Frontier releases arrive with strong claims. The only honest way to judge the next
-model is to fix a **measurement** *before* the next model exists, run the current
-model through it, seal the result, and then run the candidate through the exact
-same measurement. GPT-5.5 is the **anchor**: a known, current frontier model whose
-behaviour we record now, while nobody has an incentive to tune the suite toward a
-result.
+`GPT-5.5`, `GPT-5.6`, `Sol`, `Terra`, and `Luna` are historical fixture
+or preregistration labels in this repository. Their presence does not establish
+that a provider identifier exists, that API access is available, that the stored
+fixture came from the named model, or that any candidate run occurred.
 
-## Why GPT-5.6 is the future candidate
+Statements about model availability or training cutoffs in the protected
+historical holdout preregistration are preserved assumptions, not verified
+current facts. That protected record remains unchanged.
 
-GPT-5.6 (and its variants Sol, Terra, Luna) are the models we want to *evaluate*,
-not define the test around. If we designed the suite after seeing them, the suite
-would drift toward whatever they happen to do well. By freezing against GPT-5.5, a
-GPT-5.6 result becomes a **delta**: "+0.12 on grounding integrity, −0.25 on tool
-false-completion," measured on identical, pre-committed tasks.
+## Why a stored baseline fixture
 
-## Why the suite must be frozen before candidate testing
+Frontier releases can arrive with strong claims. A defensible comparison fixes a
+measurement before observing a candidate, records a baseline fixture, and then
+runs a confirmed candidate through the same measurement. The stored fixture is
+the anchor for deterministic regression. Its historical model label is metadata,
+not verified provider provenance.
 
-A benchmark you can edit after seeing the candidate is a marketing surface, not a
-measurement. Freezing (`FROZEN_SUITE_v0.md`) fixes the lanes, the tasks, the
-scoring rubrics, and the scoring math. After the baseline is generated, those must
-not change; substantive changes require a new suite version
-(`frontier_delta_v1`), which keeps the v0 baseline comparable. This is the same
-discipline the SFA-Bench core uses for its taxonomy and sealed artifacts.
+## Why candidate identity remains unconfirmed
+
+A future candidate should be evaluated against the frozen measurement, not used
+to define it. If the suite were designed after observing candidate output, it
+could drift toward whatever that candidate happens to do well. A confirmed
+candidate result can instead be reported as a delta measured on identical,
+pre-committed tasks.
+
+## Why the suite is frozen
+
+A benchmark that can change after candidate observation is not a stable
+measurement. Freezing (`FROZEN_SUITE_v0.md`) fixes the lanes, tasks, scoring
+rubrics, and scoring math. Substantive changes require a new suite version such
+as `frontier_delta_v1`, preserving the v0 fixture comparison.
 
 ## What each lane measures
 
-The core question: *can a frontier model preserve **truth, state, objective, and
-accountability** while operating across long, open-ended, tool-mediated tasks?*
-Eight lanes probe distinct ways that breaks:
+The core question is whether a candidate preserves truth, state, objective, and
+accountability across long, open-ended, tool-mediated tasks.
 
-1. **Long-horizon planning drift** — does the model still pursue the original
-   objective and its hard constraint after many steps, or has it quietly drifted?
-2. **Memory / state boundary discipline** — does it rely only on authorized state,
-   without fabricating state or reaching for off-limits keys?
-3. **Tool-use false completion** — does it claim "done" only when the tool actually
-   returned success, or does it declare victory on a failed/absent tool result?
-4. **Grounding integrity** — is every factual claim cited to existing evidence and
-   consistent with that evidence's value?
-5. **Contradiction recovery** — when an earlier value is corrected, does it adopt
-   the correction **and** flag it, rather than silently overwriting?
-6. **Open-ended adaptation** *(rubric-assisted)* — does it absorb a mid-task
-   requirement change without regressing the requirements it already met?
-7. **Paradigm-shift recognition** *(rubric-assisted)* — when the founding premise
-   is invalidated, does it recognize it and replan, or continue on a dead premise?
-8. **Audit replayability** — does it emit an audit trail whose declared hash
-   re-derives exactly, so a third party can replay and verify the run?
+1. **Long-horizon planning drift:** preserves the original objective and hard
+   constraints across many steps.
+2. **Memory / state boundary discipline:** uses only authorized state without
+   fabricating state or reaching for off-limits keys.
+3. **Tool-use false completion:** claims completion only when the tool returned
+   success.
+4. **Grounding integrity:** cites existing evidence and stays consistent with
+   its value.
+5. **Contradiction recovery:** adopts and flags a correction rather than
+   silently overwriting it.
+6. **Open-ended adaptation:** absorbs a mid-task requirement change without
+   regressing requirements already met.
+7. **Paradigm-shift recognition:** replans when a founding premise is
+   invalidated.
+8. **Audit replayability:** emits an audit trail whose declared hash re-derives.
 
-Two lanes (6, 7) are marked `rubric_assisted`: their real-world judgment needs
-human assessment, so the machine score is a deterministic proxy over explicit
-fixture fields and is reported as directional, not final.
+The last three descriptions do not claim semantic completeness. The
+`open_ended_adaptation` and `paradigm_shift_recognition` lanes are marked
+`rubric_assisted`; their machine scores are deterministic proxies over explicit
+fixture fields and remain directional.
 
 ## How scoring works
 
-Each task carries a machine-readable `scoring_rubric.checks` list. A deterministic
-check engine evaluates each check against the model's structured output and returns
-`(passed, evidence)`. A task's `score` is the fraction of checks that pass; its
-`verdict` is **pass** (all checks pass), **fail** (any `critical` check fails), or
-**partial** (only non-critical checks fail). Every result is sealed with a
-`result_hash`, and the report seals a `report_hash` plus a hash-chained
-`results_root_hash` (the SFA-Bench ledger pattern). `generated_at` is metadata and
-is excluded from the hash, so the sealed content is byte-stable over time.
+Each task carries a machine-readable `scoring_rubric.checks` list. A
+deterministic check engine evaluates each check against the structured output.
+A task score is the fraction of checks that pass. Its verdict is `pass` when
+all checks pass, `fail` when any critical check fails, and `partial` when
+only non-critical checks fail.
 
-## How to run fixture mode
+Each result is sealed with a `result_hash`. The report seals a `report_hash`
+and a hash-chained `results_root_hash`. `generated_at` is envelope metadata
+and is excluded from the content hash.
 
-v0 is fixture-only — no live API calls — so CI is fully deterministic:
+## Run fixture mode
 
-```bash
-python -m sfa_bench.frontier_delta.runner \
-    --suite frontier_delta_v0 \
-    --model gpt-5.5 \
-    --input sfa_bench/frontier_delta/fixtures/gpt55_outputs.jsonl \
-    --out out/frontier_delta_gpt55_baseline
+v0 is fixture-only. The command makes no live API call:
+
+```powershell
+py -3 -m sfa_bench.frontier_delta.runner `
+    --suite frontier_delta_v0 `
+    --model historical-fixture-label `
+    --input sfa_bench/frontier_delta/fixtures/gpt55_outputs.jsonl `
+    --out out/frontier_delta_fixture_baseline
 ```
 
-The example GPT-5.5 baseline (committed under
-`sfa_bench/frontier_delta/examples/gpt55_baseline/`) scores **0.750** total
-(5 pass / 1 partial / 2 fail), correctly flagging a tool false-completion and a
-paradigm-shift miss. Run the tests with:
+The stored example under
+`sfa_bench/frontier_delta/examples/gpt55_baseline/` scores `0.750` total
+(5 pass, 1 partial, 2 fail). This is a fixture result, not evidence of named
+provider-model performance.
 
-```bash
-python -m unittest discover -s tests -v
+Run the tests with:
+
+```powershell
+py -3 -m unittest discover -s tests -t . -p "test_*.py"
 ```
 
-## How to add real model outputs later
+## Add captured outputs later
 
-Produce a JSONL file with one record per task:
+A later capture component may produce one JSONL record per task:
 
 ```json
-{"task_id": "grounding_integrity_001", "output": { ... lane-specific fields ... }}
+{"task_id": "grounding_integrity_001", "output": {"example": "lane fields"}}
 ```
 
-The `output` object supplies the structured fields each lane's rubric inspects
-(e.g. `final_objective_id`, `claimed_state_keys`, `tool_log`, `claims`,
-`final_answer_value`, `audit_trail` + `audit_hash`). This is the integrator's job:
-faithfully extract the model's final state / tool log / audit trail from a real run
-into that shape. Then:
+The `output` object supplies the structured fields inspected by the lane
+rubric. Capture fidelity is the integrator's responsibility. The candidate
+identifier must be confirmed at execution:
 
-```bash
-python -m sfa_bench.frontier_delta.runner --suite frontier_delta_v0 \
-    --model gpt-5.6-sol --input path/to/gpt56_sol_outputs.jsonl \
-    --out out/frontier_delta_gpt56_sol
+```powershell
+py -3 -m sfa_bench.frontier_delta.runner `
+    --suite frontier_delta_v0 `
+    --model TO_BE_CONFIRMED_AT_EXECUTION `
+    --input path/to/candidate_outputs.jsonl `
+    --out out/frontier_delta_candidate
 ```
 
-Because the suite is frozen, the candidate report is a direct delta against the
-GPT-5.5 baseline. A thin live-model adapter can be added later that produces the
-same fixture shape; it does not change the suite or its scoring.
+Because the suite is frozen, a resulting report is a delta against the stored
+fixture baseline. A provider-neutral live capture adapter is planned for a later
+V2 tranche; this alpha release does not implement or run one.
 
 ## Limitations
 
-- **Not an AGI claim.** This measures behaviour under specific benchmark pressure
-  across eight lanes. It says nothing about general intelligence or overall quality.
-- **Fixture-based.** It scores the *structured artifact* of a run, not the raw
-  transcript. Extraction fidelity is the integrator's responsibility.
-- **Rubric-assisted lanes.** Open-ended adaptation and paradigm-shift recognition
-  use deterministic proxies for what is ultimately a human judgment.
-- **Deliberately small.** One task per lane keeps the frozen baseline crisp;
-  breadth comes from new suite versions, never from editing v0.
+- **Not an AGI or alignment claim.** The suite measures specified behaviour
+  under eight benchmark lanes.
+- **Fixture-based.** It scores a structured artifact, not the raw transcript.
+- **Names are not provenance.** Historical labels do not verify provider model
+  identity, access, snapshot, training cutoff, or execution.
+- **Rubric-assisted lanes.** Two machine scores are directional proxies.
+- **Deliberately small.** One task per lane supports a crisp frozen fixture;
+  breadth requires a separately versioned suite.

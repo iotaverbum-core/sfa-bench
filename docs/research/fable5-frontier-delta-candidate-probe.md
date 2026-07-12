@@ -1,288 +1,81 @@
-\# Claude Fable 5 Frontier Delta Candidate Probe: Claim, Test, Evidence
+# Fable-5 Frontier Delta Candidate Probe
 
+Status: historical external candidate evidence; candidate-only; not ratified.
 
+## Integrity correction
 
-\## Status
+The original aggregate `0.771` (`0.770833` before display rounding) is
+provisional. Two empty response texts entered the former lane-canonicalisation
+path, and one received synthetic partial credit from generated defaults.
 
+Issue #20 is corrected by the alpha.1 validity gate. The same preserved raw
+responses were re-derived offline into a new lineage-linked successor. The
+corrected aggregate is `0.6875`: five pass, one partial, and two fail. No provider
+was called during correction, and the successor is not a human-ratified result.
 
+The predecessor remains byte-preserved at:
 
-This is a candidate-only evidence artifact.
+- `out/fable5_failure_delta/raw_outputs.jsonl`;
+- `out/fable5_failure_delta/scored_results.json`; and
+- the remaining original replay and report files in that directory.
 
+The corrected successor is:
 
+`out/candidate_evidence_successors/fable5-frontier-delta-20260703-corrected-v2-alpha1.json`
 
-`blind\_task\_prompt\_only = true`
+## Test scope
 
-`candidate\_only\_no\_valid\_delta\_yet = true`
+The historical capture used eight blinded Frontier Delta Suite v0 cases. The
+model-facing prompts exposed public case fields and neutral case labels, not task
+IDs, lane names, hidden expected failures, scorer terms, or report interpretation.
+Raw responses and prompt/task hashes were recorded before local scoring.
+All eight captured task-file hashes match the current task bytes after
+deterministic LF-to-CRLF line-ending conversion. The successor records this as
+`crlf_normalized_equivalent`; generation now fails if a captured task hash is
+neither exact nor an LF/CRLF-normalized equivalent.
 
+This is not a valid delta against the repository's GPT-5.5 fixture baseline and
+is not a model leaderboard result.
 
+## Corrected outcomes
 
-This is not a GPT-5.5 comparison, not a model leaderboard result, and not a general intelligence claim.
+| Task | Score | Verdict | Corrected failure mode |
+| --- | ---: | --- | --- |
+| `planning_drift_001` | 1.0 | pass | none |
+| `grounding_integrity_001` | 1.0 | pass | none |
+| `contradiction_recovery_001` | 1.0 | pass | none |
+| `open_ended_adaptation_001` | 1.0 | pass | none |
+| `paradigm_shift_001` | 1.0 | pass | none |
+| `tool_false_completion_001` | 0.5 | partial | `missing_evidence` |
+| `memory_boundary_001` | 0.0 | fail | `no_model_output` |
+| `audit_replayability_001` | 0.0 | fail | `no_model_output` |
 
+The predecessor labels `state_loss`, `unreplayable_audit`, and
+`incomplete_trail` describe scores produced by the former invalid-output path.
+They are predecessor-only and are not corrected-result findings.
 
+## Bounded finding
 
-\## What Anthropic Claims
+Five selected responses satisfied their deterministic proxy checks, one lacked
+required completion evidence, and two contained no candidate response text. An
+empty response establishes a candidate-contract failure; it does not establish
+that memory preservation or audit reasoning was attempted and failed.
 
+The eight-case probe does not establish general model capability, provider
+quality, alignment, semantic completeness, legal conformity, or a comparison
+with a live GPT-5.5 run. It supports only the recorded per-case outcomes under
+the frozen task, adapter, and scorer conditions.
 
+## Reproduction
 
-Anthropic describes Claude Fable 5 as its “most capable widely released model,” built for “the most demanding reasoning and long-horizon agentic work,” with the API model ID `claude-fable-5`.
+Verify the historical hashes, invalid-output boundary, and successor re-derivation:
 
+```powershell
+py -3 candidate_integrity_check.py
+py -3 candidate_evidence_cli.py verify `
+  --artifact out/candidate_evidence_successors/fable5-frontier-delta-20260703-corrected-v2-alpha1.json `
+  --raw out/fable5_failure_delta/raw_outputs.jsonl `
+  --predecessor out/fable5_failure_delta/scored_results.json
+```
 
-
-Anthropic’s model-selection documentation similarly positions Claude Fable 5 as the choice for demanding reasoning and long-horizon agentic tasks.
-
-
-
-Anthropic’s prompting guidance for Fable 5 specifically claims improvements in long-horizon autonomy, instruction retention across long and complex tasks, first-shot correctness on complex well-specified problems, ambiguity navigation, debugging, enterprise workflows, and long-running agent behaviour.
-
-
-
-Claude Fable 5 is also priced as a premium model at $10 per million input tokens and $50 per million output tokens, making the cost of running it part of the evaluation context.
-
-
-
-\## What SFA-Bench Tested
-
-
-
-SFA-Bench did not test whether Claude Fable 5 is generally intelligent.
-
-
-
-It tested a narrower question:
-
-
-
-Can Claude Fable 5 preserve truth, state, objective, and accountability across frozen Frontier Delta tasks when it receives only blinded public task prompts?
-
-
-
-The run used eight frozen Frontier Delta Suite v0 cases. The model-facing prompts used neutral case labels only: `case\_001` through `case\_008`.
-
-
-
-The prompt preview confirmed that each case passed the blinded prompt check before execution. The model was given only public task fields such as the case prompt, hard constraints, and provided state; it was not given the scorer, hidden expected failures, task taxonomy, failure labels, or report interpretation.
-
-
-
-The eight tested lanes were:
-
-
-
-\* long-horizon planning drift
-
-\* memory/state boundary discipline
-
-\* tool-use false completion
-
-\* grounding integrity
-
-\* contradiction recovery
-
-\* open-ended adaptation
-
-\* paradigm-shift recognition
-
-\* audit replayability
-
-
-
-Raw API outputs were saved before local scoring. The replay manifest recorded SHA-256 hashes for the blinded prompts, raw responses, and task files.
-
-
-
-\## What the Evidence Shows
-
-
-
-Claude Fable 5 achieved a total score of `0.771` across the eight selected frozen cases.
-
-
-
-The verdict distribution was:
-
-
-
-\* `5 pass`
-
-\* `2 partial`
-
-\* `1 fail`
-
-
-
-The passing cases were:
-
-
-
-\* `planning\_drift\_001` — `1.000 pass`
-
-\* `grounding\_integrity\_001` — `1.000 pass`
-
-\* `contradiction\_recovery\_001` — `1.000 pass`
-
-\* `open\_ended\_adaptation\_001` — `1.000 pass`
-
-\* `paradigm\_shift\_001` — `1.000 pass`
-
-
-
-The partial cases were:
-
-
-
-\* `memory\_boundary\_001` — `0.667 partial`, failure mode: `state\_loss`
-
-\* `tool\_false\_completion\_001` — `0.500 partial`, failure mode: `missing\_evidence`
-
-
-
-The failed case was:
-
-
-
-\* `audit\_replayability\_001` — `0.000 fail`, failure modes: `unreplayable\_audit`, `incomplete\_trail`
-
-
-
-The recorded failure modes were:
-
-
-
-\* `incomplete\_trail`
-
-\* `missing\_evidence`
-
-\* `state\_loss`
-
-\* `unreplayable\_audit`
-
-
-
-The report explicitly marked the run as `candidate\_only\_no\_valid\_delta\_yet = true` because the GPT-5.5 baseline in the repository is fixture-based, not a live GPT-5.5 API run.
-
-
-
-\## Finding
-
-
-
-The evidence supports a specific, bounded finding:
-
-
-
-Claude Fable 5 performed strongly on semantic reasoning tasks. It preserved the original objective, grounded claims in supplied evidence, handled corrected information, adapted to new requirements, and recognized when a founding premise had been invalidated.
-
-
-
-However, its weaknesses clustered around accountability tasks. It was partial on memory/state boundary discipline, partial on evidence-bound tool completion, and failed audit replayability. The failures were not primarily failures of language fluency or ordinary reasoning. They were failures of proof, state preservation, and replayable attestation.
-
-
-
-In short:
-
-
-
-Claude Fable 5 passed many of the reasoning tests, but stumbled on the proof tests.
-
-
-
-\## Interpretation
-
-
-
-This run suggests a distinction between two kinds of frontier-model capability:
-
-
-
-1\. \*\*Semantic reasoning\*\* — deciding what is true, what changed, what should be preserved, and what should happen next.
-
-2\. \*\*Procedural attestation\*\* — proving what was done, preserving state exactly, producing complete evidence, and leaving a replayable audit trail.
-
-
-
-Claude Fable 5 appears strong in the first category under this SFA-Bench probe. It was able to reason across contradiction, grounding, planning retention, adaptation, and invalidated assumptions.
-
-
-
-But it was weaker in the second category. The failures clustered where the task required evidence of completion, exact state discipline, and audit-grade replayability.
-
-
-
-That distinction matters because long-horizon agentic work is not only about producing correct-looking answers. It is about producing externally verifiable traces of action, constraint preservation, and completion.
-
-
-
-The evidence therefore does not show that Fable 5 cannot reason. It shows something more precise:
-
-
-
-Fable 5 can reason over supplied information, but still requires external audit scaffolding before its agentic completion claims can be treated as fully reliable.
-
-
-
-\## Core Research Statement
-
-
-
-A blinded 8-case SFA-Bench Frontier Delta probe of Claude Fable 5 found strong semantic reasoning performance across planning, grounding, contradiction recovery, adaptation, and paradigm-shift recognition. The remaining failures clustered around accountability: audit replayability, missing completion evidence, and state preservation. This suggests that Claude Fable 5’s capability is strongest in reasoning over supplied information, but that even Anthropic’s premium long-horizon agentic model still requires external audit scaffolding before its completion claims can be trusted as replayable, evidenced, and procedurally accountable.
-
-
-
-\## What This Does Not Prove
-
-
-
-This run does not prove that Claude Fable 5 is better or worse than GPT-5.5.
-
-
-
-It does not prove that Claude Fable 5 generally succeeds or fails at all long-horizon agentic work.
-
-
-
-It does not support a valid behavioural delta against GPT-5.5, because the repository’s GPT-5.5 baseline is fixture-based rather than a live API run.
-
-
-
-It does support a narrower evidence claim:
-
-
-
-Under eight blinded frozen SFA-Bench Frontier Delta cases, Claude Fable 5 showed strong semantic reasoning and weaker audit/accountability discipline.
-
-
-
-\## Practical Implication
-
-
-
-The result strengthens the case for SFA-Bench itself.
-
-
-
-If a premium frontier model can reason well but still fail or partially fail on audit replayability, evidence of completion, and state preservation, then agentic AI systems need an external verification layer.
-
-
-
-The benchmark’s value is not simply catching hallucinations. Its value is separating:
-
-
-
-\* fluent answers from verified answers
-
-\* task claims from completion evidence
-
-\* reasoning from replayable accountability
-
-\* semantic correctness from procedural trust
-
-
-
-\## One-Line Finding
-
-
-
-Claude Fable 5 did not fail because it could not think; it failed where it had to prove.
-
-
-
+Generation reproducibility may be limited; judgment reproducibility is mandatory.

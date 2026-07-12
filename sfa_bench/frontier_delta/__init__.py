@@ -1,9 +1,10 @@
 """Frontier Delta Suite v0.
 
-The Frontier Delta Suite establishes a **frozen behavioural baseline** for a
-frontier model (GPT-5.5) so that later candidate models (GPT-5.6 Sol, Terra,
-Luna) can be rerun against the *same unchanged suite* and compared as measured
-**behavioural deltas** rather than accepted as marketing claims.
+The Frontier Delta Suite establishes a frozen behavioural fixture baseline so
+that later, independently identified candidate artifacts can be rerun against
+the same unchanged suite and compared as measured behavioural deltas. Model
+names retained in historical fixtures are labels, not verified provider
+provenance or availability claims.
 
 Scope and honesty:
   * This suite measures behaviour under specific benchmark pressure across eight

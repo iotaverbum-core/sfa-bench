@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline SFA-Bench v1.1.0 policy-guided retry demonstration."""
+"""Offline SFA-Bench v2.0.0-alpha.1 policy-guided retry demonstration."""
 from __future__ import annotations
 
 import json
@@ -53,7 +53,7 @@ def main() -> int:
     ).to_dict()
     verifier_unchanged = baseline == guided_path
 
-    print("# SFA-Bench v1.1.0 policy-guided retry demo")
+    print("# SFA-Bench v2.0.0-alpha.1 policy-guided retry demo")
     print()
     print(f"policy version: {decision['policy_version']}")
     print(f"recurrence profile loaded: {fixture_path.relative_to(ROOT).as_posix()}")

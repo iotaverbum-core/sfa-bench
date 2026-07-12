@@ -7,6 +7,7 @@ import io
 import json
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
@@ -175,6 +176,23 @@ class CampaignValidationTests(unittest.TestCase):
         codes = _codes(validate_campaign(campaign))
         self.assertIn("SECRET_FIELD_FORBIDDEN", codes)
 
+    def test_secret_key_separator_and_camel_variants_are_rejected(self):
+        for key in (
+            "api key",
+            "api.key",
+            "apiKey",
+            "access-token",
+            "authorization_token",
+            "client secret",
+        ):
+            with self.subTest(key=key):
+                campaign = _campaign()
+                campaign["reasoning_configuration"]["nested"] = {key: "value"}
+                self.assertIn(
+                    "SECRET_FIELD_FORBIDDEN",
+                    _codes(validate_campaign(campaign)),
+                )
+
     def test_likely_secret_value_detection(self):
         campaign = _campaign()
         campaign["reasoning_configuration"]["opaque"] = (
@@ -240,6 +258,9 @@ class CampaignValidationTests(unittest.TestCase):
             ("sampling_configuration", "promote"),
             ("reasoning_configuration", "ratification_result"),
             ("sampling_configuration", "promotion_result"),
+            ("reasoning_configuration", "approval-status"),
+            ("sampling_configuration", "acceptanceStatus"),
+            ("reasoning_configuration", "endorsement_result"),
         ):
             with self.subTest(surface=surface, key=key):
                 campaign = _campaign()
@@ -258,6 +279,9 @@ class CampaignValidationTests(unittest.TestCase):
             ("state", "RATIFIED"),
             ("message", "candidate ratified and promoted"),
             ("provider_note", "promotion complete"),
+            ("provider_note", "approved by reviewer"),
+            ("provider_note", "acceptance recorded"),
+            ("provider_note", "externally endorsed"),
         ):
             with self.subTest(key=key):
                 campaign = _campaign()
@@ -302,6 +326,9 @@ class CampaignValidationTests(unittest.TestCase):
             "CON",
             "out/campaign_locks/base:lock.json",
             ".git/config",
+            "foo/question?.json",
+            "foo/star*.json",
+            "foo/pipe|name.json",
         ):
             with self.subTest(reference=reference):
                 campaign = _campaign()
@@ -310,6 +337,23 @@ class CampaignValidationTests(unittest.TestCase):
                     {"PATH_TRAVERSAL", "INVALID_PATH"}
                     & _codes(validate_campaign(campaign))
                 )
+
+    def test_ordinary_accept_configuration_is_not_a_governance_claim(self):
+        campaign = _campaign()
+        campaign["reasoning_configuration"]["accepted_content_types"] = [
+            "application/json"
+        ]
+        self.assertNotIn(
+            "CAMPAIGN_GOVERNANCE_CLAIM_FORBIDDEN",
+            _codes(validate_campaign(campaign)),
+        )
+
+        manifest = _manifest()
+        manifest["environment"]["accept_language"] = "en"
+        self.assertNotIn(
+            "SELF_RATIFICATION_FORBIDDEN",
+            _codes(validate_candidate_manifest(manifest)),
+        )
 
     def test_duplicate_policy_surfaces_must_agree(self):
         campaign = _campaign()
@@ -351,12 +395,16 @@ class CampaignValidationTests(unittest.TestCase):
     def test_draft_completion_claims_fail_recursively(self):
         for key, value in (
             ("completed", True),
+            ("completed_at", "2026-07-12T00:00:00Z"),
+            ("execution_occurred", True),
             ("execution_result", {"score": 1}),
             ("official_result", "pass"),
             ("provider_ranking", 1),
             ("score", 1),
             ("passed", True),
             ("run_status", "completed"),
+            ("run_status", "finished"),
+            ("execution_status", "succeeded"),
             ("classification", "official"),
             ("message", "campaign completed successfully"),
         ):
@@ -420,6 +468,9 @@ class CandidateManifestBoundaryTests(unittest.TestCase):
             "promotion",
             "ratification_result",
             "promotion_result",
+            "approval-status",
+            "acceptanceStatus",
+            "endorsement_result",
         ):
             with self.subTest(key=key):
                 manifest = _manifest()
@@ -438,6 +489,9 @@ class CandidateManifestBoundaryTests(unittest.TestCase):
             ("state", "RATIFIED"),
             ("note", "candidate ratified and promoted"),
             ("description", "promotion approved"),
+            ("description", "approved by reviewer"),
+            ("description", "acceptance recorded"),
+            ("description", "externally endorsed"),
         ):
             with self.subTest(key=key):
                 manifest = _manifest()
@@ -473,6 +527,40 @@ class CandidateManifestBoundaryTests(unittest.TestCase):
         self.assertIn(
             "SECRET_FIELD_FORBIDDEN", _codes(validate_candidate_manifest(manifest))
         )
+
+    def test_candidate_secret_key_variants_are_rejected(self):
+        for key in (
+            "api key",
+            "api.key",
+            "apiKey",
+            "access-token",
+            "authorization_token",
+            "client secret",
+        ):
+            with self.subTest(key=key):
+                manifest = _manifest()
+                manifest["environment"]["nested"] = {key: "value"}
+                self.assertIn(
+                    "SECRET_FIELD_FORBIDDEN",
+                    _codes(validate_candidate_manifest(manifest)),
+                )
+
+    def test_draft_candidate_execution_claim_variants_are_rejected(self):
+        for key, value in (
+            ("completed_at", "2026-07-12T00:00:00Z"),
+            ("execution_occurred", True),
+            ("run_status", "finished"),
+            ("execution_status", "succeeded"),
+        ):
+            with self.subTest(key=key):
+                manifest = _manifest()
+                manifest["observed_provider_model_metadata"] = {
+                    "nested": {key: value}
+                }
+                self.assertIn(
+                    "DRAFT_COMPLETION_CLAIM",
+                    _codes(validate_candidate_manifest(manifest)),
+                )
 
     def test_provider_metadata_is_not_a_judgment_input(self):
         first = _manifest()
@@ -581,6 +669,54 @@ class BenchmarkLockTests(unittest.TestCase):
             )
         self.assertIn("VERIFIER_COMMIT_MISMATCH", _codes(caught.exception.issues))
 
+    def test_release_identifier_is_read_from_declared_commit(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            (repo / "sfa").mkdir()
+            init_path = repo / "sfa" / "__init__.py"
+            init_path.write_text('__version__ = "1.2.3"\n', encoding="utf-8")
+            subprocess.run(
+                ["git", "init", "--quiet"],
+                cwd=repo,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "add", "sfa/__init__.py"],
+                cwd=repo,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=SFA Test",
+                    "-c",
+                    "user.email=sfa-test@example.invalid",
+                    "commit",
+                    "--quiet",
+                    "-m",
+                    "fixture",
+                ],
+                cwd=repo,
+                check=True,
+            )
+            commit = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=repo,
+                check=True,
+                text=True,
+                stdout=subprocess.PIPE,
+            ).stdout.strip()
+            init_path.write_text('__version__ = "9.9.9"\n', encoding="utf-8")
+            self.assertEqual(
+                locking.observe_repository_context(
+                    repo,
+                    benchmark_commit=commit,
+                    verifier_commit=commit,
+                ).release_identifier,
+                "v1.2.3",
+            )
+
     def test_nonexistent_verifier_commit_is_rejected(self):
         campaign = _campaign()
         campaign["verifier_commit_sha"] = "0" * 40
@@ -632,6 +768,82 @@ class BenchmarkLockTests(unittest.TestCase):
         self.assertEqual(
             locking._binding_commit_issues(ROOT, exact, context),
             [],
+        )
+
+    def test_declared_commit_directory_membership_is_exact_for_all_groups(self):
+        groups = (
+            "adapter",
+            "cases",
+            "evidence",
+            "normalizer",
+            "protected_verifier",
+            "rules",
+            "schemas",
+            "system_prompt",
+            "taxonomy",
+            "user_prompt_or_case_set",
+        )
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary)
+            bound = repo / "bound"
+            bound.mkdir()
+            (bound / "a.json").write_text("{}\n", encoding="utf-8")
+            (bound / "b.json").write_text("{}\n", encoding="utf-8")
+            subprocess.run(
+                ["git", "init", "--quiet"],
+                cwd=repo,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "add", "bound"],
+                cwd=repo,
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "git",
+                    "-c",
+                    "user.name=SFA Test",
+                    "-c",
+                    "user.email=sfa-test@example.invalid",
+                    "commit",
+                    "--quiet",
+                    "-m",
+                    "fixture",
+                ],
+                cwd=repo,
+                check=True,
+            )
+            commit = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=repo,
+                check=True,
+                text=True,
+                stdout=subprocess.PIPE,
+            ).stdout.strip()
+            (bound / "b.json").unlink()
+            entries = locking._binding_entries(repo, ["bound"], "$.bound")
+            bindings = {group: entries for group in groups}
+            declarations = {group: ["bound"] for group in groups}
+            context = RepositoryContext(
+                repository_commit=commit,
+                verifier_commit=commit,
+                release_identifier="v1.2.3",
+            )
+            issues = locking._binding_commit_issues(
+                repo,
+                bindings,
+                context,
+                declared_paths=declarations,
+            )
+        membership_paths = {
+            entry["path"]
+            for entry in issues
+            if entry["code"] == "LOCK_DIRECTORY_MEMBERSHIP_MISMATCH"
+        }
+        self.assertEqual(
+            membership_paths,
+            {f"$.bindings.{group}" for group in groups},
         )
 
     def test_nonexistent_benchmark_commit_is_rejected(self):

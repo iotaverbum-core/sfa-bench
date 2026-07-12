@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Repository release checks for SFA-Bench v1.1.0."""
+"""Repository release checks for SFA-Bench v2.0.0-alpha.1."""
 from __future__ import annotations
 
 import argparse
@@ -10,11 +10,18 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parent
-EXPECTED_RELEASE = "v1.1.0"
+EXPECTED_RELEASE = "v2.0.0-alpha.1"
 WORKFLOW = ROOT / ".github" / "workflows" / "test.yml"
+VERIFY_ALL = ROOT / "verify_all.py"
 REQUIRED_CI_COMMANDS = (
     "python verify_all.py",
+    "python candidate_integrity_check.py",
+    "python campaign_protocol_check.py",
     "python release_gate.py --ci",
+)
+REQUIRED_VERIFY_COMMANDS = (
+    "candidate_integrity_check.py",
+    "campaign_protocol_check.py",
 )
 PROTECTED_PATHS = (
     "history/occurrences.jsonl",
@@ -35,6 +42,8 @@ COMMAND_FILES = (
     "report.py",
     "tamper_suite.py",
     "invariant_suite.py",
+    "candidate_integrity_check.py",
+    "campaign_protocol_check.py",
     "agent_demo.py",
     "external_candidate_demo.py",
     "transcript_demo.py",
@@ -53,7 +62,8 @@ PACKAGE_VERSION_RE = re.compile(
     r"^__version__\s*=\s*[\"']([^\"']+)[\"']", re.MULTILINE
 )
 HEADER_VERSION = re.compile(
-    r"print\(\s*(?:f)?[\"']#?\s*(?:SFA-Bench|SFA-Agent)\s+v(\d+\.\d+(?:\.\d+)?)",
+    r"print\(\s*(?:f)?[\"']#?\s*(?:SFA-Bench|SFA-Agent)\s+v"
+    r"(\d+\.\d+(?:\.\d+)?(?:-(?:alpha|beta|rc)\.\d+)?)",
     re.MULTILINE,
 )
 
@@ -92,6 +102,19 @@ def read_package_version() -> str | None:
         return None
     match = PACKAGE_VERSION_RE.search(PACKAGE_INIT.read_text(encoding="utf-8"))
     return match.group(1) if match else None
+
+
+def public_release_label(package_version: str | None) -> str | None:
+    """Map a stable or PEP 440 prerelease package version to public text."""
+    if package_version is None:
+        return None
+    if re.fullmatch(r"\d+\.\d+\.\d+", package_version):
+        return "v" + package_version
+    match = re.fullmatch(r"(\d+\.\d+\.\d+)(a|b|rc)(\d+)", package_version)
+    if match is None:
+        return None
+    stage = {"a": "alpha", "b": "beta", "rc": "rc"}[match.group(2)]
+    return f"v{match.group(1)}-{stage}.{match.group(3)}"
 
 
 def command_header_issues() -> list[str]:
@@ -154,10 +177,14 @@ def main() -> int:
 
     workflow_text = WORKFLOW.read_text(encoding="utf-8") if WORKFLOW.is_file() else ""
     missing_ci = [cmd for cmd in REQUIRED_CI_COMMANDS if cmd not in workflow_text]
+    verify_text = VERIFY_ALL.read_text(encoding="utf-8") if VERIFY_ALL.is_file() else ""
+    missing_verification = [
+        command for command in REQUIRED_VERIFY_COMMANDS if command not in verify_text
+    ]
 
     header_issues = command_header_issues()
     package_version = read_package_version()
-    package_label = f"v{package_version}" if package_version else None
+    package_label = public_release_label(package_version)
     package_version_ok = package_label == EXPECTED_RELEASE
 
     if untracked:
@@ -173,7 +200,9 @@ def main() -> int:
     if sealed_staged:
         failures.append("generated sealed artifacts are staged")
     if missing_ci:
-        failures.append("required v1.0 CI commands are missing")
+        failures.append("required CI commands are missing")
+    if missing_verification:
+        failures.append("new integrity commands are missing from verify_all.py")
     if not package_version_ok:
         failures.append("package version of record does not match the release")
     if header_issues:
@@ -193,6 +222,10 @@ def main() -> int:
     print(f"runtime output staged: {'yes' if runtime_staged else 'no'}")
     print(f"generated sealed artifacts staged: {'yes' if sealed_staged else 'no'}")
     print(f"CI command coverage: {'yes' if not missing_ci else 'no'}")
+    print(
+        "full verification command coverage: "
+        f"{'yes' if not missing_verification else 'no'}"
+    )
     print(f"current command headers: {'yes' if not header_issues else 'no'}")
     print(f"package version of record: {package_version or 'missing'}")
     print(f"package version matches release: {'yes' if package_version_ok else 'no'}")
@@ -215,6 +248,10 @@ def main() -> int:
     if missing_ci:
         print("missing CI commands:")
         for command in missing_ci:
+            print(f"  - {command}")
+    if missing_verification:
+        print("missing full-verification commands:")
+        for command in missing_verification:
             print(f"  - {command}")
     if header_issues:
         print("command header issues:")

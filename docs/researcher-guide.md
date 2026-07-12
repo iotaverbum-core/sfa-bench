@@ -9,7 +9,9 @@ later verdict was influenced by history.
 
 SFA-Bench treats the failure record as the research object. It is a deterministic
 offline harness for preserving failures, attesting them later, and testing a
-narrow set of trust-boundary invariants. It is not a live model study.
+narrow set of trust-boundary invariants. Canonical verification and the alpha.1
+correction/campaign tools are offline. The repository also preserves historical
+external candidate capture evidence produced outside CI and the trusted core.
 
 ## Architecture
 
@@ -56,11 +58,12 @@ cd sfa-bench
 python verify_all.py
 ```
 
-The full runner creates an isolated temporary copy and executes the twelve
-release commands there. This design lets mutation-producing demos run without
-changing the checked-out ledger or leaving runtime directories in the clone.
-The runner reports the path if operating-system permissions prevent automatic
-temporary-worktree cleanup.
+The full runner creates an isolated temporary copy for mutation-producing
+commands. It executes the candidate-evidence and campaign-lock checks read-only
+in the checked-out Git repository so commit provenance cannot be replaced by an
+isolated-copy assertion. Together it executes all 26 release commands without
+changing the checked-out ledger. The runner reports the path if operating-system
+permissions prevent automatic temporary-worktree cleanup.
 
 To inspect the main flow interactively:
 
@@ -98,6 +101,11 @@ inputs. `fingerprint_report.py` rebuilds the illustrative fixed-condition report
 `policy_demo.py` demonstrates deterministic generator guidance and confirms that
 policy metadata is absent from verifier inputs.
 
+`candidate_integrity_check.py` exercises invalid-output classification across
+every Frontier lane and re-derives the corrected Fable successor without a
+provider call. `campaign_protocol_check.py` validates the draft declarations,
+machine-readable schemas, and benchmark lock without writing a lock file.
+
 ## What fixtures mean
 
 Files under `cases/` are small deterministic verifier cases. They exercise a
@@ -109,6 +117,10 @@ Model-like identifiers in fingerprint fixtures are labels for illustrative data.
 They are not evidence that named or production models produced those records.
 Results are conditioned on the checked-in case set, evidence pack, prompt and
 adapter framing, transcript fixtures, taxonomy, and implementation version.
+
+The preserved files under `out/fable5_failure_delta/` are historical external
+candidate evidence, not illustrative fixtures. Their original `0.771` aggregate
+is provisional; the lineage-linked, unratified correction is `0.6875`.
 
 ## Inspect tamper and invariant results
 
@@ -136,7 +148,9 @@ Before release clearance, run:
 
 ```bash
 python verify_all.py
-python release_gate.py --release v1.0.0
+python candidate_integrity_check.py
+python campaign_protocol_check.py
+python release_gate.py --release v2.0.0-alpha.1
 git status --short --untracked-files=all
 ```
 
@@ -160,11 +174,16 @@ universal tamper resistance, hidden reasoning correctness, policy-caused model
 improvement, or semantic completeness. See [Claims and
 Limitations](claims-and-limitations.md) for the normative statement.
 
+No live GPT-5.6 study is claimed. The checked-in GPT-5.6 declarations are
+`draft_not_executed` examples with execution-time identifiers still unconfirmed.
+
+Generation reproducibility may be limited; judgment reproducibility is mandatory.
+
 ## Citation
 
 Use `CITATION.cff` from the repository root. The release citation is:
 
-> Neal, Matthew. (2026). SFA-Bench v1.0.0: Researcher Readiness & Reproducibility. https://github.com/iotaverbum-core/sfa-bench
+> Neal, Matthew. (2026). SFA-Bench v2.0.0-alpha.1: Candidate Integrity and Campaign Foundation. https://github.com/iotaverbum-core/sfa-bench
 
 SFA-Bench can be cited using its Zenodo DOI:
 

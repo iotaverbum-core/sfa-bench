@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the complete SFA-Bench v1.1.0 offline verification suite."""
+"""Run the complete SFA-Bench v2.0.0-alpha.1 offline verification suite."""
 from __future__ import annotations
 
 import fnmatch
@@ -20,6 +20,8 @@ COMMANDS = (
     "tamper_suite.py",
     "invariant_suite.py",
     "frozen_zone_check.py",
+    "candidate_integrity_check.py",
+    "campaign_protocol_check.py",
     "preregistration_demo.py",
     "autolab_controller_demo.py",
     "ratification_demo.py",
@@ -38,6 +40,9 @@ COMMANDS = (
     "recurrence_metric.py",
     "property_contract.py",
     "causal_report.py",
+)
+PROVENANCE_COMMANDS = frozenset(
+    {"candidate_integrity_check.py", "campaign_protocol_check.py"}
 )
 EXCLUDED_DIRECTORIES = {
     ".git",
@@ -69,9 +74,10 @@ def remove_readonly(function, path: str, _error) -> None:
 
 
 def main() -> int:
-    print("SFA-Bench v1.1.0 full offline verification")
+    print("SFA-Bench v2.0.0-alpha.1 full offline verification")
     print("=" * 56)
     print("workspace: isolated temporary copy (checked-out history is not mutated)")
+    print("provenance checks: read-only execution in the checked-out Git repository")
 
     env = os.environ.copy()
     env["CI"] = "true"
@@ -81,6 +87,7 @@ def main() -> int:
     # owns PR base-ref amendment-gate enforcement.
     env.pop("GITHUB_BASE_REF", None)
     env.pop("GITHUB_HEAD_REF", None)
+    env["SFA_VERIFY_ISOLATED_COPY"] = "true"
 
     workspace = ROOT / f".verify-all-{uuid.uuid4().hex[:8]}"
     failed_exit = 0
@@ -94,10 +101,15 @@ def main() -> int:
         )
         total = len(COMMANDS)
         for index, script in enumerate(COMMANDS, start=1):
+            command_env = env.copy()
+            command_root = workspace
+            if script in PROVENANCE_COMMANDS:
+                command_env.pop("SFA_VERIFY_ISOLATED_COPY", None)
+                command_root = ROOT
             result = subprocess.run(
                 [sys.executable, script],
-                cwd=workspace,
-                env=env,
+                cwd=command_root,
+                env=command_env,
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,

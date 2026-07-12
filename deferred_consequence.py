@@ -34,7 +34,7 @@ def _run_replay(path: str) -> int:
     with open(path, "r", encoding="utf-8") as fh:
         pack = json.load(fh)
     result = dc.replay(pack)
-    print("SFA-Bench v1.1.0 Deferred-Consequence Task Family - replay")
+    print("SFA-Bench v2.0.0-alpha.1 Deferred-Consequence Task Family - replay")
     print("=" * 58)
     print(f"pack_hash (re-derived): {result['pack_hash']}")
     for issue in result["issues"]:
@@ -59,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
             parser.error("replay requires a pack path")
         return _run_replay(args.report)
 
-    print("SFA-Bench v1.1.0 Deferred-Consequence Task Family")
+    print("SFA-Bench v2.0.0-alpha.1 Deferred-Consequence Task Family")
     print("=" * 58)
 
     config = {"seed": args.seed, "per_cell": args.per_cell}

@@ -42,11 +42,20 @@ RELEASE_RE = re.compile(
     r"^v\d+\.\d+\.\d+(?:-(?:alpha|beta|rc)\.\d+)?$"
 )
 
-_SECRET_KEY_RE = re.compile(
-    r"(?:api[_-]?key|access[_-]?token|auth[_-]?token|bearer[_-]?token|"
-    r"authorization[_-]?token|password|passwd|client[_-]?secret|"
-    r"private[_-]?key|credentials?)",
-    re.IGNORECASE,
+_SECRET_KEY_FRAGMENTS = frozenset(
+    {
+        "apikey",
+        "accesstoken",
+        "authtoken",
+        "bearertoken",
+        "authorizationtoken",
+        "password",
+        "passwd",
+        "clientsecret",
+        "privatekey",
+        "credential",
+        "credentials",
+    }
 )
 _SECRET_VALUE_RES = (
     re.compile(r"\bsk-[A-Za-z0-9_-]{12,}\b"),
@@ -145,6 +154,8 @@ _GOVERNANCE_VALUE_KEYS = frozenset(
 _DRAFT_COMPLETION_KEYS = frozenset(
     {
         "completed",
+        "completedat",
+        "executionoccurred",
         "executionresult",
         "official",
         "officialresult",
@@ -161,13 +172,39 @@ _DRAFT_COMPLETION_VALUE_KEYS = frozenset(
         "result",
         "runclassification",
         "runstatus",
+        "executionstatus",
         "state",
         "status",
     }
 )
 _DRAFT_COMPLETION_VALUE_RE = re.compile(
-    r"\b(?:complete(?:d)?|official|pass(?:ed)?|rank(?:ed|ing)?)\b",
+    r"\b(?:complete(?:d)?|execut(?:ed|ion occurred)|finish(?:ed)?|official|"
+    r"pass(?:ed)?|rank(?:ed|ing)?|succeed(?:ed)?)\b",
     re.IGNORECASE,
+)
+_GOVERNANCE_VALUE_RE = re.compile(
+    r"\b(?:accept(?:ance|ed|ing|s)?|approv\w*|endors\w*|promot\w*|ratif\w*)\b",
+    re.IGNORECASE,
+)
+_GOVERNANCE_ASSERTION_KEYS = frozenset(
+    {
+        "acceptance",
+        "accepted",
+        "approval",
+        "approved",
+        "endorsement",
+        "endorsed",
+        "isaccepted",
+        "isapproved",
+        "isendorsed",
+    }
+)
+_GOVERNANCE_ASSERTION_SUFFIXES = (
+    "decision",
+    "outcome",
+    "result",
+    "state",
+    "status",
 )
 _CAMPAIGN_UNTRUSTED_TEXT_SURFACES = frozenset(
     {"reasoning_configuration", "sampling_configuration"}
@@ -401,7 +438,7 @@ def _scan_secrets(value: Any, path: str = "$") -> list[Issue]:
         for key in sorted(value, key=str):
             child_path = _join(path, str(key))
             child = value[key]
-            if _SECRET_KEY_RE.search(str(key)):
+            if _is_secret_control_key(key):
                 issues.append(
                     issue(
                         "SECRET_FIELD_FORBIDDEN",
@@ -514,6 +551,17 @@ def validate_repo_relative_path(value: Any, path: str) -> list[Issue]:
                 "INVALID_PATH",
                 path,
                 "colon is forbidden in portable repository paths",
+            )
+        ]
+    if any(
+        ord(character) < 32 or character in '<>"|?*'
+        for character in value
+    ):
+        return [
+            issue(
+                "INVALID_PATH",
+                path,
+                "path contains a nonportable character",
             )
         ]
     if any(
@@ -1284,18 +1332,28 @@ def _normalized_control_key(key: Any) -> str:
     return re.sub(r"[^a-z0-9]", "", str(key).lower())
 
 
+def _is_secret_control_key(key: Any) -> bool:
+    normalized = _normalized_control_key(key)
+    return any(fragment in normalized for fragment in _SECRET_KEY_FRAGMENTS)
+
+
 def _is_governance_control_key(key: Any) -> bool:
     normalized = _normalized_control_key(key)
-    return (
+    if (
         normalized in _SELF_RATIFICATION_KEYS
         or "ratif" in normalized
         or "promot" in normalized
+        or normalized in _GOVERNANCE_ASSERTION_KEYS
+    ):
+        return True
+    return (
+        any(root in normalized for root in ("accept", "approv", "endors"))
+        and normalized.endswith(_GOVERNANCE_ASSERTION_SUFFIXES)
     )
 
 
 def _contains_governance_term(value: str) -> bool:
-    lowered = value.lower()
-    return "ratif" in lowered or "promot" in lowered
+    return _GOVERNANCE_VALUE_RE.search(value) is not None
 
 
 def _scan_governance_claims(

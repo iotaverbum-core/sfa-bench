@@ -1,24 +1,30 @@
-# FROZEN SUITE — Frontier Delta v0
+# FROZEN SUITE - Frontier Delta v0
 
 **Suite name:** Frontier Delta Suite
+
 **Suite version:** `frontier_delta_v0`
-**Status:** frozen for baseline generation
-**Baseline model:** GPT-5.5
+
+**Status:** frozen for fixture-baseline comparison
+
+**Baseline label:** historical fixture label `gpt-5.5`
+
+The baseline label above is preserved metadata. It does not establish provider
+model identity, access, provenance, snapshot, or performance. Candidate names in
+historical preregistration records are likewise unverified labels.
 
 ## Purpose
 
-Establish a **frozen behavioural baseline** for a frontier model (GPT-5.5) so that
-later candidate models (GPT-5.6 Sol, Terra, Luna) can be rerun against the *same
-unchanged suite* and reported as **behavioural deltas** rather than accepted as
-marketing claims.
+Establish a frozen behavioural fixture baseline so later captured candidate
+artifacts can be rerun against the same unchanged suite and reported as measured
+deltas rather than accepted as provider claims.
 
-This suite measures whether a model preserves **truth, state, objective, and
-accountability** while operating across long, open-ended, tool-mediated tasks. It
-is **not** a claim of AGI or general intelligence.
+This suite measures specified preservation of truth, state, objective, and
+accountability across long, open-ended, tool-mediated tasks. It is not a claim
+of AGI, alignment, semantic completeness, or overall model quality.
 
-## Frozen task list (8 lanes, one task each)
+## Frozen task list
 
-| Lane | Task id |
+| Lane | Task ID |
 | --- | --- |
 | long_horizon_planning_drift | `planning_drift_001` |
 | memory_state_boundary | `memory_boundary_001` |
@@ -32,44 +38,49 @@ is **not** a claim of AGI or general intelligence.
 ## Frozen scoring rules
 
 - Each task is scored by the deterministic check engine over its
-  `scoring_rubric.checks`. Verdict policy: **pass** if every check passes; **fail**
-  if any `critical` check fails; otherwise **partial**. `score` = fraction of
-  checks passed.
-- Lanes `open_ended_adaptation` and `paradigm_shift_recognition` are marked
-  **`rubric_assisted`**: their real-world judgment needs human assessment, so the
-  machine score is a deterministic proxy over explicit fixture fields and must be
-  read as directional.
-- Reports seal a `report_hash` (deterministic content only; `generated_at` is
-  excluded) and a hash-chained `results_root_hash` (SFA-Bench ledger pattern).
+  `scoring_rubric.checks`.
+- A verdict is `pass` if every check passes, `fail` if any critical check
+  fails, and `partial` otherwise.
+- A score is the fraction of checks passed.
+- `open_ended_adaptation` and `paradigm_shift_recognition` are
+  `rubric_assisted`; their deterministic fixture scores are directional
+  proxies.
+- Reports seal deterministic content with a `report_hash` and a hash-chained
+  `results_root_hash`. `generated_at` remains outside the content hash.
 
-## What may and may not change after the GPT-5.5 baseline is generated
+## What may and may not change
 
-**MUST NOT change** (doing so invalidates delta comparisons — cut a new suite
-version `frontier_delta_v1` instead):
+The following MUST NOT change within v0:
 
-- The set of lanes and the eight frozen task ids.
-- Any task's `objective`, `prompt`, `hard_constraints`, `provided_state`,
-  `scoring_rubric` (checks, expected values, criticality), or `replay_requirements`.
-- The check-engine semantics and the verdict policy.
-- The report scoring math (per-task, per-lane, total).
+- the set of lanes and frozen task IDs;
+- task objectives, prompts, hard constraints, supplied state, scoring rubrics,
+  and replay requirements;
+- check-engine semantics and verdict policy;
+- report scoring math.
 
-**MAY change** without breaking the baseline:
+A substantive change requires a new suite version such as
+`frontier_delta_v1`.
 
-- Documentation, comments, and prose.
-- Additive tooling that does not alter scoring (extra output formats, a live-model
-  adapter that still feeds the same fixture contract).
-- New, separately versioned suites (`frontier_delta_v1`, …) that add or revise
-  tasks — the v0 baseline stays frozen and comparable.
+The following MAY change without altering the v0 measurement:
 
-## Baseline provenance
+- documentation, comments, and bounded claim corrections;
+- additive tooling that does not alter scoring;
+- new, separately versioned suites.
 
-The GPT-5.5 baseline is generated from a stored model-output fixture
-(`fixtures/gpt55_outputs.jsonl`) via:
+## Fixture provenance
 
+The stored baseline fixture is
+`fixtures/gpt55_outputs.jsonl`. Its filename and model label are historical,
+not verified provider provenance. It can be replayed offline:
+
+```powershell
+py -3 -m sfa_bench.frontier_delta.runner `
+    --suite frontier_delta_v0 `
+    --model historical-fixture-label `
+    --input sfa_bench/frontier_delta/fixtures/gpt55_outputs.jsonl `
+    --out out/frontier_delta_fixture_baseline `
+    --now 2026-07-03T00:00:00+00:00
 ```
-python -m sfa_bench.frontier_delta.runner --suite frontier_delta_v0 --model gpt-5.5 \
-    --input sfa_bench/frontier_delta/fixtures/gpt55_outputs.jsonl \
-    --out out/frontier_delta_gpt55_baseline --now <iso-timestamp>
-```
 
-An example sealed baseline is committed under `examples/gpt55_baseline/`.
+The example sealed fixture result remains under `examples/gpt55_baseline/`.
+It is a reproducibility fixture, not a provider evaluation claim.

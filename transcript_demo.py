@@ -107,7 +107,7 @@ def main():
     verifier_normalized_only = _verifier_normalized_only(input_obj, evidence_obj, normalized.candidate, rules_obj, verdict.to_dict())
 
     metadata = raw_source["metadata"]
-    print("SFA-Bench v1.1.0 transcript demo")
+    print("SFA-Bench v2.0.0-alpha.1 transcript demo")
     print("=" * 56)
     print(f"transcript loaded: {os.path.relpath(TRANSCRIPT_PATH, ROOT)}")
     print(f"model_id: {metadata['model_id']}")

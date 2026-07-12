@@ -9,7 +9,7 @@ Example:
 
   python -m sfa_bench.frontier_delta.runner \\
       --suite frontier_delta_v0 \\
-      --model gpt-5.5 \\
+      --model historical-fixture-label \\
       --input sfa_bench/frontier_delta/fixtures/gpt55_outputs.jsonl \\
       --out out/frontier_delta_gpt55_baseline
 """
@@ -88,7 +88,11 @@ def _write_artifacts(report: dict[str, Any], out_dir: Path) -> list[Path]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--suite", default=schemas.SUITE_VERSION, help="suite version (frozen: frontier_delta_v0)")
-    parser.add_argument("--model", required=True, help="model label, e.g. gpt-5.5")
+    parser.add_argument(
+        "--model",
+        required=True,
+        help="evidence label; provider identity must be verified separately",
+    )
     parser.add_argument("--input", required=True, help="JSONL model-output fixture")
     parser.add_argument("--out", help="output directory for report + artifacts")
     parser.add_argument("--now", help="ISO timestamp to stamp as generated_at (default: current UTC)")

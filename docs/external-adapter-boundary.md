@@ -1,6 +1,7 @@
 # External Candidate Provenance Boundary
 
-The external boundary, introduced in v0.5-v0.7 and retained in v1.0.0, can
+The external boundary, introduced in v0.5-v0.7 and retained through
+v2.0.0-alpha.1, can
 evaluate candidate answers produced outside this repository
 without letting external metadata contaminate the verifier.
 
@@ -59,6 +60,29 @@ The adapter returns a transcript. The transcript normalizer extracts the
 candidate. The verifier receives only the normalized candidate, evidence, input,
 and verifier rules.
 
+## V2 Candidate-Output Validity Gate
+
+The Frontier Delta candidate adapter applies one deterministic gate before lane
+canonicalisation:
+
+- empty or whitespace text: `no_model_output`;
+- no strict JSON object found, including non-finite constants or unpaired
+  Unicode surrogates: `unparseable_model_output`;
+- valid non-object JSON: `invalid_model_output`; and
+- valid JSON object: continue through the existing lane canonicaliser.
+
+Invalid text receives zero credit and never reaches a canonicaliser or scorer.
+For surrounding prose, extraction uses the first decodable top-level object;
+when multiple top-level objects occur, the first wins. Objects nested inside a
+non-object container such as an array are not extracted.
+The gate preserves a deterministic response-text SHA-256 and parse notes; it does not
+repair invalid text or invent a replacement object. Valid objects retain the
+legacy canonicalisation contract, including its lane-specific normalization.
+
+The historical Fable capture harness is preserved as external evidence tooling;
+it is not a live adapter in the trusted registry and is not selected by CI. No
+new provider capture surface is implemented in alpha.1.
+
 ## Provenance
 
 Every attempt writes `attempt_NNN_provenance.json` beside the attempt files. The
@@ -98,4 +122,5 @@ Both attempts are preserved under `agent_runs/<run_id>/`.
 
 See [Architecture Stack](architecture-stack.md) for the boundary between the
 deterministic offline instrument and the optional adapter surface. v1.0.0 adds
-no provider integration or live-model roadmap work.
+no provider integration. Alpha.1 adds candidate integrity and campaign controls,
+not provider execution.
