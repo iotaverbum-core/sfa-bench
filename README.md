@@ -22,6 +22,14 @@ canonicalisation, append-only correction lineage for provisional external
 evidence, provider-neutral campaign pre-registration, and deterministic
 benchmark locking. It does not add provider capture or change the frozen judge.
 
+The checked-in alpha.2 implementation candidate adds a lock-bound,
+provider-neutral capture lifecycle, exact adapter-boundary byte preservation,
+crash-safe immutable events, synthetic transport, separate offline judgment,
+and an explicitly unratified review bundle. It does not run a live provider
+campaign, authenticate provider/model identity, rank models, or change the
+frozen judge. The public repository version remains alpha.1 until the distinct
+human-authorized release amendment.
+
 ## What this is not
 
 - Not a live model leaderboard.
@@ -206,11 +214,12 @@ and supported interpretations.
 
 ## Limitations
 
-Canonical verification and the alpha.1 correction/campaign commands do not call
-live models. The repository preserves historical external candidate evidence,
-but provider capture and repeated live campaigns remain outside the trusted core
-and CI. SFA-Bench does not rank real providers, prove that a retry policy improves
-models, inspect hidden chain-of-thought, or provide guarantees beyond its
+Canonical verification and the alpha.2 synthetic capture commands do not call
+live models. The repository preserves historical external candidate evidence
+and now implements an offline-tested adapter capture boundary, but no new live
+provider campaign has run and provider credentials remain outside the trusted
+core and CI. SFA-Bench does not rank real providers, prove that a retry policy
+improves models, inspect hidden chain-of-thought, or provide guarantees beyond its
 implemented checks. The rule-based verifier is intentionally narrow and is not
 semantically complete.
 
@@ -231,6 +240,19 @@ python campaign_cli.py validate-candidate --manifest campaigns/examples/gpt56-dr
 
 The GPT-5.6 files are `draft_not_executed` examples with unconfirmed provider
 identifiers. They do not assert API access, execution, a result, or a ranking.
+
+## V2 alpha.2 implementation-candidate commands
+
+```bash
+python -m unittest tests.test_campaign_capture
+python campaign_capture_check.py
+python campaign_capture_cli.py --help
+```
+
+These commands use only the deterministic synthetic adapter. See the
+[Alpha.2 Campaign Execution Protocol](docs/research/sfa-bench-v2-alpha2-campaign-execution.md)
+and [PowerShell example](examples/v2_alpha2_campaign_capture_powershell.md).
+Capture success and review packaging do not ratify evidence.
 
 ## GroundLedger product layer
 
@@ -255,6 +277,13 @@ research instrument's release line or its DOI. See
 - [V2 Threat-Model Amendment](docs/research/sfa-bench-v2-threat-model-amendment.md)
 - [V2 Architecture Decisions](docs/research/sfa-bench-v2-alpha1-decisions.md)
 - [V2 PowerShell Example](examples/v2_campaign_powershell.md)
+- [Alpha.2 Campaign Execution Protocol](docs/research/sfa-bench-v2-alpha2-campaign-execution.md)
+- [Alpha.2 Capture Artifact Specification](docs/research/sfa-bench-v2-alpha2-capture-artifact-spec.md)
+- [Alpha.2 Threat Model](docs/research/sfa-bench-v2-alpha2-threat-model.md)
+- [Alpha.2 Recovery Guide](docs/research/sfa-bench-v2-alpha2-recovery-guide.md)
+- [Alpha.2 Contributor Guide](docs/research/sfa-bench-v2-alpha2-contributor-guide.md)
+- [Alpha.2 Release Checklist](docs/research/sfa-bench-v2-alpha2-release-checklist.md)
+- [Alpha.2 Decision Log](docs/research/sfa-bench-v2-alpha2-decisions.md)
 - [Failure Fingerprinting](docs/failure-fingerprinting.md)
 - [Policy-Guided Retry](docs/policy-guided-retry.md)
 - [Tamper Suite](docs/tamper-suite.md)

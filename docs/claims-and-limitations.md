@@ -1,8 +1,9 @@
 # Claims and Limitations
 
 This document defines the interpretation boundary for SFA-Bench
-v2.0.0-alpha.1. Claims
-apply to the checked-in implementation, fixtures, and explicit test conditions.
+v2.0.0-alpha.1 and the checked-in alpha.2 implementation candidate. Claims apply
+to the checked-in implementation, fixtures, synthetic adapter, and explicit test
+conditions. No new live provider campaign occurred.
 
 ## Supported claims
 
@@ -32,6 +33,19 @@ apply to the checked-in implementation, fixtures, and explicit test conditions.
 - Benchmark locks bind declared campaign policy, prompt references, and tested
   file classes; the CLI proves bound files match the declared Git commit and
   current release of record without accepting an injected provenance context.
+- Alpha.2 lifecycle state is derived from canonical, immutable, hash-chained
+  event files and covered illegal/interrupted transitions fail closed.
+- Exact request and response-body bytes observed at the synthetic adapter
+  boundary round-trip through content-addressed private blobs, including binary
+  and non-UTF-8 content.
+- Covered duplicate execution/attempt, concurrent writer, partial capture,
+  response/manifest/ledger, secret-metadata, and path-safety cases are detected
+  or rejected.
+- Sealed capture and deterministic judgment are separate offline operations;
+  provider, adapter, retry, and authorization metadata have an empty judgment
+  projection.
+- Deterministic review bundles contain public hashes and warnings, exclude raw
+  bodies, and remain explicitly unratified.
 
 ## Unsupported claims
 
@@ -58,6 +72,13 @@ apply to the checked-in implementation, fixtures, and explicit test conditions.
   self-improvement, automatic ratification, or automatic promotion.
 - Claims of EU AI Act approval, legal conformity, certification, or regulatory
   conformity from an SFA-Bench result.
+- Claims that adapter-boundary bytes prove provider-side origin, complete wire
+  fidelity, absence of SDK/proxy transformations, or access to hidden reasoning.
+- Claims that provider/model labels or request identifiers authenticate a real
+  provider product, model snapshot, execution origin, or training cutoff.
+- Claims that a structurally valid execution authorization proves the submitter
+  is human or establishes legal authority, consent, entitlement, ownership, or
+  provider approval.
 
 ## Qualification of key terms
 
@@ -83,12 +104,29 @@ and correction does not itself ratify the result.
 It detects changes within its fixed and declared path sets; it is not a universal
 security proof.
 
+"Exact captured bytes" means the bytes observed by the named adapter at the
+declared capture boundary. It does not mean independently authenticated provider
+wire bytes.
+
+"Execution authorized" means a supplied execution-only artifact passed the
+implemented schema, digest, campaign, lock, request, adapter, and retry binding
+checks. It does not authenticate the operator or authorize ratification.
+
+"Capture provenance" means internal consistency among Git-bound code,
+preregistration, lock, declared metadata, lifecycle events, and captured byte
+hashes. Provider/model/request identifiers remain
+`provider_declared_unverified` unless a separate signed-provider mechanism is
+implemented and reviewed; alpha.2 implements no such mechanism.
+
 ## Scope changes
 
 Any future change to verifier behaviour, taxonomy, provider execution, fixture
 provenance, or security assumptions requires a new claim review. Alpha.1 adds
 candidate-output integrity and campaign controls without changing the frozen
-verifier or introducing provider capture into the trusted core.
+verifier. The alpha.2 implementation candidate adds a provider-neutral capture
+envelope outside deterministic judgment, tested only with synthetic evidence.
+It does not establish that a live campaign ran or move provider/adapter metadata
+into verifier judgment.
 
 Generation reproducibility may be limited; judgment reproducibility is mandatory.
 
