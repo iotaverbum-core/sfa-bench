@@ -14,6 +14,7 @@ The manifest (`autolab/frozen_manifest.json`) declares the frozen paths. v0.8.0:
 
 | Path | Why it is frozen |
 | --- | --- |
+| `.gitattributes` | cross-platform LF checkout policy for hash-bound evidence and protocol inputs |
 | `sfa/verifier.py` | verifier verdict logic |
 | `sfa/categories.py` | verifier verdict logic (failure categories) |
 | `sfa/ledger.py` | append-only ledger code |

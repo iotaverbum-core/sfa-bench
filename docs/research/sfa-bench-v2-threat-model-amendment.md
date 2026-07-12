@@ -66,6 +66,20 @@ members from every declared class, including the campaign protocol implementatio
 
 Residual risk: only files in the fixed and declared binding sets are covered.
 
+### Cross-platform checkout drift
+
+Threat: Git line-ending conversion changes hash-bound text bytes on Windows, so
+an otherwise clean clone cannot reproduce the preserved evidence or benchmark
+lock.
+
+Control: the frozen `.gitattributes` applies `text=auto eol=lf` repository-wide.
+Normal Windows and POSIX clones therefore retain the LF bytes stored in Git for
+detected text files. Candidate integrity and campaign lock checks still fail
+closed if any bound byte sequence differs.
+
+Residual risk: a user can explicitly override repository attributes or alter
+files after checkout; the deterministic checks detect the resulting byte drift.
+
 ### Self-asserted lock provenance
 
 Threat: an API caller supplies invented benchmark and verifier commits through

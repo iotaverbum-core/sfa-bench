@@ -161,6 +161,11 @@ version, the gate's expected release, or any command header disagree on the
 release. `git diff --name-only` is useful for tracked changes but is insufficient
 because it omits untracked files.
 
+The repository's frozen `.gitattributes` forces LF checkout for detected text
+files. This keeps hash-bound evidence and benchmark-lock inputs byte-stable even
+when a Windows Git installation has `core.autocrlf=true`. Do not override that
+attribute when reproducing a governed result.
+
 ## Supported interpretation
 
 The repository supports claims about determinism and separation under the

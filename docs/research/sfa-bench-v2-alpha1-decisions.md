@@ -238,3 +238,19 @@ reasoning. A decision remains subject to rejection by tests or independent revie
   labels cannot be represented as committed evidence.
 - Rollback or rejection condition: a missing or byte-different commit binding
   verifies successfully.
+
+## ADR-V2-016: Freeze LF Checkout Semantics
+
+- Problem: a normal Windows clone with `core.autocrlf=true` rewrites hash-bound
+  JSON and JSONL bytes, so preserved evidence fails its exact digest check.
+- Alternatives: require reviewers to configure Git manually; hash normalized
+  text instead of preserved bytes; enforce repository checkout semantics.
+- Selected option: add and freeze `.gitattributes` with `text=auto eol=lf`.
+- Evidence: the original Windows clone reproduced the failure, while a clone
+  using LF checkout reproduced the candidate and campaign seals.
+- Affected trust boundary: Git object bytes to cross-platform checked-out
+  evidence and benchmark inputs.
+- Compatibility impact: detected text files use LF in every checkout; binary
+  files remain subject to Git's `text=auto` classification.
+- Rollback or rejection condition: a normal Windows clone changes a protected
+  evidence digest or fails the offline integrity checks.
