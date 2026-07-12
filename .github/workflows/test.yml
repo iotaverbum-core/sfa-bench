@@ -38,6 +38,33 @@ jobs:
           SFA_FROZEN_ZONE_AMENDMENT_TOKEN: ${{ secrets.SFA_FROZEN_ZONE_AMENDMENT_TOKEN }}
         run: python frozen_zone_check.py --ci
 
+  campaign-capture:
+    name: Campaign capture (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - name: Check out repository with provenance history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run focused campaign capture tests
+        run: python -m unittest tests.test_campaign_capture
+
+      - name: Run Git-bound synthetic capture check
+        run: python campaign_capture_check.py
+
+      - name: Confirm offline and credential-free CLI surface
+        run: python campaign_capture_cli.py --help
+
   product:
     runs-on: ubuntu-latest
     steps:

@@ -22,6 +22,7 @@ COMMANDS = (
     "frozen_zone_check.py",
     "candidate_integrity_check.py",
     "campaign_protocol_check.py",
+    "campaign_capture_check.py",
     "preregistration_demo.py",
     "autolab_controller_demo.py",
     "ratification_demo.py",
@@ -42,7 +43,7 @@ COMMANDS = (
     "causal_report.py",
 )
 PROVENANCE_COMMANDS = frozenset(
-    {"candidate_integrity_check.py", "campaign_protocol_check.py"}
+    {"candidate_integrity_check.py", "campaign_protocol_check.py", "campaign_capture_check.py"}
 )
 EXCLUDED_DIRECTORIES = {
     ".git",
