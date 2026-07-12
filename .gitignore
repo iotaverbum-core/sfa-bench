@@ -10,3 +10,4 @@ policy_runs/
 .verify-all-*/
 product/data/
 product/sales/**/*.pdf
+out/campaign_runs/

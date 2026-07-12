@@ -1,0 +1,38 @@
+{
+  "$id": "https://github.com/iotaverbum-core/sfa-bench/campaigns/alpha2/schemas/judgment.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "benchmark_lock_digest": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "campaign_id": {"type": "string"},
+    "candidate_decode_status": {"enum": ["utf8", "binary_non_utf8"]},
+    "candidate_validity": {"type": "string"},
+    "capture_manifest_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "deterministic_result": {"type": "object"},
+    "execution_id": {"type": "string"},
+    "judged_at": {"format": "date-time", "type": "string"},
+    "judgment_content_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "judgment_input_projection": {
+      "additionalProperties": false,
+      "properties": {
+        "adapter_metadata": {"maxProperties": 0, "type": "object"},
+        "authorization_metadata": {"maxProperties": 0, "type": "object"},
+        "provider_metadata": {"maxProperties": 0, "type": "object"},
+        "retry_metadata": {"maxProperties": 0, "type": "object"}
+      },
+      "required": ["provider_metadata", "adapter_metadata", "authorization_metadata", "retry_metadata"],
+      "type": "object"
+    },
+    "judgment_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "provenance_class": {"const": "derived_deterministic"},
+    "ratification_status": {"const": "unratified"},
+    "response_blob_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "schema_version": {"const": "sfa_bench.campaign_capture.judgment.v1"},
+    "task_reference": {"type": "string"},
+    "task_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "verifier_commit": {"type": "string"}
+  },
+  "required": ["schema_version", "campaign_id", "execution_id", "benchmark_lock_digest", "verifier_commit", "capture_manifest_sha256", "response_blob_sha256", "task_reference", "task_sha256", "candidate_decode_status", "candidate_validity", "deterministic_result", "judgment_input_projection", "judged_at", "provenance_class", "ratification_status", "judgment_content_sha256", "judgment_sha256"],
+  "title": "SFA-Bench Offline Judgment v1",
+  "type": "object"
+}

@@ -1,0 +1,29 @@
+{
+  "$id": "https://github.com/iotaverbum-core/sfa-bench/campaigns/alpha2/schemas/review-bundle.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "adapter_provenance": {"type": "object"},
+    "benchmark_lock": {"type": "object"},
+    "bundle_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "campaign_id": {"type": "string"},
+    "capture_manifest": {"type": "object"},
+    "claims_and_limitations": {"type": "object"},
+    "deterministic_judgment": {"type": ["object", "null"]},
+    "execution_authorization": {"type": "object"},
+    "execution_id": {"type": "string"},
+    "integrity_verification_report": {"type": "object"},
+    "lifecycle_ledger": {"type": "object"},
+    "lineage_references": {"type": "object"},
+    "packaging_is_approval": {"const": false},
+    "preregistration": {"type": "object"},
+    "ratification_status": {"const": "unratified"},
+    "raw_bodies_included": {"const": false},
+    "raw_evidence_hashes": {"items": {"pattern": "^[0-9a-f]{64}$", "type": "string"}, "type": "array", "uniqueItems": true},
+    "schema_version": {"const": "sfa_bench.campaign_capture.review_bundle.v1"},
+    "unresolved_warnings": {"items": {"type": "string"}, "type": "array", "uniqueItems": true}
+  },
+  "required": ["schema_version", "campaign_id", "execution_id", "preregistration", "benchmark_lock", "execution_authorization", "lifecycle_ledger", "raw_evidence_hashes", "capture_manifest", "adapter_provenance", "integrity_verification_report", "deterministic_judgment", "claims_and_limitations", "unresolved_warnings", "lineage_references", "ratification_status", "packaging_is_approval", "raw_bodies_included", "bundle_sha256"],
+  "title": "SFA-Bench Unratified Review Bundle v1",
+  "type": "object"
+}

@@ -1,0 +1,73 @@
+{
+  "$id": "https://github.com/iotaverbum-core/sfa-bench/campaigns/alpha2/schemas/execution-authorization.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Execution-only declared authorization. Validation does not establish real-world identity or legal authority.",
+  "properties": {
+    "adapter": {
+      "additionalProperties": false,
+      "properties": {
+        "adapter_id": {"minLength": 1, "type": "string"},
+        "adapter_version": {"minLength": 1, "type": "string"},
+        "implementation_path": {"minLength": 1, "type": "string"}
+      },
+      "required": ["adapter_id", "adapter_version", "implementation_path"],
+      "type": "object"
+    },
+    "authorization_digest": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "authorization_id": {"pattern": "^[a-z0-9][a-z0-9._-]{0,63}$", "type": "string"},
+    "automatic_actions": {
+      "additionalProperties": false,
+      "properties": {
+        "promote": {"const": false},
+        "publish": {"const": false},
+        "ratify": {"const": false},
+        "release": {"const": false}
+      },
+      "required": ["ratify", "promote", "publish", "release"],
+      "type": "object"
+    },
+    "benchmark_commit": {"pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$", "type": "string"},
+    "benchmark_lock_digest": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "campaign_id": {"minLength": 1, "type": "string"},
+    "execution_id": {"pattern": "^[a-z0-9][a-z0-9._-]{0,63}$", "type": "string"},
+    "issued_at": {"format": "date-time", "type": "string"},
+    "operator_declaration": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_type": {"const": "declared_human_operator"},
+        "authorization_scope": {"const": "execution_only"},
+        "identity": {"maxLength": 200, "minLength": 1, "type": "string"}
+      },
+      "required": ["identity", "authority_type", "authorization_scope"],
+      "type": "object"
+    },
+    "ratification_status": {"const": "unratified"},
+    "release_identifier": {"pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+(?:-(?:alpha|beta|rc)\\.[0-9]+)?$", "type": "string"},
+    "request": {
+      "additionalProperties": false,
+      "properties": {
+        "byte_length": {"minimum": 0, "type": "integer"},
+        "case_reference": {"minLength": 1, "type": "string"},
+        "prompt_reference": {"minLength": 1, "type": "string"},
+        "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"}
+      },
+      "required": ["sha256", "byte_length", "prompt_reference", "case_reference"],
+      "type": "object"
+    },
+    "retry_policy": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_reasons": {"items": {"minLength": 1, "type": "string"}, "type": "array", "uniqueItems": true},
+        "max_attempts": {"minimum": 1, "type": "integer"}
+      },
+      "required": ["max_attempts", "allowed_reasons"],
+      "type": "object"
+    },
+    "schema_version": {"const": "sfa_bench.campaign_capture.execution_authorization.v1"},
+    "verifier_commit": {"pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$", "type": "string"}
+  },
+  "required": ["schema_version", "authorization_id", "campaign_id", "benchmark_lock_digest", "benchmark_commit", "verifier_commit", "release_identifier", "execution_id", "adapter", "request", "retry_policy", "operator_declaration", "issued_at", "ratification_status", "automatic_actions", "authorization_digest"],
+  "title": "SFA-Bench Execution Authorization v1",
+  "type": "object"
+}

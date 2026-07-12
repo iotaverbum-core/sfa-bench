@@ -1,0 +1,22 @@
+{
+  "$id": "https://github.com/iotaverbum-core/sfa-bench/campaigns/alpha2/schemas/lifecycle-event.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {"minLength": 1, "type": "string"},
+    "event_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "event_type": {"minLength": 1, "type": "string"},
+    "execution_id": {"pattern": "^[a-z0-9][a-z0-9._-]{0,63}$", "type": "string"},
+    "from_state": {"enum": [null, "draft", "validated", "locked", "execution_authorized", "capturing", "captured", "interrupted", "aborted", "sealed", "judged", "review_required"]},
+    "observed_at": {"format": "date-time", "type": "string"},
+    "payload": {"type": "object"},
+    "previous_event_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "schema_version": {"const": "sfa_bench.campaign_capture.lifecycle_event.v1"},
+    "sequence": {"minimum": 0, "type": "integer"},
+    "to_state": {"enum": ["draft", "validated", "locked", "execution_authorized", "capturing", "captured", "interrupted", "aborted", "sealed", "judged", "review_required"]},
+    "transition": {"type": "boolean"}
+  },
+  "required": ["schema_version", "sequence", "event_id", "execution_id", "event_type", "transition", "from_state", "to_state", "observed_at", "previous_event_sha256", "payload", "event_sha256"],
+  "title": "SFA-Bench Campaign Lifecycle Event v1",
+  "type": "object"
+}
