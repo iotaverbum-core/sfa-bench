@@ -465,8 +465,7 @@ from typing import Any
 
 from sfa.hashing import sha256_hex
 from sfa_bench.frontier_delta import schemas
-from sfa_bench.frontier_delta.candidate_adapter import canonicalize
-from sfa_bench.frontier_delta.scorers import score_task
+from sfa_bench.frontier_delta.candidate_adapter import score_response
 
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -483,9 +482,8 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
-# Canonicalization is provided by the reusable, unit-tested module
-# sfa_bench.frontier_delta.candidate_adapter.canonicalize (imported above),
-# which is the single source of truth and covers all eight lanes.
+# Candidate scoring is provided by the reusable, unit-tested score_response
+# boundary. Invalid output is rejected before lane canonicalisation.
 
 
 def tally_failure_modes(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -571,10 +569,7 @@ def main() -> int:
         schemas.assert_valid_task(task)
 
         raw = raw_rows[task_id]
-        output, parse_notes = canonicalize(task, raw.get("response_text", ""))
-        result = score_task(task, output)
-        result["canonical_output"] = output
-        result["parse_notes"] = parse_notes
+        result = score_response(task, raw.get("response_text", ""))
         result["blinded_prompt_sha256"] = raw.get("blinded_prompt_sha256")
         result["raw_response_sha256"] = raw.get("raw_response_sha256")
         result["task_file_sha256"] = raw.get("task_file_sha256")

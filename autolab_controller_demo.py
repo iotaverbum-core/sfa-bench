@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v1.1.0 AutoLab controller demo (SFA-AutoLab v0, Item 3).
+"""SFA-Bench v2.0.0-alpha.1 AutoLab controller demo (SFA-AutoLab v0, Item 3).
 
 Offline, deterministic. Runs one controller iteration with a temporary
 meta-ledger and a fake builder callback. The demo asserts:
@@ -68,7 +68,7 @@ def _events(path: Path) -> list[str]:
 
 
 def main() -> int:
-    print("# SFA-Bench v1.1.0 AutoLab controller demo")
+    print("# SFA-Bench v2.0.0-alpha.1 AutoLab controller demo")
     print("=" * 56)
 
     failures: list[str] = []

@@ -9,7 +9,7 @@ Example:
 
   python -m sfa_bench.frontier_delta.runner \\
       --suite frontier_delta_v0 \\
-      --model gpt-5.5 \\
+      --model historical-fixture-label \\
       --input sfa_bench/frontier_delta/fixtures/gpt55_outputs.jsonl \\
       --out out/frontier_delta_gpt55_baseline
 """
@@ -27,9 +27,9 @@ from .scorers import score_task
 from .tasks import load_tasks
 
 
-def load_output_fixture(path: str | Path) -> dict[str, dict[str, Any]]:
+def load_output_fixture(path: str | Path) -> dict[str, dict[str, Any] | None]:
     """Load a JSONL model-output fixture into {task_id: output}."""
-    outputs: dict[str, dict[str, Any]] = {}
+    outputs: dict[str, dict[str, Any] | None] = {}
     with open(path, "r", encoding="utf-8") as fh:
         for line_no, raw in enumerate(fh, start=1):
             line = raw.strip()
@@ -39,13 +39,13 @@ def load_output_fixture(path: str | Path) -> dict[str, dict[str, Any]]:
             task_id = record.get("task_id")
             if not task_id:
                 raise ValueError(f"{path}:{line_no}: record missing task_id")
-            outputs[task_id] = record.get("output", {})
+            outputs[task_id] = record.get("output")
     return outputs
 
 
 def run_suite(
     model: str,
-    outputs: dict[str, dict[str, Any]],
+    outputs: dict[str, dict[str, Any] | None],
     *,
     generated_at: str | None = None,
     suite_version: str = schemas.SUITE_VERSION,
@@ -88,7 +88,11 @@ def _write_artifacts(report: dict[str, Any], out_dir: Path) -> list[Path]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--suite", default=schemas.SUITE_VERSION, help="suite version (frozen: frontier_delta_v0)")
-    parser.add_argument("--model", required=True, help="model label, e.g. gpt-5.5")
+    parser.add_argument(
+        "--model",
+        required=True,
+        help="evidence label; provider identity must be verified separately",
+    )
     parser.add_argument("--input", required=True, help="JSONL model-output fixture")
     parser.add_argument("--out", help="output directory for report + artifacts")
     parser.add_argument("--now", help="ISO timestamp to stamp as generated_at (default: current UTC)")

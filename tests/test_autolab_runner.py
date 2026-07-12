@@ -324,8 +324,13 @@ class FrozenZoneIntegrationTests(unittest.TestCase):
         amendments = {a.get("amendment_id"): a for a in fz.load_amendments(REPO_ROOT)}
         record = amendments.get("fz-v0.7.0-add-runner")
         self.assertIsNotNone(record, "fz-v0.7.0 amendment record missing")
-        self.assertEqual(record["new_zone_hash"], manifest["zone_hash"])
         self.assertIn("autolab/runner.py", record["applies_to"])
+        if record["new_zone_hash"] == manifest["zone_hash"]:
+            return
+        successor = amendments.get("fz-v0.8.0-v2-alpha1-integrity-release")
+        self.assertIsNotNone(successor, "v0.7.0 amendment must be linked by a successor")
+        self.assertEqual(successor["prev_zone_hash"], record["new_zone_hash"])
+        self.assertEqual(successor["new_zone_hash"], manifest["zone_hash"])
 
 
 if __name__ == "__main__":

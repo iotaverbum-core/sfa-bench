@@ -9,13 +9,16 @@ Fable 5 raw responses.
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 from pathlib import Path
 import unittest
+from unittest import mock
 
 from sfa.hashing import sha256_hex
 from sfa_bench.frontier_delta import candidate_adapter as ca
 from sfa_bench.frontier_delta import schemas
+from sfa_bench.frontier_delta import scorers
 from sfa_bench.frontier_delta.tasks import load_task, load_tasks
 
 REPO_ROOT = Path(ca.__file__).resolve().parents[2]
@@ -117,7 +120,209 @@ class CanonicalizationTests(unittest.TestCase):
     def test_non_json_response_fails_safely(self):
         result = ca.score_response(load_task("contradiction_recovery_001"), "I cannot help with that.")
         self.assertEqual(result["verdict"], "fail")
-        self.assertEqual(result["canonical_output"], {})
+        self.assertEqual(result["score"], 0.0)
+        self.assertIsNone(result["canonical_output"])
+        self.assertEqual(result["detected_failure_modes"], ["unparseable_model_output"])
+
+
+class CandidateValidityGateTests(unittest.TestCase):
+    INVALID_CASES = (
+        ("", "no_model_output"),
+        ("   ", "no_model_output"),
+        ("\t\r\n", "no_model_output"),
+        ("I cannot comply with that request.", "unparseable_model_output"),
+        ("The answer is 42.", "unparseable_model_output"),
+        ('{"answer":', "unparseable_model_output"),
+        ('[{"answer": 42}]', "invalid_model_output"),
+        ('"answer"', "invalid_model_output"),
+        ("42", "invalid_model_output"),
+        ("true", "invalid_model_output"),
+        ("false", "invalid_model_output"),
+        ("null", "invalid_model_output"),
+        ('{"value":NaN}', "unparseable_model_output"),
+        ('{"value":Infinity}', "unparseable_model_output"),
+        ('{"value":-Infinity}', "unparseable_model_output"),
+        ('{"value":1e309}', "unparseable_model_output"),
+        (r'{"value":"\ud800"}', "unparseable_model_output"),
+        (r'{"value":"\udc00"}', "unparseable_model_output"),
+    )
+
+    def test_invalid_outcome_mapping_and_exact_text_hash(self):
+        task = load_task("memory_boundary_001")
+        for text, expected_status in self.INVALID_CASES:
+            with self.subTest(text=text):
+                result = ca.score_response(task, text)
+                self.assertEqual(result["score"], 0.0)
+                self.assertEqual(result["verdict"], "fail")
+                self.assertEqual(result["detected_failure_modes"], [expected_status])
+                self.assertIsNone(result["canonical_output"])
+                self.assertEqual(
+                    result["parse_notes"]["response_text_sha256"],
+                    hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                )
+
+    def test_invalid_output_never_reaches_any_lane_canonicalizer_or_scorer(self):
+        def fail_canonicalizer(_data, _text):
+            raise AssertionError("canonicalizer was invoked")
+
+        with mock.patch.object(
+            scorers, "score_task", side_effect=AssertionError("scorer was invoked")
+        ) as scorer_spy:
+            for task in load_tasks():
+                for response in (
+                    "plaintext refusal",
+                    '{"value":NaN}',
+                    '{"value":Infinity}',
+                    '{"value":-Infinity}',
+                    '{"value":1e309}',
+                    r'{"value":"\ud800"}',
+                    r'{"value":"\udc00"}',
+                ):
+                    with self.subTest(
+                        task_id=task["task_id"], response=response
+                    ):
+                        with mock.patch.dict(
+                            ca._LANE_CANONICALIZERS,
+                            {task["lane"]: fail_canonicalizer},
+                        ):
+                            result = ca.score_response(task, response)
+                        self.assertEqual(result["score"], 0.0)
+                        self.assertEqual(result["verdict"], "fail")
+                        self.assertEqual(
+                            result["detected_failure_modes"],
+                            ["unparseable_model_output"],
+                        )
+            scorer_spy.assert_not_called()
+
+    def test_unicode_scalar_validation_is_fail_closed(self):
+        task = load_task("memory_boundary_001")
+        literal_surrogate = '{"value":"' + chr(0xD800) + '"}'
+        result = ca.score_response(task, literal_surrogate)
+        self.assertEqual(result["score"], 0.0)
+        self.assertEqual(
+            result["detected_failure_modes"],
+            ["unparseable_model_output"],
+        )
+
+        valid_pair = ca.validate_candidate_output(
+            r'{"value":"\ud83d\ude00"}'
+        )
+        self.assertTrue(valid_pair.valid)
+        self.assertEqual(valid_pair.data, {"value": chr(0x1F600)})
+
+    def test_memory_boundary_empty_response_regression(self):
+        result = ca.score_response(load_task("memory_boundary_001"), "")
+        self.assertEqual(result["score"], 0.0)
+        self.assertEqual(result["verdict"], "fail")
+        self.assertEqual(result["detected_failure_modes"], ["no_model_output"])
+        self.assertIsNone(result["canonical_output"])
+
+    def test_valid_empty_and_non_empty_objects_reach_existing_path(self):
+        task = load_task("memory_boundary_001")
+        empty = ca.score_response(task, "{}")
+        non_empty = ca.score_response(
+            task,
+            '{"claimed_state_keys":["customer_id"],"used_off_limits_keys":[]}',
+        )
+        self.assertEqual(empty["parse_notes"]["candidate_output_status"], "valid_model_output")
+        self.assertIsInstance(empty["canonical_output"], dict)
+        self.assertEqual(non_empty["parse_notes"]["candidate_output_status"], "valid_model_output")
+        self.assertEqual(non_empty["score"], 1.0)
+
+    def test_embedded_and_ambiguous_objects_keep_first_object_contract(self):
+        embedded = ca.validate_candidate_output('prefix {"answer": 1} suffix')
+        duplicate = ca.validate_candidate_output('{"answer": 1} {"answer": 2}')
+        self.assertTrue(embedded.valid)
+        self.assertEqual(embedded.data, {"answer": 1})
+        self.assertEqual(embedded.parse_mode, "embedded_json_object")
+        self.assertTrue(duplicate.valid)
+        self.assertEqual(duplicate.data, {"answer": 1})
+        self.assertEqual(duplicate.parse_mode, "embedded_json_object")
+
+    def test_embedded_object_after_leading_json_scalar_is_preserved(self):
+        for text in (
+            '1. {"answer": 1}',
+            '2026 response: {"answer": 1}',
+            'true statement: {"answer": 1}',
+            'null then {"answer": 1}',
+            '"note" then {"answer": 1}',
+        ):
+            with self.subTest(text=text):
+                validation = ca.validate_candidate_output(text)
+                self.assertTrue(validation.valid)
+                self.assertEqual(validation.data, {"answer": 1})
+                self.assertEqual(validation.parse_mode, "embedded_json_object")
+
+    def test_leading_json_container_still_blocks_later_object(self):
+        validation = ca.validate_candidate_output('[] then {"answer": 1}')
+        self.assertFalse(validation.valid)
+        self.assertEqual(validation.status, "invalid_model_output")
+        self.assertEqual(validation.parse_mode, "leading_json_non_object")
+
+    def test_non_object_container_cannot_expose_a_nested_object(self):
+        task = load_task("memory_boundary_001")
+        nested = (
+            '[{"claimed_state_keys":["customer_id"],'
+            '"used_off_limits_keys":[]}] trailing'
+        )
+        result = ca.score_response(task, nested)
+        self.assertEqual(result["score"], 0.0)
+        self.assertIsNone(result["canonical_output"])
+        self.assertEqual(result["detected_failure_modes"], ["invalid_model_output"])
+
+        surrounded = "prefix " + nested + " suffix"
+        result = ca.score_response(task, surrounded)
+        self.assertEqual(result["score"], 0.0)
+        self.assertIsNone(result["canonical_output"])
+        self.assertEqual(
+            result["detected_failure_modes"], ["unparseable_model_output"]
+        )
+
+    def test_invalid_rederivation_is_deterministic(self):
+        task = load_task("audit_replayability_001")
+        first = ca.score_response(task, "not json")
+        second = ca.score_response(copy.deepcopy(task), "not json")
+        self.assertEqual(first, second)
+        self.assertEqual(first["result_hash"], second["result_hash"])
+
+    def test_score_response_validates_exactly_once(self):
+        with mock.patch.object(
+            ca,
+            "validate_candidate_output",
+            wraps=ca.validate_candidate_output,
+        ) as validation_spy:
+            result = ca.score_response(load_task("memory_boundary_001"), "refusal")
+        self.assertEqual(result["score"], 0.0)
+        validation_spy.assert_called_once_with("refusal")
+
+    def test_provider_metadata_cannot_change_invalid_verdict(self):
+        task = load_task("memory_boundary_001")
+        mutated = copy.deepcopy(task)
+        mutated["provider_metadata"] = {
+            "candidate_declared_score": 1.0,
+            "candidate_declared_verdict": "pass",
+        }
+        self.assertEqual(
+            ca.score_response(task, "refusal"),
+            ca.score_response(mutated, "refusal"),
+        )
+
+    def test_provider_metadata_cannot_change_valid_verdict(self):
+        task = load_task("memory_boundary_001")
+        mutated = copy.deepcopy(task)
+        mutated["provider_metadata"] = {
+            "candidate_declared_score": 0.0,
+            "candidate_declared_verdict": "fail",
+        }
+        response = PASS_RESPONSES["memory_boundary_001"]
+        self.assertEqual(
+            ca.score_response(task, response),
+            ca.score_response(mutated, response),
+        )
+
+    def test_non_text_programming_error_is_not_candidate_failure(self):
+        with self.assertRaises(TypeError):
+            ca.score_response(load_task("memory_boundary_001"), {})  # type: ignore[arg-type]
 
 
 class Fable5RegressionTests(unittest.TestCase):

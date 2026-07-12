@@ -2,6 +2,54 @@
 
 All notable changes to SFA-Bench will be documented in this file.
 
+## 2.0.0-alpha.1 - 2026-07-12
+
+### Added
+
+- A single candidate-output validity gate before Frontier lane canonicalisation,
+  with distinct `no_model_output`, `unparseable_model_output`, and
+  `invalid_model_output` zero-credit outcomes.
+- Deterministic, no-overwrite successor evidence tooling and a lineage-linked
+  correction of the provisional Fable-5 candidate result.
+- Provider-neutral campaign, candidate-manifest, execution-plan, benchmark-lock,
+  and ratification-policy validators with inspectable JSON Schemas.
+- Offline campaign and evidence CLIs, lock provenance checks, adversarial tests,
+  and non-mutating release verification commands.
+- Benchmark-lock bindings for declared system prompts and user/case-set
+  references, including deterministic directory digests.
+- Frozen LF checkout semantics so normal Windows Git checkouts that honor
+  repository attributes do not rewrite hash-bound research evidence or campaign
+  inputs.
+
+### Fixed
+
+- Issue #20: empty, refusal-like, malformed, and non-object candidate responses
+  can no longer receive synthetic credit from lane defaults.
+- Missing structured fixture output remains `None` rather than becoming `{}`.
+- Public lock APIs no longer accept caller-injected commit provenance.
+- Nested ratification/promotion key variants and non-finite JSON numbers now fail
+  closed with stable validation codes.
+- Unpaired Unicode surrogates, recursive draft-completion claims, and
+  noncanonical portable paths now fail before dispatch or serialization.
+- Semantic execution, result, approval, acceptance, and endorsement key variants
+  now fail closed without rejecting declared planning controls.
+- Incidental leading JSON scalars in prose no longer suppress a later valid
+  top-level candidate object; leading containers remain invalid.
+- Historical task-capture hashes must match exact bytes or a deterministic
+  LF/CRLF-normalized equivalent.
+- Every campaign lock binding and declared directory membership must match its
+  declared Git commit. The release identifier is read from that commit's version
+  source; deleted, ignored, untracked, or repository-control inputs fail closed.
+
+### Governance
+
+- The original Fable evidence remains byte-preserved and its `0.771` aggregate
+  is explicitly provisional. The corrected `0.6875` successor is not ratified.
+- No live provider campaign, GPT-5.6 result, provider ranking, alignment proof,
+  legal conformity, automatic ratification, or automatic promotion is claimed.
+- The frozen zone now protects the original Fable evidence and corrected
+  successor through an explicit human-authorized amendment record.
+
 ## Unreleased — SFA-AutoLab v0
 
 ### Added (AutoLab Item 7 - End-to-end runner)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v1.1.0 AutoLab lineage + rollback demo (Item 5).
+"""SFA-Bench v2.0.0-alpha.1 AutoLab lineage + rollback demo (Item 5).
 
 Offline, deterministic. Loads sealed pre-registration fixtures, appends a
 human-ratified promotion, inscribes it into append-only lineage, then shows that
@@ -63,7 +63,7 @@ def _rollback() -> dict:
 
 
 def main() -> int:
-    print("# SFA-Bench v1.1.0 AutoLab lineage + rollback demo")
+    print("# SFA-Bench v2.0.0-alpha.1 AutoLab lineage + rollback demo")
     print("=" * 56)
 
     declaration = _load("declaration.json")

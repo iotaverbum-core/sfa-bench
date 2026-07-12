@@ -1,77 +1,79 @@
 # Frontier Delta Suite (v0)
 
-A frozen, fixture-based behavioural benchmark that establishes a **GPT-5.5
-baseline** so future GPT-5.6 candidates (Sol, Terra, Luna) can be compared as
-**behavioural deltas**, not accepted as marketing claims.
+A frozen, fixture-based behavioural benchmark for comparing captured candidate
+artifacts against a stored baseline without changing the deterministic scorer.
 
-> SFA-Bench freezes a GPT-5.5 frontier baseline so future GPT-5.6 results can be
-> measured as behavioural deltas rather than accepted as marketing claims.
+## Historical labels
 
-**Not an AGI claim.** This suite measures whether a model preserves **truth,
-state, objective, and accountability** under specific benchmark pressure across
-eight lanes. It says nothing about general intelligence or overall quality.
+The strings `GPT-5.5`, `GPT-5.6`, `Sol`, `Terra`, and `Luna` occur in
+historical fixtures and preregistration records. They are labels, not proof of a
+provider model identifier, availability, provenance, snapshot, or completed run.
+The stored `gpt55_outputs.jsonl` fixture does not establish named-model
+performance.
+
+**Not an AGI or alignment claim.** This suite measures specified behaviour under
+eight benchmark lanes. It does not establish general intelligence, semantic
+completeness, legal conformity, or overall model quality.
 
 ## The eight lanes
 
 | Lane | What it measures | Task |
 | --- | --- | --- |
-| Long-horizon planning drift | Keeps the original objective + constraints across many steps | `planning_drift_001` |
-| Memory / state boundary | Uses only authorized state; no fabrication, no off-limits keys | `memory_boundary_001` |
-| Tool-use false completion | Only claims "complete" when the tool actually succeeded | `tool_false_completion_001` |
-| Grounding integrity | Every claim cites existing evidence and matches its value | `grounding_integrity_001` |
-| Contradiction recovery | Uses the corrected value **and** flags the contradiction | `contradiction_recovery_001` |
-| Open-ended adaptation | Adapts to a mid-task requirement change without regression | `open_ended_adaptation_001` |
-| Paradigm-shift recognition | Notices when the founding premise is invalidated and replans | `paradigm_shift_001` |
-| Audit replayability | Emits an audit trail whose declared hash re-derives exactly | `audit_replayability_001` |
+| Long-horizon planning drift | Keeps the original objective and constraints | `planning_drift_001` |
+| Memory / state boundary | Uses only authorized state | `memory_boundary_001` |
+| Tool-use false completion | Claims completion only after tool success | `tool_false_completion_001` |
+| Grounding integrity | Cites and matches supplied evidence | `grounding_integrity_001` |
+| Contradiction recovery | Uses and flags the corrected value | `contradiction_recovery_001` |
+| Open-ended adaptation | Applies a requirement change without regression | `open_ended_adaptation_001` |
+| Paradigm-shift recognition | Replans after a premise is invalidated | `paradigm_shift_001` |
+| Audit replayability | Emits a trail whose hash re-derives | `audit_replayability_001` |
 
 ## How it works
 
-1. **Tasks** (`tasks/*.json`) are deterministic JSON with a machine-readable
-   `scoring_rubric.checks` list.
-2. **Model outputs** are supplied as a JSONL fixture (`fixtures/gpt55_outputs.jsonl`),
-   one `{task_id, output}` record per task. v0 is fixture-only — no live API calls,
-   so CI is deterministic.
-3. **Scorers** (`scorers/`) run each task's checks with a deterministic engine and
-   return structured results: `score` (0–1), `verdict` (pass/fail/partial),
-   `detected_failure_modes`, `evidence_snippets`, `explanation`, `replay_possible`,
-   and `scoring_mode` (`deterministic` or `rubric_assisted`).
-4. **Runner** (`runner.py`) scores the whole suite and **report** (`report.py`)
-   seals a baseline with per-lane / per-task scores, a failure-mode tally, replay
-   status, and a hash-chained `results_root_hash` (SFA-Bench ledger pattern).
+1. Tasks under `tasks/*.json` contain deterministic
+   `scoring_rubric.checks`.
+2. Fixture mode reads one `{task_id, output}` record per task. It makes no live
+   API call.
+3. Scorers return a score, verdict, failure modes, evidence snippets,
+   explanation, replay status, and scoring mode.
+4. The runner seals each result and a hash-chained report.
 
-## Run it (fixture mode)
+## Run fixture mode
 
-```bash
-python -m sfa_bench.frontier_delta.runner \
-    --suite frontier_delta_v0 \
-    --model gpt-5.5 \
-    --input sfa_bench/frontier_delta/fixtures/gpt55_outputs.jsonl \
-    --out out/frontier_delta_gpt55_baseline
+```powershell
+py -3 -m sfa_bench.frontier_delta.runner `
+    --suite frontier_delta_v0 `
+    --model historical-fixture-label `
+    --input sfa_bench/frontier_delta/fixtures/gpt55_outputs.jsonl `
+    --out out/frontier_delta_fixture_baseline
 ```
 
-An example sealed baseline is committed under `examples/gpt55_baseline/`
-(`baseline_report.json`, `per_task_results.jsonl`, `summary.txt`).
+An example sealed fixture baseline remains under `examples/gpt55_baseline/`.
+Its historical model field is metadata and is not verified provider provenance.
 
-## Adding real model outputs later
+## Add captured outputs later
 
-Produce the same JSONL shape from a real run — one `{"task_id": ..., "output": {...}}`
-record per task, where `output` carries the fields each lane's rubric inspects
-(e.g. `final_objective_id`, `claimed_state_keys`, `tool_log`, `claims`,
-`audit_trail` + `audit_hash`). Point `--input` at that file and `--model` at the
-candidate label (e.g. `gpt-5.6-sol`). The suite is unchanged, so the result is a
-directly comparable delta against the frozen GPT-5.5 baseline.
+A later capture component may produce the same JSONL shape. Point `--input` at
+that file and use a candidate identity confirmed at execution:
+
+```powershell
+py -3 -m sfa_bench.frontier_delta.runner `
+    --suite frontier_delta_v0 `
+    --model TO_BE_CONFIRMED_AT_EXECUTION `
+    --input path/to/candidate_outputs.jsonl `
+    --out out/frontier_delta_candidate
+```
+
+This alpha release does not implement or run a provider adapter. Capture
+fidelity remains outside the deterministic scorer.
 
 ## Freeze
 
-The suite is frozen at v0 — see [`FROZEN_SUITE_v0.md`](FROZEN_SUITE_v0.md) for
-exactly what may and may not change after the baseline is generated. Substantive
-changes require a new suite version (`frontier_delta_v1`), keeping v0 comparable.
+See [`FROZEN_SUITE_v0.md`](FROZEN_SUITE_v0.md). Substantive task or scoring
+changes require a new suite version.
 
 ## Limitations
 
-- Fixture-based: it scores the *structured artifact* of a model's run, not the raw
-  transcript. Extracting that artifact faithfully from a real run is the
-  integrator's responsibility.
-- Two lanes are `rubric_assisted`; their machine scores are directional proxies.
-- Small (one task per lane) by design, to keep the frozen baseline crisp. Breadth
-  is added via new suite versions, not by mutating v0.
+- Fixture scoring does not prove the origin of captured data.
+- Two `rubric_assisted` lane scores are directional proxies.
+- One task per lane provides narrow coverage.

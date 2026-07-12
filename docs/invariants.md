@@ -1,4 +1,4 @@
-# SFA-Bench v1.0.0 Verifier, Fingerprint, and Policy Invariants
+# SFA-Bench v2.0.0-alpha.1 Verifier, Fingerprint, and Policy Invariants
 
 `invariant_suite.py` protects the verifier's history-blindness, adapter
 airlock, and fingerprint-blindness boundaries.
@@ -66,6 +66,20 @@ python invariant_suite.py
 
 This suite is intentionally separate from verifier behavior. It must fail before
 any verifier change is made to justify touching `sfa/verifier.py`.
+
+## Alpha.1 companion checks
+
+Two release commands extend coverage without changing `invariant_suite.py`'s
+verifier contract:
+
+- `candidate_integrity_check.py` exercises all invalid-output classes across
+  every Frontier lane and verifies the corrected evidence successor; and
+- `campaign_protocol_check.py` validates draft campaign artifacts and rebuilds
+  the deterministic benchmark lock in memory.
+
+The focused unit suite additionally uses canonicaliser/scorer spies and mutates
+each declared lock-input class. These are bounded tests of the implemented
+surfaces, not claims of universal security or semantic completeness.
 
 Warnings, prior-attempt context, provenance, adapter metadata, fingerprint
 summaries, recurrence data, and policy guidance may shape reporting or

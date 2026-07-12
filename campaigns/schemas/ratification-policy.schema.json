@@ -1,0 +1,28 @@
+{
+  "$id": "https://sfa-bench.invalid/schemas/ratification-policy.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "allowed_decisions": {
+      "allOf": [
+        {"contains": {"const": "halt"}},
+        {"contains": {"const": "ratify"}},
+        {"contains": {"const": "reject"}}
+      ],
+      "items": {"enum": ["prepare", "ratify", "reject", "halt"]},
+      "minItems": 3,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "automatic_promotion": {"const": false},
+    "automatic_ratification": {"const": false},
+    "evidence_references_required": {"const": true},
+    "lineage_linkage_required": {"const": true},
+    "reason_required": {"const": true},
+    "reviewer_identity_required": {"const": true},
+    "schema_version": {"const": "sfa_bench.ratification_policy.v1"}
+  },
+  "required": ["allowed_decisions", "automatic_promotion", "automatic_ratification", "evidence_references_required", "lineage_linkage_required", "reason_required", "reviewer_identity_required", "schema_version"],
+  "title": "SFA-Bench V2 human ratification policy",
+  "type": "object"
+}

@@ -1,0 +1,43 @@
+{
+  "$id": "https://sfa-bench.invalid/schemas/candidate-manifest.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "campaign_id": {"minLength": 1, "type": "string"},
+    "campaign_reference": {
+      "additionalProperties": false,
+      "properties": {
+        "campaign_id": {"minLength": 1, "type": "string"},
+        "path": {"minLength": 1, "type": "string"},
+        "sha256": {"pattern": "^([0-9a-f]{64}|TO_BE_CONFIRMED_AT_EXECUTION)$", "type": "string"}
+      },
+      "required": ["campaign_id", "path", "sha256"],
+      "type": "object"
+    },
+    "candidate_id": {"minLength": 1, "type": "string"},
+    "capture_boundary_version": {"minLength": 1, "type": "string"},
+    "configuration": {"type": "object"},
+    "environment": {"type": "object"},
+    "judgment_boundary": {
+      "additionalProperties": false,
+      "properties": {
+        "adapter_metadata_may_affect_verdict": {"const": false},
+        "provider_metadata_may_affect_verdict": {"const": false},
+        "retry_metadata_may_affect_verdict": {"const": false}
+      },
+      "required": ["adapter_metadata_may_affect_verdict", "provider_metadata_may_affect_verdict", "retry_metadata_may_affect_verdict"],
+      "type": "object"
+    },
+    "model_string_supplied_at_execution": {"minLength": 1, "type": "string"},
+    "mutable_alias_use_declared": {"type": "boolean"},
+    "observed_provider_model_metadata": {"type": ["object", "null"]},
+    "provider": {"minLength": 1, "type": "string"},
+    "schema_version": {"const": "sfa_bench.candidate_manifest.v1"},
+    "snapshot_or_alias_status": {"enum": ["fixed_snapshot", "mutable_alias", "to_be_confirmed"]},
+    "status": {"const": "draft_not_executed"},
+    "tool_state": {"type": "object"}
+  },
+  "required": ["campaign_id", "campaign_reference", "candidate_id", "capture_boundary_version", "configuration", "environment", "judgment_boundary", "model_string_supplied_at_execution", "mutable_alias_use_declared", "observed_provider_model_metadata", "provider", "schema_version", "snapshot_or_alias_status", "status", "tool_state"],
+  "title": "SFA-Bench V2 candidate manifest",
+  "type": "object"
+}

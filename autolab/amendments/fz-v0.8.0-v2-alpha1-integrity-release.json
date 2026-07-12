@@ -1,0 +1,25 @@
+{
+  "amendment_id": "fz-v0.8.0-v2-alpha1-integrity-release",
+  "applies_to": [
+    ".gitattributes",
+    "autolab/frozen_manifest.json",
+    "frozen_zone_check.py",
+    "invariant_suite.py",
+    "out/candidate_evidence_successors/fable5-frontier-delta-20260703-corrected-v2-alpha1.json",
+    "out/fable5_failure_delta/fable5_report.md",
+    "out/fable5_failure_delta/fable5_two_hardcase_report.md",
+    "out/fable5_failure_delta/failure_modes.json",
+    "out/fable5_failure_delta/raw_outputs.jsonl",
+    "out/fable5_failure_delta/replay_manifest.json",
+    "out/fable5_failure_delta/scored_results.json",
+    "release_gate.py",
+    "sfa/invariants.py"
+  ],
+  "author": "Repository owner (human authorization in v2.0.0-alpha.1 task brief)",
+  "authored_on": "2026-07-12",
+  "manifest_version": "fz-v0.8.0",
+  "new_zone_hash": "706fefaed9ff7a066ca4ee41f9073e1424e04dd9b130bc43c3db30c53217db36",
+  "prev_zone_hash": "a4c3779bdf3e89bb1010730d15d03c654563df10371386b6353bc58245124ccc",
+  "reason": "The human-specified v2.0.0-alpha.1 release tranche requires prerelease-aware version agreement, direct candidate/campaign release checks, append-only preservation of the provisional Fable evidence plus its corrected lineage successor, and LF checkout enforcement so normal Windows Git checkouts that honor repository attributes retain hash-bound bytes. The verifier, taxonomy, occurrence history, and historical V1/V1.1 records are unchanged.",
+  "schema": "sfa.autolab.frozen_zone.amendment.v0"
+}

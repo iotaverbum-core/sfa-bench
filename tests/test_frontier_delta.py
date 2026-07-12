@@ -77,6 +77,20 @@ class ScorerShapeTests(unittest.TestCase):
         self.assertEqual(result["score"], 0.0)
         self.assertIn("no_model_output", result["detected_failure_modes"])
 
+    def test_fixture_record_missing_output_remains_none(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture = Path(tmp) / "missing-output.jsonl"
+            fixture.write_text('{"task_id":"memory_boundary_001"}\n', encoding="utf-8")
+            outputs = runner.load_output_fixture(fixture)
+        self.assertIn("memory_boundary_001", outputs)
+        self.assertIsNone(outputs["memory_boundary_001"])
+        result = score_task(
+            next(t for t in self.tasks if t["task_id"] == "memory_boundary_001"),
+            outputs["memory_boundary_001"],
+        )
+        self.assertEqual(result["score"], 0.0)
+        self.assertEqual(result["detected_failure_modes"], ["no_model_output"])
+
     def test_rubric_assisted_lanes_marked(self):
         for task in self.tasks:
             result = score_task(task, self.outputs.get(task["task_id"]))

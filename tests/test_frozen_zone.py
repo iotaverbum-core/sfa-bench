@@ -339,6 +339,17 @@ class RealRepositoryTests(unittest.TestCase):
                          "frozen_zone_check.py", fz.MANIFEST_RELPATH):
             self.assertIn(required, manifest["frozen_paths"], required)
 
+    def test_manifest_preserves_provisional_and_corrected_fable_evidence(self):
+        manifest = fz.load_manifest(REPO_ROOT)
+        required = (
+            "out/fable5_failure_delta/raw_outputs.jsonl",
+            "out/fable5_failure_delta/scored_results.json",
+            "out/candidate_evidence_successors/"
+            "fable5-frontier-delta-20260703-corrected-v2-alpha1.json",
+        )
+        for relative in required:
+            self.assertIn(relative, manifest["frozen_paths"], relative)
+
 
 if __name__ == "__main__":
     unittest.main()

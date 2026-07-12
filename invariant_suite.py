@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v1.1.0 verifier, fingerprint, and policy invariant suite.
+"""SFA-Bench v2.0.0-alpha.1 verifier, fingerprint, and policy invariant suite.
 
 Run: python invariant_suite.py
 """
@@ -48,7 +48,7 @@ def _summarize_verdict(output):
 def main() -> int:
     invariants = _load_invariants_module()
 
-    print("SFA-Bench v1.1.0 Verifier, Fingerprint & Policy Invariant Suite")
+    print("SFA-Bench v2.0.0-alpha.1 Verifier, Fingerprint & Policy Invariant Suite")
     print("=" * 74)
 
     invariants.assert_verifier_static_guard(VERIFIER_PATH)
@@ -188,7 +188,7 @@ def main() -> int:
     print("repository version consistency: PASS")
     print(
         f"  package, release gate, and {version_consistency['command_files_checked']} "
-        f"command headers all declare v{version_consistency['package_version']}"
+        f"command headers all declare {version_consistency['public_release']}"
     )
 
     print("=" * 74)

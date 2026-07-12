@@ -1,4 +1,4 @@
-# SFA-Bench v1.1.0
+# SFA-Bench v2.0.0-alpha.1
 
 ![SFA-Bench](https://github.com/iotaverbum-core/sfa-bench/actions/workflows/test.yml/badge.svg)
 
@@ -17,6 +17,11 @@ and disabled-by-default adapter boundary, deterministic failure fingerprints, an
 generator-side retry policy. These layers preserve a fixed, history-blind
 verifier boundary.
 
+The alpha.1 V2 tranche adds one validity gate before candidate lane
+canonicalisation, append-only correction lineage for provisional external
+evidence, provider-neutral campaign pre-registration, and deterministic
+benchmark locking. It does not add provider capture or change the frozen judge.
+
 ## What this is not
 
 - Not a live model leaderboard.
@@ -34,7 +39,8 @@ results.
 - Python 3.11 or later.
 - Git, for the release gate.
 - No third-party Python packages.
-- No API keys, provider credentials, network access, or live adapter.
+- No API keys, provider credentials, network access, or live adapter for the
+  canonical verification and alpha.1 campaign tooling.
 
 From a clean clone:
 
@@ -67,7 +73,7 @@ python verify_all.py
 ```
 
 `verify_all.py` copies the current source into a temporary isolated worktree,
-runs the complete offline command set in release order, stops on the first failure, and then
+runs the 26-command offline set in release order, stops on the first failure, and then
 removes the temporary worktree. The checked-out occurrence ledger and runtime
 directories are not modified. The environment forces CI mode and disables
 adapter-selection environment variables. If operating-system permissions prevent
@@ -86,8 +92,10 @@ The command covers:
 8. transcript normalization;
 9. transcript verdict re-derivation;
 10. the offline adapter boundary;
-11. failure fingerprint re-derivation; and
-12. policy-guided retry.
+11. failure fingerprint re-derivation;
+12. policy-guided retry;
+13. V2 candidate-output integrity and corrected-evidence lineage; and
+14. V2 campaign validation and deterministic lock verification.
 
 For individual non-mutating checks:
 
@@ -104,7 +112,7 @@ python policy_demo.py
 ```bash
 python release_gate.py
 python release_gate.py --ci
-python release_gate.py --release v1.1.0
+python release_gate.py --release v2.0.0-alpha.1
 ```
 
 The gate explicitly runs `git status --short --untracked-files=all`; it never
@@ -149,12 +157,19 @@ policy-guided retry
 - v1.1 — AGI-axis research extension: prior-state trial, deferred-consequence task
   family, recurrence-decline metric, gold-absent property contract, and causal-edge
   taxonomy (schema v2)
+- v2.0.0-alpha.1: candidate-output integrity, corrected-evidence lineage,
+  campaign pre-registration, and benchmark locking
 
 v1.1 adds research capability without weakening the spine. The verifier invariants
 hold through every new layer: generators, priors, metrics, and property contracts
 may shape or measure proposals, but every accept/reject decision remains a fixed,
 deterministic function and no LLM output participates in any verdict. Policy may
 shape the next answer; it may never shape the judgment.
+
+In alpha.1, empty, plaintext, malformed, and non-object candidate responses are
+classified before lane dispatch and receive zero credit. Valid JSON objects
+continue through the existing canonicaliser and fixed scorer path. Campaign and
+provider metadata remain evidence only and never become verdict inputs.
 
 See [Architecture Stack](docs/architecture-stack.md) for data-flow and trust
 boundaries.
@@ -169,6 +184,11 @@ Under the checked-in fixtures and implemented checks:
 - verifier history-blindness and metadata isolation are tested;
 - transcript normalization is isolated from verifier inputs;
 - live adapters are optional, disabled by default, and blocked in CI;
+- invalid candidate text cannot reach a lane canonicaliser or receive default-field credit;
+- corrected external evidence is lineage-linked without overwriting its predecessor;
+- campaign declarations and candidate manifests validate deterministically offline;
+- benchmark locks detect tested changes to prompts, cases, evidence, rules,
+  taxonomy, normalisers, adapters, schemas, and protected verifier files;
 - failure fingerprints are deterministic under fixed fixture conditions;
 - policy decisions are deterministic, generator-side, and excluded from verifier judgment; and
 - the package version of record, the release gate, and every command header are verified to declare a single release version.
@@ -186,11 +206,31 @@ and supported interpretations.
 
 ## Limitations
 
-SFA-Bench does not call live models, rank real providers, prove that a retry
-policy improves models, inspect hidden chain-of-thought, or provide security
-guarantees beyond its implemented canonical hashing, sealing, replay, and test
-checks. The rule-based verifier is intentionally narrow and is not semantically
-complete.
+Canonical verification and the alpha.1 correction/campaign commands do not call
+live models. The repository preserves historical external candidate evidence,
+but provider capture and repeated live campaigns remain outside the trusted core
+and CI. SFA-Bench does not rank real providers, prove that a retry policy improves
+models, inspect hidden chain-of-thought, or provide guarantees beyond its
+implemented checks. The rule-based verifier is intentionally narrow and is not
+semantically complete.
+
+Generation reproducibility may be limited; judgment reproducibility is mandatory.
+
+SFA-Bench evidence may support governance review and compliance-oriented
+documentation, but passing SFA-Bench does not establish legal or regulatory
+conformity.
+
+## V2 alpha.1 offline commands
+
+```bash
+python candidate_integrity_check.py
+python campaign_protocol_check.py
+python campaign_cli.py validate --campaign campaigns/examples/gpt56-draft-preregistration.json
+python campaign_cli.py validate-candidate --manifest campaigns/examples/gpt56-draft-candidate-manifest.json
+```
+
+The GPT-5.6 files are `draft_not_executed` examples with unconfirmed provider
+identifiers. They do not assert API access, execution, a result, or a ranking.
 
 ## GroundLedger product layer
 
@@ -211,6 +251,10 @@ research instrument's release line or its DOI. See
 - [Verifier Invariants](docs/invariants.md)
 - [SFA-Agent](docs/sfa-agent.md)
 - [External Adapter Boundary](docs/external-adapter-boundary.md)
+- [V2 Campaign Protocol](docs/research/sfa-bench-v2-campaign-protocol.md)
+- [V2 Threat-Model Amendment](docs/research/sfa-bench-v2-threat-model-amendment.md)
+- [V2 Architecture Decisions](docs/research/sfa-bench-v2-alpha1-decisions.md)
+- [V2 PowerShell Example](examples/v2_campaign_powershell.md)
 - [Failure Fingerprinting](docs/failure-fingerprinting.md)
 - [Policy-Guided Retry](docs/policy-guided-retry.md)
 - [Tamper Suite](docs/tamper-suite.md)
@@ -303,7 +347,7 @@ threat model, architecture, reproducibility path, and reviewer commands.
 
 Use the repository metadata in [`CITATION.cff`](CITATION.cff). A plain-text form:
 
-> Neal, Matthew. (2026). SFA-Bench v1.1.0: AGI-Axis Research Extension. https://github.com/iotaverbum-core/sfa-bench
+> Neal, Matthew. (2026). SFA-Bench v2.0.0-alpha.1: Candidate Integrity and Campaign Foundation. https://github.com/iotaverbum-core/sfa-bench
 
 DOI: https://doi.org/10.5281/zenodo.20766587
 

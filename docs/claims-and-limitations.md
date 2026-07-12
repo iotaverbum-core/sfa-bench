@@ -1,6 +1,7 @@
 # Claims and Limitations
 
-This document defines the interpretation boundary for SFA-Bench v1.0.0. Claims
+This document defines the interpretation boundary for SFA-Bench
+v2.0.0-alpha.1. Claims
 apply to the checked-in implementation, fixtures, and explicit test conditions.
 
 ## Supported claims
@@ -21,6 +22,16 @@ apply to the checked-in implementation, fixtures, and explicit test conditions.
   guide a subsequent proposal but is excluded from verifier judgment.
 - The covered tamper and contamination cases are detected or rejected by the
   corresponding implemented checks.
+- Empty, refusal-like plaintext, malformed, non-finite, and non-object candidate
+  responses are classified before lane canonicalisation and receive zero credit.
+- The corrected Fable-5 successor is deterministically re-derived from preserved
+  raw evidence and linked to a byte-preserved provisional predecessor. It is not
+  a ratified result.
+- Campaign pre-registrations and draft candidate manifests are validated
+  deterministically without provider access or credentials.
+- Benchmark locks bind declared campaign policy, prompt references, and tested
+  file classes; the CLI proves bound files match the declared Git commit and
+  current release of record without accepting an injected provenance context.
 
 ## Unsupported claims
 
@@ -37,6 +48,16 @@ apply to the checked-in implementation, fixtures, and explicit test conditions.
 - Claims that the rule-based verifier is semantically complete or suitable for
   arbitrary domains.
 - Claims that human evaluation is unnecessary.
+- Claims that GPT-5.6 API access or any public execution identifier is available.
+- Claims that a GPT-5.6 study or any new live provider campaign has run.
+- Claims that historical Frontier Delta model or variant labels identify real
+  provider products, verified snapshots, execution provenance, or established
+  training cutoffs. Protected preregistration statements remain historical
+  assumptions.
+- Provider rankings, alignment proof, semantic completeness, autonomous
+  self-improvement, automatic ratification, or automatic promotion.
+- Claims of EU AI Act approval, legal conformity, certification, or regulatory
+  conformity from an SFA-Bench result.
 
 ## Qualification of key terms
 
@@ -54,8 +75,23 @@ is not an intrinsic identity or stable universal property of a model.
 from sealed recurrence data. The repository does not demonstrate causal model
 improvement and does not allow policy data into verifier judgment.
 
+"Corrected successor" means a new canonically hashed and lineage-linked artifact
+derived from preserved evidence. It does not overwrite or erase its predecessor,
+and correction does not itself ratify the result.
+
+"Benchmark lock" means the deterministic binding implemented and tested here.
+It detects changes within its fixed and declared path sets; it is not a universal
+security proof.
+
 ## Scope changes
 
 Any future change to verifier behaviour, taxonomy, provider execution, fixture
-provenance, or security assumptions requires a new claim review. v1.0.0 changes
-none of those boundaries; it adds reproducibility and documentation hardening.
+provenance, or security assumptions requires a new claim review. Alpha.1 adds
+candidate-output integrity and campaign controls without changing the frozen
+verifier or introducing provider capture into the trusted core.
+
+Generation reproducibility may be limited; judgment reproducibility is mandatory.
+
+SFA-Bench evidence may support governance review and compliance-oriented
+documentation, but passing SFA-Bench does not establish legal or regulatory
+conformity.
