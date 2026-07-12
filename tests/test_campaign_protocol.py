@@ -265,6 +265,13 @@ class CampaignValidationTests(unittest.TestCase):
             ("sampling_configuration", "approved_by_reviewer"),
             ("reasoning_configuration", "externally_accepted"),
             ("sampling_configuration", "reviewer_endorsed"),
+            ("reasoning_configuration", "provider_approved"),
+            ("sampling_configuration", "self_approved"),
+            ("reasoning_configuration", "owner_approval"),
+            ("sampling_configuration", "admin_accepted"),
+            ("reasoning_configuration", "approved_by_owner"),
+            ("sampling_configuration", "endorsed_by_provider"),
+            ("reasoning_configuration", "external_approval"),
         ):
             with self.subTest(surface=surface, key=key):
                 campaign = _campaign()
@@ -401,14 +408,21 @@ class CampaignValidationTests(unittest.TestCase):
             ("completed", True),
             ("completed_at", "2026-07-12T00:00:00Z"),
             ("campaign_completed", True),
+            ("trial_completed", True),
             ("executed_at", "2026-07-12T00:00:00Z"),
+            ("candidate_executed", True),
             ("execution_completed_at", "2026-07-12T00:00:00Z"),
+            ("execution_end_time", "2026-07-12T00:00:00Z"),
             ("execution_occurred", True),
             ("execution_result", {"score": 1}),
             ("finished_at", "2026-07-12T00:00:00Z"),
+            ("benchmark_finished", True),
             ("final_score", 1),
+            ("campaign_score", 1),
+            ("result_score", 1),
             ("official_result", "pass"),
             ("passed_at", "2026-07-12T00:00:00Z"),
+            ("benchmark_passed", True),
             ("provider_rank", 1),
             ("provider_ranking", 1),
             ("run_finished", True),
@@ -420,6 +434,8 @@ class CampaignValidationTests(unittest.TestCase):
             ("run_status", "finished"),
             ("execution_status", "succeeded"),
             ("execution_status", "successful"),
+            ("succeeded_at", "2026-07-12T00:00:00Z"),
+            ("completed_by_reviewer", True),
             ("was_executed", True),
             ("classification", "official"),
             ("message", "campaign completed successfully"),
@@ -436,8 +452,13 @@ class CampaignValidationTests(unittest.TestCase):
         campaign = _campaign()
         campaign["reasoning_configuration"]["execution_timeout_seconds"] = 30
         campaign["reasoning_configuration"]["approval_timeout_seconds"] = 60
+        campaign["reasoning_configuration"]["completion_policy"] = "declared"
+        campaign["reasoning_configuration"]["execution_time_limit"] = 30
+        campaign["reasoning_configuration"]["provider_approval_required"] = True
         campaign["sampling_configuration"]["run_count_limit"] = 3
+        campaign["sampling_configuration"]["pass_threshold"] = 0.8
         campaign["sampling_configuration"]["ranking_policy"] = "pre_registered"
+        campaign["sampling_configuration"]["result_schema"] = "draft"
         campaign["sampling_configuration"]["score_threshold"] = 0.8
         codes = _codes(validate_campaign(campaign))
         self.assertNotIn("DRAFT_COMPLETION_CLAIM", codes)
@@ -502,6 +523,13 @@ class CandidateManifestBoundaryTests(unittest.TestCase):
             "approved_by_reviewer",
             "externally_accepted",
             "reviewer_endorsed",
+            "provider_approved",
+            "self_approved",
+            "owner_approval",
+            "admin_accepted",
+            "approved_by_owner",
+            "endorsed_by_provider",
+            "external_approval",
         ):
             with self.subTest(key=key):
                 manifest = _manifest()
@@ -580,17 +608,26 @@ class CandidateManifestBoundaryTests(unittest.TestCase):
         for key, value in (
             ("completed_at", "2026-07-12T00:00:00Z"),
             ("campaign_completed", True),
+            ("trial_completed", True),
             ("executed_at", "2026-07-12T00:00:00Z"),
+            ("candidate_executed", True),
             ("execution_completed_at", "2026-07-12T00:00:00Z"),
+            ("execution_end_time", "2026-07-12T00:00:00Z"),
             ("execution_occurred", True),
             ("finished_at", "2026-07-12T00:00:00Z"),
+            ("benchmark_finished", True),
             ("final_score", 1),
+            ("campaign_score", 1),
+            ("result_score", 1),
             ("passed_at", "2026-07-12T00:00:00Z"),
+            ("benchmark_passed", True),
             ("provider_rank", 1),
             ("run_finished", True),
             ("run_started_at", "2026-07-12T00:00:00Z"),
             ("run_status", "finished"),
             ("execution_status", "succeeded"),
+            ("succeeded_at", "2026-07-12T00:00:00Z"),
+            ("completed_by_reviewer", True),
             ("was_executed", True),
         ):
             with self.subTest(key=key):
@@ -607,7 +644,12 @@ class CandidateManifestBoundaryTests(unittest.TestCase):
         manifest = _manifest()
         manifest["configuration"]["execution_timeout_seconds"] = 30
         manifest["configuration"]["approval_timeout_seconds"] = 60
+        manifest["configuration"]["completion_policy"] = "declared"
+        manifest["configuration"]["execution_time_limit"] = 30
+        manifest["configuration"]["provider_approval_required"] = True
+        manifest["configuration"]["pass_threshold"] = 0.8
         manifest["configuration"]["ranking_policy"] = "pre_registered"
+        manifest["configuration"]["result_schema"] = "draft"
         manifest["configuration"]["score_threshold"] = 0.8
         codes = _codes(validate_candidate_manifest(manifest))
         self.assertNotIn("DRAFT_COMPLETION_CLAIM", codes)

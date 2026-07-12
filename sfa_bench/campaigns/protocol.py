@@ -185,43 +185,48 @@ _DRAFT_COMPLETION_VALUE_RE = re.compile(
 )
 _DRAFT_EVENT_MARKERS = (
     "completed",
+    "done",
     "ended",
     "executed",
+    "failed",
+    "fail",
     "finished",
     "official",
     "passed",
+    "pass",
     "started",
-)
-_DRAFT_EVENT_PREFIXES = (
-    "",
-    "campaign",
-    "execution",
-    "is",
-    "provider",
-    "run",
-    "study",
-    "was",
+    "succeeded",
+    "successful",
+    "success",
 )
 _DRAFT_EVENT_SUFFIXES = ("", "at", "date", "on", "time", "timestamp")
 _DRAFT_EVENT_NOUN_SUFFIXES = (
     "at",
+    "date",
+    "end",
+    "ended",
+    "endtime",
     "occurred",
+    "on",
+    "outcome",
     "result",
+    "start",
+    "started",
+    "starttime",
     "state",
     "status",
+    "time",
     "timestamp",
 )
-_DRAFT_RESULT_NOUNS = ("rank", "ranking", "score")
-_DRAFT_RESULT_PREFIXES = (
-    "benchmark",
-    "candidate",
-    "final",
-    "model",
-    "observed",
-    "provider",
-    "total",
+_DRAFT_RESULT_NOUNS = (
+    "outcome",
+    "rank",
+    "ranking",
+    "result",
+    "score",
+    "verdict",
 )
-_DRAFT_RESULT_SUFFIXES = ("final", "observed", "result", "value")
+_DRAFT_RESULT_SUFFIXES = ("", "at", "date", "on", "time", "timestamp", "value")
 _GOVERNANCE_VALUE_RE = re.compile(
     r"\b(?:accept(?:ance|ed|ing|s)?|approv\w*|endors\w*|promot\w*|ratif\w*)\b",
     re.IGNORECASE,
@@ -231,31 +236,22 @@ _GOVERNANCE_ASSERTION_MARKERS = (
     "accepted",
     "approval",
     "approved",
+    "certification",
+    "certified",
     "endorsement",
     "endorsed",
-)
-_GOVERNANCE_ASSERTION_PREFIXES = (
-    "",
-    "campaign",
-    "candidate",
-    "externally",
-    "human",
-    "is",
-    "reviewer",
-    "was",
 )
 _GOVERNANCE_ASSERTION_SUFFIXES = (
     "",
     "at",
-    "by",
-    "byhuman",
-    "byreviewer",
+    "date",
     "decision",
     "on",
     "outcome",
     "result",
     "state",
     "status",
+    "timestamp",
 )
 _CAMPAIGN_UNTRUSTED_TEXT_SURFACES = frozenset(
     {"reasoning_configuration", "sampling_configuration"}
@@ -1383,6 +1379,28 @@ def _normalized_control_key(key: Any) -> str:
     return re.sub(r"[^a-z0-9]", "", str(key).lower())
 
 
+def _has_semantic_assertion(
+    normalized: str,
+    markers: tuple[str, ...],
+    suffixes: tuple[str, ...],
+    *,
+    allow_actor_suffix: bool,
+) -> bool:
+    for marker in markers:
+        start = 0
+        while True:
+            position = normalized.find(marker, start)
+            if position < 0:
+                break
+            suffix = normalized[position + len(marker) :]
+            if suffix in suffixes:
+                return True
+            if allow_actor_suffix and suffix.startswith("by") and len(suffix) > 2:
+                return True
+            start = position + 1
+    return False
+
+
 def _is_secret_control_key(key: Any) -> bool:
     normalized = _normalized_control_key(key)
     return any(fragment in normalized for fragment in _SECRET_KEY_FRAGMENTS)
@@ -1396,12 +1414,12 @@ def _is_governance_control_key(key: Any) -> bool:
         or "promot" in normalized
     ):
         return True
-    for prefix in _GOVERNANCE_ASSERTION_PREFIXES:
-        for marker in _GOVERNANCE_ASSERTION_MARKERS:
-            stem = prefix + marker
-            if normalized.startswith(stem):
-                return normalized[len(stem) :] in _GOVERNANCE_ASSERTION_SUFFIXES
-    return False
+    return _has_semantic_assertion(
+        normalized,
+        _GOVERNANCE_ASSERTION_MARKERS,
+        _GOVERNANCE_ASSERTION_SUFFIXES,
+        allow_actor_suffix=True,
+    )
 
 
 def _contains_governance_term(value: str) -> bool:
@@ -1412,27 +1430,30 @@ def _is_draft_completion_key(key: Any) -> bool:
     normalized = _normalized_control_key(key)
     if normalized in _DRAFT_COMPLETION_KEYS:
         return True
-    for prefix in _DRAFT_EVENT_PREFIXES:
-        for marker in _DRAFT_EVENT_MARKERS:
-            stem = prefix + marker
-            if normalized.startswith(stem):
-                return normalized[len(stem) :] in _DRAFT_EVENT_SUFFIXES
-    if any(
-        normalized == noun + suffix
-        for noun in ("completion", "execution")
-        for suffix in _DRAFT_EVENT_NOUN_SUFFIXES
+    if _has_semantic_assertion(
+        normalized,
+        _DRAFT_EVENT_MARKERS,
+        _DRAFT_EVENT_SUFFIXES,
+        allow_actor_suffix=True,
     ):
         return True
-    if any(
-        normalized == prefix + noun
-        for noun in _DRAFT_RESULT_NOUNS
-        for prefix in _DRAFT_RESULT_PREFIXES
+    if _has_semantic_assertion(
+        normalized,
+        ("completion", "execution"),
+        _DRAFT_EVENT_NOUN_SUFFIXES,
+        allow_actor_suffix=True,
     ):
         return True
-    return any(
-        normalized == noun + suffix
-        for noun in _DRAFT_RESULT_NOUNS
-        for suffix in _DRAFT_RESULT_SUFFIXES
+    if (
+        normalized == "invalidoutputscore"
+        or normalized.endswith("mayaffectverdict")
+    ):
+        return False
+    return _has_semantic_assertion(
+        normalized,
+        _DRAFT_RESULT_NOUNS,
+        _DRAFT_RESULT_SUFFIXES,
+        allow_actor_suffix=True,
     )
 
 
