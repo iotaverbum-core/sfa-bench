@@ -516,6 +516,17 @@ def validate_repo_relative_path(value: Any, path: str) -> list[Issue]:
                 "colon is forbidden in portable repository paths",
             )
         ]
+    if any(
+        segment.lower() in {".git", ".hg", ".svn"}
+        for segment in segments
+    ):
+        return [
+            issue(
+                "INVALID_PATH",
+                path,
+                "repository-control directories are forbidden",
+            )
+        ]
     reserved = {
         "CON",
         "PRN",

@@ -301,6 +301,7 @@ class CampaignValidationTests(unittest.TestCase):
             "foo:bar",
             "CON",
             "out/campaign_locks/base:lock.json",
+            ".git/config",
         ):
             with self.subTest(reference=reference):
                 campaign = _campaign()
@@ -598,6 +599,40 @@ class BenchmarkLockTests(unittest.TestCase):
             build_benchmark_lock(campaign, ROOT, context=false_context)
         with self.assertRaises(TypeError):
             verify_benchmark_lock(campaign, {}, ROOT, context=false_context)
+
+    def test_commit_binding_requires_an_exact_commit_blob(self):
+        context = _context()
+        missing = {
+            "protected_verifier": [],
+            "schemas": [
+                {"path": ".git/config", "sha256": "0" * 64}
+            ],
+        }
+        self.assertIn(
+            "LOCK_INPUT_NOT_AT_COMMIT",
+            _codes(
+                locking._binding_commit_issues(
+                    ROOT, missing, context
+                )
+            ),
+        )
+
+        prompt_path = (
+            "campaigns/examples/prompts/gpt56-study-system-prompt.txt"
+        )
+        exact = {
+            "protected_verifier": [],
+            "system_prompt": [
+                {
+                    "path": prompt_path,
+                    "sha256": reference_digest(ROOT, prompt_path),
+                }
+            ],
+        }
+        self.assertEqual(
+            locking._binding_commit_issues(ROOT, exact, context),
+            [],
+        )
 
     def test_nonexistent_benchmark_commit_is_rejected(self):
         campaign = _campaign()

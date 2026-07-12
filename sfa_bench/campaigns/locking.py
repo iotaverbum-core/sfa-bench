@@ -525,49 +525,38 @@ def _build_bindings(campaign: dict[str, Any], repo_root: Path) -> dict[str, Any]
     return bindings
 
 
-def _changed_or_untracked_paths(
-    repo_root: Path,
-    commit: str,
-) -> set[str]:
-    changed = {
-        path.replace("\\", "/")
-        for path in _git(
-            repo_root, "diff", "--name-only", commit, "--"
-        ).splitlines()
-        if path
-    }
-    untracked = {
-        path.replace("\\", "/")
-        for path in _git(
-            repo_root, "ls-files", "--others", "--exclude-standard"
-        ).splitlines()
-        if path
-    }
-    return changed | untracked
-
-
 def _binding_commit_issues(
     repo_root: Path,
     bindings: dict[str, Any],
     context: RepositoryContext,
 ) -> list[Issue]:
-    """Prove bound files match their declared benchmark or verifier commit."""
-    verifier_paths = {entry["path"] for entry in bindings["protected_verifier"]}
-    benchmark_paths = {
-        entry["path"]
-        for group, entries in bindings.items()
-        if group != "protected_verifier"
-        for entry in entries
-    }
-    benchmark_drift = sorted(
-        benchmark_paths
-        & _changed_or_untracked_paths(repo_root, context.repository_commit)
-    )
-    verifier_drift = sorted(
-        verifier_paths
-        & _changed_or_untracked_paths(repo_root, context.verifier_commit)
-    )
-    drift = benchmark_drift + verifier_drift
+    """Compare every bound byte sequence with its assigned Git commit blob."""
+    drift: set[str] = set()
+    for group in sorted(bindings):
+        commit = (
+            context.verifier_commit
+            if group == "protected_verifier"
+            else context.repository_commit
+        )
+        for entry in bindings[group]:
+            relative = entry["path"]
+            try:
+                result = subprocess.run(
+                    ["git", "show", f"{commit}:{relative}"],
+                    cwd=repo_root,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+            except OSError:
+                drift.add(relative)
+                continue
+            if (
+                result.returncode
+                or hashlib.sha256(result.stdout).hexdigest()
+                != entry["sha256"]
+            ):
+                drift.add(relative)
     if not drift:
         return []
     return [
@@ -575,7 +564,7 @@ def _binding_commit_issues(
             "LOCK_INPUT_NOT_AT_COMMIT",
             "$.bindings",
             "bound inputs differ from their declared benchmark/verifier commit: "
-            + ", ".join(sorted(set(drift))),
+            + ", ".join(sorted(drift)),
         )
     ]
 
