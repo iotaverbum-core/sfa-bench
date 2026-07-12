@@ -101,7 +101,7 @@ model identity, or hidden reasoning.
 ## ADR-A2-005: Separate private raw evidence and public review material
 
 - Problem: transport metadata and raw bodies may contain credentials or other
-  sensitive material, while public review must remain secret-free.
+  sensitive material, while public review must exclude covered credential forms and raw bodies.
 - Alternatives: overwrite with redactions; publish everything; separate zones.
 - Selected option: keep raw request/response blobs immutable and private to the
   capture store. Public manifests and review bundles contain allowlisted
@@ -157,7 +157,7 @@ model identity, or hidden reasoning.
 - Selected option: execution ends at sealed capture evidence. A separate offline
   command verifies integrity, derives candidate validity, and invokes the
   existing fixed candidate judgment path. Another deterministic command creates
-  a secret-free review bundle with `ratification_status: unratified` and moves
+  a secret-scanned, allowlisted review bundle with `ratification_status: unratified` and moves
   lifecycle state to `review_required`.
 - Evidence: alpha.1 preserves explicit zero credit for missing, refusal-like,
   malformed, non-object, and non-finite outputs and forbids automatic promotion.
@@ -206,7 +206,7 @@ model identity, or hidden reasoning.
 If supported by final tests, alpha.2 may claim deterministic synthetic lifecycle,
 capture-boundary byte preservation, internal digest/provenance consistency,
 tamper detection for covered cases, offline judgment reproducibility, and
-secret-free unratified review packaging.
+secret-scanned, allowlisted, unratified review packaging.
 
 It does not support claims of a live provider run, provider/model identity,
 provider rankings, comparative quality, population-level behaviour, alignment,

@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 import shutil
 import socket
 import tempfile
@@ -47,6 +50,12 @@ from sfa_bench.campaigns.capture.run import (
     verify_run,
 )
 from sfa_bench.campaigns.capture.storage import read_blob, reserve_run
+from campaign_capture_check import (
+    REQUEST as LOCKED_REQUEST,
+    TASK_REFERENCE as LOCKED_TASK_REFERENCE,
+    _authorization as locked_authorization,
+    _campaign_and_lock,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -694,6 +703,108 @@ class CaptureFlowTests(CaptureUnitTest):
             )
         self.assertEqual(first.name, second.name)
         self.assertNotEqual(first.parent.parent, second.parent.parent)
+
+
+class CampaignCliIntegrationTests(unittest.TestCase):
+    def test_full_synthetic_cli_lifecycle_and_exit_codes(self):
+        campaign, lock = _campaign_and_lock()
+        authorization = locked_authorization(campaign, lock, "cli-e2e")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            capture_root = root / "runs"
+            campaign_path = root / "campaign.json"
+            lock_path = root / "lock.json"
+            authorization_path = root / "authorization.json"
+            request_path = root / "request.bin"
+            campaign_path.write_bytes(canonical_bytes(campaign))
+            lock_path.write_bytes(canonical_bytes(lock))
+            authorization_path.write_bytes(canonical_bytes(authorization))
+            request_path.write_bytes(LOCKED_REQUEST)
+            run_dir = capture_root / campaign["campaign_id"] / authorization["execution_id"]
+            environment = os.environ.copy()
+            environment["SFA_CAMPAIGN_CAPTURE_ROOT"] = str(capture_root)
+            environment.pop("SFA_ADAPTER", None)
+            environment.pop("SFA_ENABLE_LIVE_ADAPTERS", None)
+
+            def invoke(*arguments):
+                result = subprocess.run(
+                    [sys.executable, str(ROOT / "campaign_capture_cli.py"), *map(str, arguments)],
+                    cwd=ROOT,
+                    env=environment,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr or result.stdout)
+                lines = result.stdout.splitlines()
+                self.assertEqual(len(lines), 1, result.stdout)
+                payload = json.loads(lines[0])
+                self.assertEqual(payload["status"], "ok")
+                return payload
+
+            validated = invoke(
+                "validate-authorization",
+                "--campaign", campaign_path,
+                "--lock", lock_path,
+                "--authorization", authorization_path,
+                "--request", request_path,
+                "--mode", "valid_json_object",
+            )
+            initialized = invoke(
+                "init",
+                "--campaign", campaign_path,
+                "--lock", lock_path,
+                "--authorization", authorization_path,
+                "--request", request_path,
+                "--mode", "valid_json_object",
+                "--now", NOW,
+            )
+            captured = invoke(
+                "capture-synthetic",
+                "--run", run_dir,
+                "--request", request_path,
+                "--mode", "valid_json_object",
+                "--now", NOW,
+            )
+            sealed = invoke("seal", "--run", run_dir, "--now", NOW)
+            judged = invoke(
+                "judge",
+                "--run", run_dir,
+                "--task-reference", LOCKED_TASK_REFERENCE,
+                "--now", NOW,
+            )
+            bundled = invoke("bundle", "--run", run_dir, "--now", NOW)
+            verified = invoke("verify", "--run", run_dir)
+
+            self.assertEqual(validated["command"], "validate-authorization")
+            self.assertEqual(initialized["command"], "init")
+            self.assertTrue(captured["complete"])
+            self.assertEqual(sealed["ratification_status"], "unratified")
+            self.assertEqual(judged["ratification_status"], "unratified")
+            self.assertFalse(bundled["packaging_is_approval"])
+            self.assertEqual(verified["integrity"]["lifecycle_state"], "review_required")
+            self.assertEqual(verified["integrity"]["review_bundle"], "verified")
+
+            rejected = subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "campaign_capture_cli.py"),
+                    "verify",
+                    "--run",
+                    str(root / "outside" / "run"),
+                ],
+                cwd=ROOT,
+                env=environment,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            self.assertEqual(rejected.returncode, 2)
+            rejection = json.loads(rejected.stdout)
+            self.assertEqual(rejection["status"], "error")
+            self.assertEqual(rejection["issue"]["code"], "PATH_ESCAPE")
 
 
 class SyntheticLaboratoryTests(unittest.TestCase):

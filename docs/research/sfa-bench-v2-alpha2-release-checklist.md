@@ -10,7 +10,7 @@ This checklist does not authorize a merge, tag, release, or frozen amendment.
 - [ ] Exact request/response bytes round-trip and tamper tests pass.
 - [ ] Duplicate execution/attempt and concurrent ledger collisions fail closed.
 - [ ] Capture, judgment, and review artifacts verify independently.
-- [ ] Review bundle is secret-free, excludes raw bodies, and is unratified.
+- [ ] Review bundle passes the documented secret scan and allowlist, excludes raw bodies, and is unratified.
 - [ ] Alpha.1 valid-output scores, verdicts, canonical forms, and protected
       result hashes remain unchanged.
 

@@ -1,6 +1,6 @@
 # SFA-Bench V2 Alpha.2 Campaign Execution Protocol
 
-Status: accepted implementation candidate; repository version remains
+Status: implementation candidate; repository version remains
 `v2.0.0-alpha.1` until the separate human-authorized release amendment.
 
 Alpha.2 adds an offline-testable execution and evidence-capture envelope outside
@@ -15,7 +15,7 @@ preregistration + benchmark lock
   -> private append-only capture
   -> sealed capture manifest
   -> separate offline deterministic judgment
-  -> secret-free unratified human-review bundle
+  -> secret-scanned, allowlisted, unratified human-review bundle
 ```
 
 The adapter transports evidence. It does not validate its own lock, score its
