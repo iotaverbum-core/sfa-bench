@@ -1,7 +1,7 @@
 {
   "adapter_version": "sfa.frontier_delta.candidate_adapter.v1",
   "api_or_execution_surface": "TO_BE_CONFIRMED_AT_EXECUTION",
-  "benchmark_commit_sha": "12276fa235e9147c160bd8e9280cfeb130c4354c",
+  "benchmark_commit_sha": "64778294758459ec59c8d7f946c2d04fe2bd5400",
   "benchmark_inputs": {
     "adapter_paths": [
       "sfa_bench/frontier_delta/candidate_adapter.py"
