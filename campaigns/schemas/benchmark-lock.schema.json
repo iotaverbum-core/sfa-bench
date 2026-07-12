@@ -44,9 +44,11 @@
     "envelope": {
       "additionalProperties": false,
       "properties": {
-        "created_at": {"minLength": 1, "type": "string"},
-        "created_by": {"minLength": 1, "type": "string"},
-        "environment_note": {"minLength": 1, "type": "string"}
+        "created_at": {
+          "format": "date-time",
+          "minLength": 1,
+          "type": "string"
+        }
       },
       "type": "object"
     },

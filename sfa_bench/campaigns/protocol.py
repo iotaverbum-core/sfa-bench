@@ -133,6 +133,53 @@ _SELF_RATIFICATION_KEYS = frozenset(
         "autopromote",
     }
 )
+_GOVERNANCE_VALUE_KEYS = frozenset(
+    {
+        "decision",
+        "outcome",
+        "result",
+        "state",
+        "status",
+    }
+)
+_DRAFT_COMPLETION_KEYS = frozenset(
+    {
+        "completed",
+        "executionresult",
+        "official",
+        "officialresult",
+        "passed",
+        "providerranking",
+        "score",
+    }
+)
+_DRAFT_COMPLETION_VALUE_KEYS = frozenset(
+    {
+        "classification",
+        "decision",
+        "outcome",
+        "result",
+        "runclassification",
+        "runstatus",
+        "state",
+        "status",
+    }
+)
+_DRAFT_COMPLETION_VALUE_RE = re.compile(
+    r"\b(?:complete(?:d)?|official|pass(?:ed)?|rank(?:ed|ing)?)\b",
+    re.IGNORECASE,
+)
+_CAMPAIGN_UNTRUSTED_TEXT_SURFACES = frozenset(
+    {"reasoning_configuration", "sampling_configuration"}
+)
+_CANDIDATE_UNTRUSTED_TEXT_SURFACES = frozenset(
+    {
+        "configuration",
+        "environment",
+        "observed_provider_model_metadata",
+        "tool_state",
+    }
+)
 
 
 Issue = dict[str, str]
@@ -401,6 +448,46 @@ def validate_finite_numbers(value: Any, path: str = "$") -> list[Issue]:
     return issues
 
 
+def validate_unicode_scalars(value: Any, path: str = "$") -> list[Issue]:
+    """Reject strings containing unpaired UTF-16 surrogate code points."""
+    issues: list[Issue] = []
+    if isinstance(value, dict):
+        for key in sorted(value, key=str):
+            invalid_key = isinstance(key, str) and any(
+                0xD800 <= ord(character) <= 0xDFFF for character in key
+            )
+            child_path = (
+                f"{path}.<invalid-key>"
+                if invalid_key
+                else _join(path, str(key))
+            )
+            if invalid_key:
+                issues.append(
+                    issue(
+                        "INVALID_UNICODE_SCALAR",
+                        child_path,
+                        "object keys must not contain unpaired surrogate code points",
+                    )
+                )
+            issues.extend(
+                validate_unicode_scalars(value[key], child_path)
+            )
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            issues.extend(validate_unicode_scalars(child, _join(path, index)))
+    elif isinstance(value, str) and any(
+        0xD800 <= ord(character) <= 0xDFFF for character in value
+    ):
+        issues.append(
+            issue(
+                "INVALID_UNICODE_SCALAR",
+                path,
+                "strings must not contain unpaired surrogate code points",
+            )
+        )
+    return issues
+
+
 def validate_repo_relative_path(value: Any, path: str) -> list[Issue]:
     """Validate a canonical repository-relative POSIX path."""
     if not isinstance(value, str) or not value.strip():
@@ -412,7 +499,8 @@ def validate_repo_relative_path(value: Any, path: str) -> list[Issue]:
     pure = PurePosixPath(value)
     if pure.is_absolute() or re.match(r"^[A-Za-z]:", value):
         return [issue("PATH_ESCAPE", path, "absolute paths are forbidden")]
-    if value in {".", ".."} or any(part in {"", ".", ".."} for part in pure.parts):
+    segments = value.split("/")
+    if any(segment in {"", ".", ".."} for segment in segments):
         return [
             issue(
                 "PATH_TRAVERSAL",
@@ -420,6 +508,40 @@ def validate_repo_relative_path(value: Any, path: str) -> list[Issue]:
                 "path must not contain empty, dot, or parent segments",
             )
         ]
+    if ":" in value:
+        return [
+            issue(
+                "INVALID_PATH",
+                path,
+                "colon is forbidden in portable repository paths",
+            )
+        ]
+    reserved = {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        *(f"COM{index}" for index in range(1, 10)),
+        *(f"LPT{index}" for index in range(1, 10)),
+    }
+    for segment in segments:
+        if segment.endswith((" ", ".")):
+            return [
+                issue(
+                    "INVALID_PATH",
+                    path,
+                    "path segments must not end with a space or dot",
+                )
+            ]
+        stem = segment.split(".", 1)[0].upper()
+        if stem in reserved:
+            return [
+                issue(
+                    "INVALID_PATH",
+                    path,
+                    f"reserved path segment is forbidden: {segment}",
+                )
+            ]
     return []
 
 
@@ -950,6 +1072,9 @@ def validate_campaign(campaign: Any, *, for_lock_build: bool = False) -> list[Is
     issues: list[Issue] = []
     if not isinstance(campaign, dict):
         return [issue("MALFORMED_DOCUMENT", "$", "campaign must be a JSON object")]
+    unicode_issues = validate_unicode_scalars(campaign)
+    if unicode_issues:
+        return sort_issues(unicode_issues)
 
     _require_fields(campaign, _CAMPAIGN_REQUIRED, issues, "$")
     _unknown_fields(campaign, _CAMPAIGN_FIELDS, issues, "$")
@@ -1112,24 +1237,17 @@ def validate_campaign(campaign: Any, *, for_lock_build: bool = False) -> list[Is
                 "a draft_not_executed campaign cannot claim official classification",
             )
         )
-    if status == "draft_not_executed":
-        for forbidden in (
-            "completed",
-            "execution_result",
-            "official_result",
-            "provider_ranking",
-            "ratified",
-            "score",
-        ):
-            if forbidden in campaign:
-                issues.append(
-                    issue(
-                        "DRAFT_COMPLETION_CLAIM",
-                        _join("$", forbidden),
-                        "draft campaigns cannot contain execution or completion claims",
-                    )
-                )
     for field in sorted(campaign):
+        if status == "draft_not_executed":
+            issues.extend(
+                _scan_draft_completion_claims(
+                    campaign[field],
+                    _join("$", field),
+                    claim_context=(
+                        field in _CAMPAIGN_UNTRUSTED_TEXT_SURFACES
+                    ),
+                )
+            )
         if field == "ratification_policy":
             continue
         issues.extend(
@@ -1140,6 +1258,9 @@ def validate_campaign(campaign: Any, *, for_lock_build: bool = False) -> list[Is
                 message=(
                     "campaign configuration cannot assert ratification "
                     "or automatic promotion"
+                ),
+                claim_context=(
+                    field in _CAMPAIGN_UNTRUSTED_TEXT_SURFACES
                 ),
             )
         )
@@ -1152,18 +1273,34 @@ def _normalized_control_key(key: Any) -> str:
     return re.sub(r"[^a-z0-9]", "", str(key).lower())
 
 
+def _is_governance_control_key(key: Any) -> bool:
+    normalized = _normalized_control_key(key)
+    return (
+        normalized in _SELF_RATIFICATION_KEYS
+        or "ratif" in normalized
+        or "promot" in normalized
+    )
+
+
+def _contains_governance_term(value: str) -> bool:
+    lowered = value.lower()
+    return "ratif" in lowered or "promot" in lowered
+
+
 def _scan_governance_claims(
     value: Any,
     path: str = "$",
     *,
     code: str,
     message: str,
+    claim_context: bool = False,
 ) -> list[Issue]:
     issues: list[Issue] = []
     if isinstance(value, dict):
         for key in sorted(value, key=str):
             child_path = _join(path, str(key))
-            if _normalized_control_key(key) in _SELF_RATIFICATION_KEYS:
+            normalized = _normalized_control_key(key)
+            if _is_governance_control_key(key):
                 issues.append(issue(code, child_path, message))
             issues.extend(
                 _scan_governance_claims(
@@ -1171,6 +1308,10 @@ def _scan_governance_claims(
                     child_path,
                     code=code,
                     message=message,
+                    claim_context=(
+                        claim_context
+                        or normalized in _GOVERNANCE_VALUE_KEYS
+                    ),
                 )
             )
     elif isinstance(value, list):
@@ -1181,8 +1322,68 @@ def _scan_governance_claims(
                     _join(path, index),
                     code=code,
                     message=message,
+                    claim_context=claim_context,
                 )
             )
+    elif (
+        claim_context
+        and isinstance(value, str)
+        and _contains_governance_term(value)
+    ):
+        issues.append(issue(code, path, message))
+    return issues
+
+
+def _scan_draft_completion_claims(
+    value: Any,
+    path: str = "$",
+    *,
+    claim_context: bool = False,
+) -> list[Issue]:
+    issues: list[Issue] = []
+    if isinstance(value, dict):
+        for key in sorted(value, key=str):
+            child_path = _join(path, str(key))
+            normalized = _normalized_control_key(key)
+            if normalized in _DRAFT_COMPLETION_KEYS:
+                issues.append(
+                    issue(
+                        "DRAFT_COMPLETION_CLAIM",
+                        child_path,
+                        "draft campaigns cannot contain execution or completion claims",
+                    )
+                )
+            issues.extend(
+                _scan_draft_completion_claims(
+                    value[key],
+                    child_path,
+                    claim_context=(
+                        claim_context
+                        or normalized in _DRAFT_COMPLETION_VALUE_KEYS
+                    ),
+                )
+            )
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            issues.extend(
+                _scan_draft_completion_claims(
+                    child,
+                    _join(path, index),
+                    claim_context=claim_context,
+                )
+            )
+    elif (
+        claim_context
+        and isinstance(value, str)
+        and _DRAFT_COMPLETION_VALUE_RE.search(value)
+    ):
+        issues.append(
+            issue(
+                "DRAFT_COMPLETION_CLAIM",
+                path,
+                "draft campaigns cannot contain execution or completion claims",
+            )
+        )
     return issues
 
 
@@ -1193,6 +1394,9 @@ def validate_candidate_manifest(manifest: Any) -> list[Issue]:
         return [
             issue("MALFORMED_DOCUMENT", "$", "candidate manifest must be a JSON object")
         ]
+    unicode_issues = validate_unicode_scalars(manifest)
+    if unicode_issues:
+        return sort_issues(unicode_issues)
     _require_fields(manifest, _CANDIDATE_FIELDS, issues, "$")
     _unknown_fields(manifest, _CANDIDATE_FIELDS, issues, "$")
     _validate_schema_version(manifest, CANDIDATE_MANIFEST_SCHEMA, issues)
@@ -1286,13 +1490,31 @@ def validate_candidate_manifest(manifest: Any) -> list[Issue]:
                     )
                 )
 
-    issues.extend(
-        _scan_governance_claims(
-            manifest,
-            code="CANDIDATE_SELF_RATIFICATION_FORBIDDEN",
-            message="candidate manifests cannot assert ratification or promotion",
+    for field in sorted(manifest):
+        issues.extend(
+            _scan_governance_claims(
+                manifest[field],
+                _join("$", field),
+                code="CANDIDATE_SELF_RATIFICATION_FORBIDDEN",
+                message=(
+                    "candidate manifests cannot assert ratification "
+                    "or promotion"
+                ),
+                claim_context=(
+                    field in _CANDIDATE_UNTRUSTED_TEXT_SURFACES
+                ),
+            )
         )
-    )
+        if status == "draft_not_executed":
+            issues.extend(
+                _scan_draft_completion_claims(
+                    manifest[field],
+                    _join("$", field),
+                    claim_context=(
+                        field in _CANDIDATE_UNTRUSTED_TEXT_SURFACES
+                    ),
+                )
+            )
     issues.extend(validate_finite_numbers(manifest))
     issues.extend(_scan_secrets(manifest))
     return sort_issues(issues)

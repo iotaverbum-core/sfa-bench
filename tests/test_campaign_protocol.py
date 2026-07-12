@@ -232,10 +232,36 @@ class CampaignValidationTests(unittest.TestCase):
             ("reasoning_configuration", "automatic_promotion"),
             ("sampling_configuration", "automaticPromotion"),
             ("reasoning_configuration", "ratification-status"),
+            ("reasoning_configuration", "auto_ratify"),
+            ("sampling_configuration", "auto_ratification"),
+            ("reasoning_configuration", "auto_promotion"),
+            ("sampling_configuration", "self_ratified"),
+            ("reasoning_configuration", "ratify"),
+            ("sampling_configuration", "promote"),
+            ("reasoning_configuration", "ratification_result"),
+            ("sampling_configuration", "promotion_result"),
         ):
             with self.subTest(surface=surface, key=key):
                 campaign = _campaign()
                 campaign[surface][key] = True
+                self.assertIn(
+                    "CAMPAIGN_GOVERNANCE_CLAIM_FORBIDDEN",
+                    _codes(validate_campaign(campaign)),
+                )
+
+    def test_untrusted_campaign_text_cannot_assert_governance(self):
+        for key, value in (
+            ("status", "ratified"),
+            ("decision", "promote"),
+            ("outcome", "human ratification complete"),
+            ("result", "promotion approved"),
+            ("state", "RATIFIED"),
+            ("message", "candidate ratified and promoted"),
+            ("provider_note", "promotion complete"),
+        ):
+            with self.subTest(key=key):
+                campaign = _campaign()
+                campaign["reasoning_configuration"][key] = value
                 self.assertIn(
                     "CAMPAIGN_GOVERNANCE_CLAIM_FORBIDDEN",
                     _codes(validate_campaign(campaign)),
@@ -264,6 +290,25 @@ class CampaignValidationTests(unittest.TestCase):
         codes = _codes(validate_campaign(campaign))
         self.assertIn("PATH_TRAVERSAL", codes)
         self.assertIn("OUTPUT_PATH_NOT_APPROVED", codes)
+
+    def test_noncanonical_and_nonportable_paths_are_rejected(self):
+        for reference in (
+            "foo//bar",
+            "foo/./bar",
+            "./foo",
+            "foo/.",
+            "foo/",
+            "foo:bar",
+            "CON",
+            "out/campaign_locks/base:lock.json",
+        ):
+            with self.subTest(reference=reference):
+                campaign = _campaign()
+                campaign["system_prompt"]["reference"] = reference
+                self.assertTrue(
+                    {"PATH_TRAVERSAL", "INVALID_PATH"}
+                    & _codes(validate_campaign(campaign))
+                )
 
     def test_duplicate_policy_surfaces_must_agree(self):
         campaign = _campaign()
@@ -302,6 +347,38 @@ class CampaignValidationTests(unittest.TestCase):
         self.assertIn("DRAFT_OFFICIAL_CONFLICT", codes)
         self.assertIn("DRAFT_COMPLETION_CLAIM", codes)
 
+    def test_draft_completion_claims_fail_recursively(self):
+        for key, value in (
+            ("completed", True),
+            ("execution_result", {"score": 1}),
+            ("official_result", "pass"),
+            ("provider_ranking", 1),
+            ("score", 1),
+            ("passed", True),
+            ("run_status", "completed"),
+            ("classification", "official"),
+            ("message", "campaign completed successfully"),
+        ):
+            with self.subTest(key=key):
+                campaign = _campaign()
+                campaign["reasoning_configuration"][key] = value
+                self.assertIn(
+                    "DRAFT_COMPLETION_CLAIM",
+                    _codes(validate_campaign(campaign)),
+                )
+
+    def test_campaign_unicode_scalars_fail_closed_for_values_and_keys(self):
+        campaign = _campaign()
+        campaign["campaign_title"] = chr(0xD800)
+        campaign["reasoning_configuration"][chr(0xDC00)] = 1
+        issues = validate_campaign(campaign)
+        self.assertGreaterEqual(
+            [entry["code"] for entry in issues].count(
+                "INVALID_UNICODE_SCALAR"
+            ),
+            2,
+        )
+
     def test_field_types_fail_closed(self):
         campaign = _campaign()
         campaign["run_count"] = True
@@ -332,6 +409,16 @@ class CandidateManifestBoundaryTests(unittest.TestCase):
             "ratificationStatus",
             "promotionStatus",
             "is_ratified",
+            "auto_ratify",
+            "auto_ratification",
+            "auto_promotion",
+            "self_ratified",
+            "ratify",
+            "promote",
+            "ratification",
+            "promotion",
+            "ratification_result",
+            "promotion_result",
         ):
             with self.subTest(key=key):
                 manifest = _manifest()
@@ -340,6 +427,36 @@ class CandidateManifestBoundaryTests(unittest.TestCase):
                     "CANDIDATE_SELF_RATIFICATION_FORBIDDEN",
                     _codes(validate_candidate_manifest(manifest)),
                 )
+
+    def test_untrusted_candidate_text_cannot_assert_governance(self):
+        for key, value in (
+            ("status", "ratified"),
+            ("decision", "promote"),
+            ("outcome", "human ratification complete"),
+            ("result", "promotion approved"),
+            ("state", "RATIFIED"),
+            ("note", "candidate ratified and promoted"),
+            ("description", "promotion approved"),
+        ):
+            with self.subTest(key=key):
+                manifest = _manifest()
+                manifest["observed_provider_model_metadata"] = {key: value}
+                self.assertIn(
+                    "CANDIDATE_SELF_RATIFICATION_FORBIDDEN",
+                    _codes(validate_candidate_manifest(manifest)),
+                )
+
+    def test_manifest_unicode_scalars_fail_closed_for_values_and_keys(self):
+        manifest = _manifest()
+        manifest["candidate_id"] = chr(0xD800)
+        manifest["observed_provider_model_metadata"] = {chr(0xDC00): 1}
+        issues = validate_candidate_manifest(manifest)
+        self.assertGreaterEqual(
+            [entry["code"] for entry in issues].count(
+                "INVALID_UNICODE_SCALAR"
+            ),
+            2,
+        )
 
     def test_nonfinite_manifest_numbers_are_rejected(self):
         manifest = _manifest()
@@ -388,20 +505,41 @@ class BenchmarkLockTests(unittest.TestCase):
 
     def test_envelope_is_outside_deterministic_digest(self):
         campaign = _campaign()
-        first = _build(campaign, envelope={"created_at": "one"})
-        second = _build(campaign, envelope={"created_at": "two"})
+        first = _build(
+            campaign, envelope={"created_at": "2026-07-11T00:00:00Z"}
+        )
+        second = _build(
+            campaign, envelope={"created_at": "2099-01-01T00:00:00Z"}
+        )
         self.assertEqual(first["lock_digest"], second["lock_digest"])
         changed = copy.deepcopy(first)
-        changed["envelope"] = {"created_at": "later"}
+        changed["envelope"] = {"created_at": "2077-01-01T00:00:00Z"}
         self.assertEqual(benchmark_lock_digest(changed), first["lock_digest"])
         self.assertEqual(_verify(campaign, changed), [])
 
     def test_envelope_cannot_carry_unhashed_outcome_claims(self):
         campaign = _campaign()
-        for envelope, expected_code in (
+        cases = [
             ({"score": "1.0"}, "ENVELOPE_FIELD_FORBIDDEN"),
-            ({"environment_note": "campaign passed"}, "ENVELOPE_CLAIM_FORBIDDEN"),
-        ):
+            ({"created_by": "reviewer"}, "ENVELOPE_FIELD_FORBIDDEN"),
+            ({"created_at": "campaign passed"}, "ENVELOPE_TIMESTAMP_INVALID"),
+        ]
+        cases.extend(
+            (
+                {"environment_note": claim},
+                "ENVELOPE_FIELD_FORBIDDEN",
+            )
+            for claim in (
+                "campaign completed successfully",
+                "approved by regulator",
+                "certified compliant with EU law",
+                "legal conformity established",
+                "official provider ranking: first",
+                "execution occurred",
+                "api key sk-12345678901234567890",
+            )
+        )
+        for envelope, expected_code in cases:
             with self.subTest(envelope=envelope):
                 with self.assertRaises(LockingError) as caught:
                     _build(campaign, envelope=envelope)
@@ -747,6 +885,28 @@ class CampaignCliTests(unittest.TestCase):
             self.assertFalse(escaped.exists())
             self.assertIn("OUTPUT_PATH_NOT_APPROVED", _codes(result["issues"]))
 
+    def test_output_rejects_nonportable_windows_forms(self):
+        for filename in ("base:lock.json", "CON.json"):
+            with self.subTest(filename=filename):
+                with tempfile.TemporaryDirectory() as temporary:
+                    approved = Path(temporary) / "approved"
+                    output = approved / filename
+                    with mock.patch.object(
+                        campaign_cli, "LOCK_OUTPUT_ROOT", approved
+                    ):
+                        returncode, result = self._run(
+                            [
+                                "lock",
+                                "--campaign",
+                                "campaigns/examples/"
+                                "gpt56-draft-preregistration.json",
+                                "--output",
+                                str(output),
+                            ]
+                        )
+                self.assertEqual(returncode, 2)
+                self.assertIn("OUTPUT_PATH_INVALID", _codes(result["issues"]))
+
     def test_invalid_document_exits_two(self):
         with tempfile.TemporaryDirectory() as temporary:
             invalid = Path(temporary) / "invalid.json"
@@ -773,6 +933,21 @@ class CampaignCliTests(unittest.TestCase):
                 self.assertEqual(returncode, 2)
                 self.assertFalse(result["ok"])
                 self.assertIn("MALFORMED_JSON", _codes(result["issues"]))
+
+    def test_unpaired_surrogate_json_exits_two(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            invalid = Path(temporary) / "campaign.json"
+            campaign = _campaign()
+            campaign["campaign_title"] = chr(0xD800)
+            invalid.write_text(
+                json.dumps(campaign, ensure_ascii=True) + "\n",
+                encoding="utf-8",
+            )
+            returncode, result = self._run(
+                ["validate", "--campaign", str(invalid)]
+            )
+        self.assertEqual(returncode, 2)
+        self.assertIn("INVALID_UNICODE_SCALAR", _codes(result["issues"]))
 
 
 if __name__ == "__main__":

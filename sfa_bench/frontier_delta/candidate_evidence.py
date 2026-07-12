@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -55,12 +56,91 @@ class CandidateEvidenceError(ValueError):
         self.code = code
 
 
+class _NonStandardJsonConstant(ValueError):
+    pass
+
+
+def _reject_json_constant(value: str) -> None:
+    raise _NonStandardJsonConstant(
+        f"non-standard JSON constant is forbidden: {value}"
+    )
+
+
+def _contains_nonfinite_number(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any(_contains_nonfinite_number(child) for child in value.values())
+    if isinstance(value, list):
+        return any(_contains_nonfinite_number(child) for child in value)
+    return isinstance(value, float) and not math.isfinite(value)
+
+
+def _contains_unpaired_surrogate(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any(
+            _contains_unpaired_surrogate(key)
+            or _contains_unpaired_surrogate(child)
+            for key, child in value.items()
+        )
+    if isinstance(value, list):
+        return any(_contains_unpaired_surrogate(child) for child in value)
+    return isinstance(value, str) and any(
+        0xD800 <= ord(character) <= 0xDFFF for character in value
+    )
+
+
+def _require_finite_numbers(value: Any, *, code: str, label: str) -> None:
+    if _contains_nonfinite_number(value):
+        raise CandidateEvidenceError(
+            code, f"{label} contains a non-finite number"
+        )
+
+
+def _require_unicode_scalars(value: Any, *, code: str, label: str) -> None:
+    if _contains_unpaired_surrogate(value):
+        raise CandidateEvidenceError(
+            code, f"{label} contains an unpaired surrogate code point"
+        )
+
+
 def _file_sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
         for block in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _bytes_sha256(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def _captured_task_digest_relation(
+    task_path: Path, captured_digest: Any
+) -> str:
+    if captured_digest is None:
+        return "not_recorded"
+    if (
+        not isinstance(captured_digest, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", captured_digest)
+    ):
+        raise CandidateEvidenceError(
+            "captured_task_digest_invalid",
+            f"captured task digest is invalid: {task_path.name}",
+        )
+    task_bytes = task_path.read_bytes()
+    exact_digest = _bytes_sha256(task_bytes)
+    if captured_digest == exact_digest:
+        return "exact_bytes"
+    lf_bytes = task_bytes.replace(b"\r\n", b"\n")
+    if captured_digest == _bytes_sha256(lf_bytes):
+        return "lf_normalized_equivalent"
+    crlf_bytes = lf_bytes.replace(b"\n", b"\r\n")
+    if captured_digest == _bytes_sha256(crlf_bytes):
+        return "crlf_normalized_equivalent"
+    raise CandidateEvidenceError(
+        "captured_task_digest_mismatch",
+        f"captured task digest is unrelated to current bytes: {task_path.name}",
+    )
 
 
 def _load_json_object(path: Path, *, label: str) -> dict[str, Any]:
@@ -71,11 +151,21 @@ def _load_json_object(path: Path, *, label: str) -> dict[str, Any]:
             f"{label}_invalid_utf8", f"{label} must be UTF-8: {path}"
         ) from exc
     try:
-        value = json.loads(text)
-    except json.JSONDecodeError as exc:
+        value = json.loads(text, parse_constant=_reject_json_constant)
+    except (json.JSONDecodeError, _NonStandardJsonConstant) as exc:
         raise CandidateEvidenceError(
             f"{label}_invalid_json", f"{label} is not valid JSON: {path}"
         ) from exc
+    _require_finite_numbers(
+        value,
+        code=f"{label}_invalid_json",
+        label=label,
+    )
+    _require_unicode_scalars(
+        value,
+        code=f"{label}_invalid_json",
+        label=label,
+    )
     if not isinstance(value, dict):
         raise CandidateEvidenceError(
             f"{label}_not_object", f"{label} must be a JSON object: {path}"
@@ -95,12 +185,24 @@ def _load_raw_rows(path: Path) -> dict[str, dict[str, Any]]:
         if not raw_line.strip():
             continue
         try:
-            row = json.loads(raw_line)
-        except json.JSONDecodeError as exc:
+            row = json.loads(
+                raw_line, parse_constant=_reject_json_constant
+            )
+        except (json.JSONDecodeError, _NonStandardJsonConstant) as exc:
             raise CandidateEvidenceError(
                 "raw_evidence_invalid_jsonl",
                 f"raw evidence line {line_number} is not valid JSON",
             ) from exc
+        _require_finite_numbers(
+            row,
+            code="raw_evidence_invalid_jsonl",
+            label=f"raw evidence line {line_number}",
+        )
+        _require_unicode_scalars(
+            row,
+            code="raw_evidence_invalid_jsonl",
+            label=f"raw evidence line {line_number}",
+        )
         if not isinstance(row, dict):
             raise CandidateEvidenceError(
                 "raw_evidence_record_not_object",
@@ -372,14 +474,18 @@ def _build_successor(
 
         task_path = TASKS_DIR / f"{task_id}.json"
         task_file_sha256 = _file_sha256(task_path)
+        captured_task_digest = raw_row.get("task_file_sha256")
         task_files[task_id] = {
             "path": f"sfa_bench/frontier_delta/tasks/{task_id}.json",
             "sha256": task_file_sha256,
             "canonical_sha256": schemas.task_hash(task),
             "capture_sha256": (
-                raw_row.get("task_file_sha256")
-                if isinstance(raw_row.get("task_file_sha256"), str)
+                captured_task_digest
+                if isinstance(captured_task_digest, str)
                 else None
+            ),
+            "capture_digest_relation": _captured_task_digest_relation(
+                task_path, captured_task_digest
             ),
         }
 
@@ -525,6 +631,16 @@ def build_successor(
 
 
 def _verify_artifact_seal(artifact: dict[str, Any]) -> None:
+    _require_finite_numbers(
+        artifact,
+        code="successor_nonfinite_number",
+        label="successor",
+    )
+    _require_unicode_scalars(
+        artifact,
+        code="successor_invalid_unicode",
+        label="successor",
+    )
     if artifact.get("schema") != SUCCESSOR_SCHEMA_VERSION:
         raise CandidateEvidenceError(
             "successor_schema_unknown",
@@ -549,12 +665,23 @@ def _verify_artifact_seal(artifact: dict[str, Any]) -> None:
 
 
 def _artifact_bytes(artifact: dict[str, Any]) -> bytes:
+    _require_finite_numbers(
+        artifact,
+        code="successor_nonfinite_number",
+        label="successor",
+    )
+    _require_unicode_scalars(
+        artifact,
+        code="successor_invalid_unicode",
+        label="successor",
+    )
     return (
         json.dumps(
             artifact,
             indent=2,
             sort_keys=True,
             ensure_ascii=False,
+            allow_nan=False,
         )
         + "\n"
     ).encode("utf-8")
@@ -858,8 +985,9 @@ def main(
             json.dumps(
                 {"ok": False, "code": exc.code, "message": str(exc)},
                 sort_keys=True,
+                allow_nan=False,
             )
         )
         return 2
-    print(json.dumps(payload, sort_keys=True))
+    print(json.dumps(payload, sort_keys=True, allow_nan=False))
     return 0

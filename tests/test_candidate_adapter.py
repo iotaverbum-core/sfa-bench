@@ -139,6 +139,12 @@ class CandidateValidityGateTests(unittest.TestCase):
         ("true", "invalid_model_output"),
         ("false", "invalid_model_output"),
         ("null", "invalid_model_output"),
+        ('{"value":NaN}', "unparseable_model_output"),
+        ('{"value":Infinity}', "unparseable_model_output"),
+        ('{"value":-Infinity}', "unparseable_model_output"),
+        ('{"value":1e309}', "unparseable_model_output"),
+        (r'{"value":"\ud800"}', "unparseable_model_output"),
+        (r'{"value":"\udc00"}', "unparseable_model_output"),
     )
 
     def test_invalid_outcome_mapping_and_exact_text_hash(self):
@@ -163,15 +169,46 @@ class CandidateValidityGateTests(unittest.TestCase):
             scorers, "score_task", side_effect=AssertionError("scorer was invoked")
         ) as scorer_spy:
             for task in load_tasks():
-                with self.subTest(task_id=task["task_id"]):
-                    with mock.patch.dict(
-                        ca._LANE_CANONICALIZERS,
-                        {task["lane"]: fail_canonicalizer},
+                for response in (
+                    "plaintext refusal",
+                    '{"value":NaN}',
+                    '{"value":Infinity}',
+                    '{"value":-Infinity}',
+                    '{"value":1e309}',
+                    r'{"value":"\ud800"}',
+                    r'{"value":"\udc00"}',
+                ):
+                    with self.subTest(
+                        task_id=task["task_id"], response=response
                     ):
-                        result = ca.score_response(task, "plaintext refusal")
-                    self.assertEqual(result["score"], 0.0)
-                    self.assertEqual(result["verdict"], "fail")
+                        with mock.patch.dict(
+                            ca._LANE_CANONICALIZERS,
+                            {task["lane"]: fail_canonicalizer},
+                        ):
+                            result = ca.score_response(task, response)
+                        self.assertEqual(result["score"], 0.0)
+                        self.assertEqual(result["verdict"], "fail")
+                        self.assertEqual(
+                            result["detected_failure_modes"],
+                            ["unparseable_model_output"],
+                        )
             scorer_spy.assert_not_called()
+
+    def test_unicode_scalar_validation_is_fail_closed(self):
+        task = load_task("memory_boundary_001")
+        literal_surrogate = '{"value":"' + chr(0xD800) + '"}'
+        result = ca.score_response(task, literal_surrogate)
+        self.assertEqual(result["score"], 0.0)
+        self.assertEqual(
+            result["detected_failure_modes"],
+            ["unparseable_model_output"],
+        )
+
+        valid_pair = ca.validate_candidate_output(
+            r'{"value":"\ud83d\ude00"}'
+        )
+        self.assertTrue(valid_pair.valid)
+        self.assertEqual(valid_pair.data, {"value": chr(0x1F600)})
 
     def test_memory_boundary_empty_response_regression(self):
         result = ca.score_response(load_task("memory_boundary_001"), "")

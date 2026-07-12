@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import datetime as dt
 import hashlib
 import json
 import os
@@ -22,6 +23,7 @@ from .protocol import (
     validate_campaign,
     validate_finite_numbers,
     validate_repo_relative_path,
+    validate_unicode_scalars,
 )
 
 
@@ -31,12 +33,7 @@ _PACKAGE_VERSION_RE = re.compile(
 _PRERELEASE_VERSION_RE = re.compile(
     r"^(\d+\.\d+\.\d+)(a|b|rc)(\d+)$"
 )
-_ENVELOPE_FIELDS = frozenset({"created_at", "created_by", "environment_note"})
-_ENVELOPE_CLAIM_RE = re.compile(
-    r"\b(?:score|verdict|result|outcome|pass(?:ed)?|fail(?:ed|ure)?|ratif(?:y|ied|ication)|"
-    r"promot(?:e|ed|ion))\b",
-    re.IGNORECASE,
-)
+_ENVELOPE_FIELDS = frozenset({"created_at"})
 
 
 # These paths implement the fixed judge or its shared deterministic contracts.
@@ -278,12 +275,19 @@ def _validate_envelope(envelope: Any) -> list[Issue]:
                     "envelope metadata must be a non-empty string",
                 )
             )
-        elif _ENVELOPE_CLAIM_RE.search(value):
+            continue
+        try:
+            timestamp = dt.datetime.fromisoformat(
+                value.replace("Z", "+00:00")
+            )
+        except ValueError:
+            timestamp = None
+        if timestamp is None or timestamp.tzinfo is None:
             issues.append(
                 issue(
-                    "ENVELOPE_CLAIM_FORBIDDEN",
+                    "ENVELOPE_TIMESTAMP_INVALID",
                     f"$.envelope.{field}",
-                    "unhashed envelope metadata cannot contain outcome claims",
+                    "created_at must be a timezone-qualified ISO timestamp",
                 )
             )
     return sort_issues(issues)
@@ -688,7 +692,10 @@ def validate_benchmark_lock(lock: Any) -> list[Issue]:
     if not isinstance(lock, dict):
         return [issue("MALFORMED_DOCUMENT", "$", "benchmark lock must be a JSON object")]
     finite_issues = validate_finite_numbers(lock)
-    issues: list[Issue] = list(finite_issues)
+    unicode_issues = validate_unicode_scalars(lock)
+    if unicode_issues:
+        return sort_issues(unicode_issues)
+    issues: list[Issue] = [*finite_issues, *unicode_issues]
     required = frozenset(
         {
             "schema_version",
@@ -899,6 +906,7 @@ def validate_benchmark_lock(lock: Any) -> list[Issue]:
     stated_digest = lock.get("lock_digest")
     if (
         not finite_issues
+        and not unicode_issues
         and isinstance(stated_digest, str)
         and SHA256_RE.fullmatch(stated_digest)
     ):
@@ -1045,7 +1053,7 @@ def approved_output_path(output: Path, approved_root: Path) -> Path:
     target = output if output.is_absolute() else root / output
     target = target.resolve(strict=False)
     try:
-        target.relative_to(root)
+        relative_target = target.relative_to(root)
     except ValueError as exc:
         raise LockingError(
             [
@@ -1056,6 +1064,19 @@ def approved_output_path(output: Path, approved_root: Path) -> Path:
                 )
             ]
         ) from exc
+    portable_issues = validate_repo_relative_path(
+        relative_target.as_posix(), "$.output"
+    )
+    if portable_issues:
+        raise LockingError(
+            [
+                issue(
+                    "OUTPUT_PATH_INVALID",
+                    "$.output",
+                    portable_issues[0]["message"],
+                )
+            ]
+        )
     if target.suffix.lower() != ".json":
         raise LockingError(
             [issue("OUTPUT_PATH_INVALID", "$.output", "lock output must be a .json file")]

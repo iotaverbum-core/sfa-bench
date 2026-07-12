@@ -134,6 +134,13 @@ class SuccessorBuildTests(EvidenceUnitTest):
             candidate_adapter.CANDIDATE_ADAPTER_VERSION,
         )
         self.assertEqual(
+            {
+                entry["capture_digest_relation"]
+                for entry in artifact["source_evidence"]["task_files"].values()
+            },
+            {"crlf_normalized_equivalent"},
+        )
+        self.assertEqual(
             artifact["scoring_status"]["predecessor"]["total_score"],
             0.770833,
         )
@@ -193,6 +200,20 @@ class SuccessorBuildTests(EvidenceUnitTest):
                         reason=REASON,
                     )
                 self.assertEqual(caught.exception.code, "artifact_id_invalid")
+
+    def test_nonfinite_artifact_serialization_fails_closed(self):
+        with self.assertRaises(evidence.CandidateEvidenceError) as caught:
+            evidence._artifact_bytes({"value": float("nan")})
+        self.assertEqual(
+            caught.exception.code,
+            "successor_nonfinite_number",
+        )
+        with self.assertRaises(evidence.CandidateEvidenceError) as caught:
+            evidence._artifact_bytes({"value": chr(0xD800)})
+        self.assertEqual(
+            caught.exception.code,
+            "successor_invalid_unicode",
+        )
 
     def test_cli_output_path_cannot_escape_repository_out(self):
         with self.assertRaises(evidence.CandidateEvidenceError) as caught:
@@ -384,6 +405,18 @@ class SuccessorVerifyTests(EvidenceUnitTest):
             "successor_serialization_mismatch",
         )
 
+    def test_verify_rejects_nonstandard_successor_json(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact = Path(tmp) / "successor.json"
+            artifact.write_text('{"schema":NaN}\n', encoding="utf-8")
+            with self.assertRaises(evidence.CandidateEvidenceError) as caught:
+                evidence.verify_successor(
+                    artifact,
+                    RAW,
+                    PREDECESSOR,
+                )
+        self.assertEqual(caught.exception.code, "successor_invalid_json")
+
 
 class CandidateEvidenceCliTests(EvidenceUnitTest):
     def test_build_verify_and_no_overwrite_return_machine_readable_results(self):
@@ -496,6 +529,71 @@ class CandidateEvidenceCliTests(EvidenceUnitTest):
             "raw_evidence_response_text_missing",
         )
 
+    def test_nonstandard_raw_and_predecessor_numbers_fail_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            raw = root / "raw.jsonl"
+            raw.write_text(
+                '{"task_id":"memory_boundary_001",'
+                '"response_text":"","value":Infinity}\n',
+                encoding="utf-8",
+            )
+            with self.assertRaises(evidence.CandidateEvidenceError) as caught:
+                evidence.build_successor(
+                    raw,
+                    PREDECESSOR,
+                    artifact_id=ARTIFACT_ID,
+                    benchmark_commit=COMMIT,
+                    verifier_commit=COMMIT,
+                    reason=REASON,
+                )
+            self.assertEqual(
+                caught.exception.code,
+                "raw_evidence_invalid_jsonl",
+            )
+
+            predecessor = root / "predecessor.json"
+            predecessor.write_text(
+                PREDECESSOR.read_text(encoding="utf-8").replace(
+                    '"total_score_on_selected_cases": 0.770833',
+                    '"total_score_on_selected_cases": NaN',
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaises(evidence.CandidateEvidenceError) as caught:
+                evidence.build_successor(
+                    RAW,
+                    predecessor,
+                    artifact_id=ARTIFACT_ID,
+                    benchmark_commit=COMMIT,
+                    verifier_commit=COMMIT,
+                    reason=REASON,
+                )
+            self.assertEqual(
+                caught.exception.code,
+                "predecessor_invalid_json",
+            )
+
+            raw.write_text(
+                r'{"task_id":"memory_boundary_001",'
+                r'"response_text":"","value":"\ud800"}'
+                "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(evidence.CandidateEvidenceError) as caught:
+                evidence.build_successor(
+                    raw,
+                    PREDECESSOR,
+                    artifact_id=ARTIFACT_ID,
+                    benchmark_commit=COMMIT,
+                    verifier_commit=COMMIT,
+                    reason=REASON,
+                )
+            self.assertEqual(
+                caught.exception.code,
+                "raw_evidence_invalid_jsonl",
+            )
+
     def test_tampered_captured_raw_response_hash_fails_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
             raw = Path(tmp) / "raw.jsonl"
@@ -524,4 +622,34 @@ class CandidateEvidenceCliTests(EvidenceUnitTest):
         self.assertEqual(
             caught.exception.code,
             "captured_raw_response_digest_mismatch",
+        )
+
+    def test_unrelated_captured_task_digest_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            raw = Path(tmp) / "raw.jsonl"
+            rows = [
+                json.loads(line)
+                for line in RAW.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            rows[0]["task_file_sha256"] = "0" * 64
+            raw.write_text(
+                "".join(
+                    json.dumps(row, sort_keys=True) + "\n"
+                    for row in rows
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaises(evidence.CandidateEvidenceError) as caught:
+                evidence.build_successor(
+                    raw,
+                    PREDECESSOR,
+                    artifact_id=ARTIFACT_ID,
+                    benchmark_commit=COMMIT,
+                    verifier_commit=COMMIT,
+                    reason=REASON,
+                )
+        self.assertEqual(
+            caught.exception.code,
+            "captured_task_digest_mismatch",
         )

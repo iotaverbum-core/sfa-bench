@@ -24,6 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 import re
 from typing import Any, Callable, Literal
 
@@ -169,6 +170,42 @@ class CandidateOutputValidation:
         }
 
 
+class _NonStandardJsonConstant(ValueError):
+    pass
+
+
+class _InvalidUnicodeScalar(ValueError):
+    pass
+
+
+def _reject_json_constant(value: str) -> None:
+    raise _NonStandardJsonConstant(
+        f"non-standard JSON constant is forbidden: {value}"
+    )
+
+
+def _contains_nonfinite_number(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any(_contains_nonfinite_number(child) for child in value.values())
+    if isinstance(value, list):
+        return any(_contains_nonfinite_number(child) for child in value)
+    return isinstance(value, float) and not math.isfinite(value)
+
+
+def _contains_unpaired_surrogate(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any(
+            _contains_unpaired_surrogate(key)
+            or _contains_unpaired_surrogate(child)
+            for key, child in value.items()
+        )
+    if isinstance(value, list):
+        return any(_contains_unpaired_surrogate(child) for child in value)
+    return isinstance(value, str) and any(
+        0xD800 <= ord(character) <= 0xDFFF for character in value
+    )
+
+
 def validate_candidate_output(text: str | None) -> CandidateOutputValidation:
     """Classify raw candidate text before any lane-specific code can see it.
 
@@ -183,14 +220,31 @@ def validate_candidate_output(text: str | None) -> CandidateOutputValidation:
     else:
         raise TypeError("candidate response text must be str or None")
 
-    response_hash = hashlib.sha256(exact_text.encode("utf-8")).hexdigest()
+    try:
+        response_bytes = exact_text.encode("utf-8")
+    except UnicodeEncodeError:
+        response_bytes = exact_text.encode("utf-8", errors="surrogatepass")
+        return CandidateOutputValidation(
+            "unparseable_model_output",
+            None,
+            "invalid_unicode_response_text",
+            hashlib.sha256(response_bytes).hexdigest(),
+        )
+    response_hash = hashlib.sha256(response_bytes).hexdigest()
     stripped = exact_text.strip()
     if not stripped:
         return CandidateOutputValidation(
             "no_model_output", None, "empty_response_text", response_hash
         )
+    decoder = json.JSONDecoder(parse_constant=_reject_json_constant)
     try:
-        parsed = json.loads(stripped)
+        parsed = decoder.decode(stripped)
+        if _contains_nonfinite_number(parsed):
+            raise _NonStandardJsonConstant("non-finite JSON number is forbidden")
+        if _contains_unpaired_surrogate(parsed):
+            raise _InvalidUnicodeScalar(
+                "unpaired surrogate code point is forbidden"
+            )
         if isinstance(parsed, dict):
             return CandidateOutputValidation(
                 "valid_model_output", parsed, "full_text_json", response_hash
@@ -198,12 +252,25 @@ def validate_candidate_output(text: str | None) -> CandidateOutputValidation:
         return CandidateOutputValidation(
             "invalid_model_output", None, "full_text_json_non_object", response_hash
         )
-    except json.JSONDecodeError:
+    except (
+        json.JSONDecodeError,
+        _NonStandardJsonConstant,
+        _InvalidUnicodeScalar,
+    ):
         pass
-    decoder = json.JSONDecoder()
     try:
         leading, _end = decoder.raw_decode(stripped)
-    except json.JSONDecodeError:
+        if _contains_nonfinite_number(leading):
+            raise _NonStandardJsonConstant("non-finite JSON number is forbidden")
+        if _contains_unpaired_surrogate(leading):
+            raise _InvalidUnicodeScalar(
+                "unpaired surrogate code point is forbidden"
+            )
+    except (
+        json.JSONDecodeError,
+        _NonStandardJsonConstant,
+        _InvalidUnicodeScalar,
+    ):
         pass
     else:
         if isinstance(leading, dict):
@@ -241,7 +308,19 @@ def validate_candidate_output(text: str | None) -> CandidateOutputValidation:
             if top_level:
                 try:
                     parsed, _end = decoder.raw_decode(stripped[index:])
-                except json.JSONDecodeError:
+                    if _contains_nonfinite_number(parsed):
+                        raise _NonStandardJsonConstant(
+                            "non-finite JSON number is forbidden"
+                        )
+                    if _contains_unpaired_surrogate(parsed):
+                        raise _InvalidUnicodeScalar(
+                            "unpaired surrogate code point is forbidden"
+                        )
+                except (
+                    json.JSONDecodeError,
+                    _NonStandardJsonConstant,
+                    _InvalidUnicodeScalar,
+                ):
                     pass
                 else:
                     if isinstance(parsed, dict):
