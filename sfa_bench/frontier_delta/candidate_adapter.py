@@ -277,9 +277,13 @@ def validate_candidate_output(text: str | None) -> CandidateOutputValidation:
             return CandidateOutputValidation(
                 "valid_model_output", leading, "embedded_json_object", response_hash
             )
-        return CandidateOutputValidation(
-            "invalid_model_output", None, "leading_json_non_object", response_hash
-        )
+        if isinstance(leading, list):
+            return CandidateOutputValidation(
+                "invalid_model_output",
+                None,
+                "leading_json_non_object",
+                response_hash,
+            )
 
     brace_depth = 0
     bracket_depth = 0

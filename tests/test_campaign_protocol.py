@@ -261,6 +261,10 @@ class CampaignValidationTests(unittest.TestCase):
             ("reasoning_configuration", "approval-status"),
             ("sampling_configuration", "acceptanceStatus"),
             ("reasoning_configuration", "endorsement_result"),
+            ("reasoning_configuration", "human_approved"),
+            ("sampling_configuration", "approved_by_reviewer"),
+            ("reasoning_configuration", "externally_accepted"),
+            ("sampling_configuration", "reviewer_endorsed"),
         ):
             with self.subTest(surface=surface, key=key):
                 campaign = _campaign()
@@ -396,15 +400,27 @@ class CampaignValidationTests(unittest.TestCase):
         for key, value in (
             ("completed", True),
             ("completed_at", "2026-07-12T00:00:00Z"),
+            ("campaign_completed", True),
+            ("executed_at", "2026-07-12T00:00:00Z"),
+            ("execution_completed_at", "2026-07-12T00:00:00Z"),
             ("execution_occurred", True),
             ("execution_result", {"score": 1}),
+            ("finished_at", "2026-07-12T00:00:00Z"),
+            ("final_score", 1),
             ("official_result", "pass"),
+            ("passed_at", "2026-07-12T00:00:00Z"),
+            ("provider_rank", 1),
             ("provider_ranking", 1),
+            ("run_finished", True),
+            ("run_started_at", "2026-07-12T00:00:00Z"),
             ("score", 1),
             ("passed", True),
             ("run_status", "completed"),
+            ("run_status", "done"),
             ("run_status", "finished"),
             ("execution_status", "succeeded"),
+            ("execution_status", "successful"),
+            ("was_executed", True),
             ("classification", "official"),
             ("message", "campaign completed successfully"),
         ):
@@ -415,6 +431,17 @@ class CampaignValidationTests(unittest.TestCase):
                     "DRAFT_COMPLETION_CLAIM",
                     _codes(validate_campaign(campaign)),
                 )
+
+    def test_draft_guard_allows_planning_configuration(self):
+        campaign = _campaign()
+        campaign["reasoning_configuration"]["execution_timeout_seconds"] = 30
+        campaign["reasoning_configuration"]["approval_timeout_seconds"] = 60
+        campaign["sampling_configuration"]["run_count_limit"] = 3
+        campaign["sampling_configuration"]["ranking_policy"] = "pre_registered"
+        campaign["sampling_configuration"]["score_threshold"] = 0.8
+        codes = _codes(validate_campaign(campaign))
+        self.assertNotIn("DRAFT_COMPLETION_CLAIM", codes)
+        self.assertNotIn("CAMPAIGN_GOVERNANCE_CLAIM_FORBIDDEN", codes)
 
     def test_campaign_unicode_scalars_fail_closed_for_values_and_keys(self):
         campaign = _campaign()
@@ -471,6 +498,10 @@ class CandidateManifestBoundaryTests(unittest.TestCase):
             "approval-status",
             "acceptanceStatus",
             "endorsement_result",
+            "human_approved",
+            "approved_by_reviewer",
+            "externally_accepted",
+            "reviewer_endorsed",
         ):
             with self.subTest(key=key):
                 manifest = _manifest()
@@ -548,9 +579,19 @@ class CandidateManifestBoundaryTests(unittest.TestCase):
     def test_draft_candidate_execution_claim_variants_are_rejected(self):
         for key, value in (
             ("completed_at", "2026-07-12T00:00:00Z"),
+            ("campaign_completed", True),
+            ("executed_at", "2026-07-12T00:00:00Z"),
+            ("execution_completed_at", "2026-07-12T00:00:00Z"),
             ("execution_occurred", True),
+            ("finished_at", "2026-07-12T00:00:00Z"),
+            ("final_score", 1),
+            ("passed_at", "2026-07-12T00:00:00Z"),
+            ("provider_rank", 1),
+            ("run_finished", True),
+            ("run_started_at", "2026-07-12T00:00:00Z"),
             ("run_status", "finished"),
             ("execution_status", "succeeded"),
+            ("was_executed", True),
         ):
             with self.subTest(key=key):
                 manifest = _manifest()
@@ -561,6 +602,16 @@ class CandidateManifestBoundaryTests(unittest.TestCase):
                     "DRAFT_COMPLETION_CLAIM",
                     _codes(validate_candidate_manifest(manifest)),
                 )
+
+    def test_candidate_draft_guard_allows_planning_configuration(self):
+        manifest = _manifest()
+        manifest["configuration"]["execution_timeout_seconds"] = 30
+        manifest["configuration"]["approval_timeout_seconds"] = 60
+        manifest["configuration"]["ranking_policy"] = "pre_registered"
+        manifest["configuration"]["score_threshold"] = 0.8
+        codes = _codes(validate_candidate_manifest(manifest))
+        self.assertNotIn("DRAFT_COMPLETION_CLAIM", codes)
+        self.assertNotIn("CANDIDATE_SELF_RATIFICATION_FORBIDDEN", codes)
 
     def test_provider_metadata_is_not_a_judgment_input(self):
         first = _manifest()

@@ -178,29 +178,80 @@ _DRAFT_COMPLETION_VALUE_KEYS = frozenset(
     }
 )
 _DRAFT_COMPLETION_VALUE_RE = re.compile(
-    r"\b(?:complete(?:d)?|execut(?:ed|ion occurred)|finish(?:ed)?|official|"
-    r"pass(?:ed)?|rank(?:ed|ing)?|succeed(?:ed)?)\b",
+    r"\b(?:complete(?:d)?|done|end(?:ed)?|execut(?:ed|ion occurred)|"
+    r"finish(?:ed)?|official|pass(?:ed)?|rank(?:ed|ing)?|"
+    r"succeed(?:ed)?|success(?:ful(?:ly)?)?)\b",
     re.IGNORECASE,
 )
+_DRAFT_EVENT_MARKERS = (
+    "completed",
+    "ended",
+    "executed",
+    "finished",
+    "official",
+    "passed",
+    "started",
+)
+_DRAFT_EVENT_PREFIXES = (
+    "",
+    "campaign",
+    "execution",
+    "is",
+    "provider",
+    "run",
+    "study",
+    "was",
+)
+_DRAFT_EVENT_SUFFIXES = ("", "at", "date", "on", "time", "timestamp")
+_DRAFT_EVENT_NOUN_SUFFIXES = (
+    "at",
+    "occurred",
+    "result",
+    "state",
+    "status",
+    "timestamp",
+)
+_DRAFT_RESULT_NOUNS = ("rank", "ranking", "score")
+_DRAFT_RESULT_PREFIXES = (
+    "benchmark",
+    "candidate",
+    "final",
+    "model",
+    "observed",
+    "provider",
+    "total",
+)
+_DRAFT_RESULT_SUFFIXES = ("final", "observed", "result", "value")
 _GOVERNANCE_VALUE_RE = re.compile(
     r"\b(?:accept(?:ance|ed|ing|s)?|approv\w*|endors\w*|promot\w*|ratif\w*)\b",
     re.IGNORECASE,
 )
-_GOVERNANCE_ASSERTION_KEYS = frozenset(
-    {
-        "acceptance",
-        "accepted",
-        "approval",
-        "approved",
-        "endorsement",
-        "endorsed",
-        "isaccepted",
-        "isapproved",
-        "isendorsed",
-    }
+_GOVERNANCE_ASSERTION_MARKERS = (
+    "acceptance",
+    "accepted",
+    "approval",
+    "approved",
+    "endorsement",
+    "endorsed",
+)
+_GOVERNANCE_ASSERTION_PREFIXES = (
+    "",
+    "campaign",
+    "candidate",
+    "externally",
+    "human",
+    "is",
+    "reviewer",
+    "was",
 )
 _GOVERNANCE_ASSERTION_SUFFIXES = (
+    "",
+    "at",
+    "by",
+    "byhuman",
+    "byreviewer",
     "decision",
+    "on",
     "outcome",
     "result",
     "state",
@@ -1343,17 +1394,46 @@ def _is_governance_control_key(key: Any) -> bool:
         normalized in _SELF_RATIFICATION_KEYS
         or "ratif" in normalized
         or "promot" in normalized
-        or normalized in _GOVERNANCE_ASSERTION_KEYS
     ):
         return True
-    return (
-        any(root in normalized for root in ("accept", "approv", "endors"))
-        and normalized.endswith(_GOVERNANCE_ASSERTION_SUFFIXES)
-    )
+    for prefix in _GOVERNANCE_ASSERTION_PREFIXES:
+        for marker in _GOVERNANCE_ASSERTION_MARKERS:
+            stem = prefix + marker
+            if normalized.startswith(stem):
+                return normalized[len(stem) :] in _GOVERNANCE_ASSERTION_SUFFIXES
+    return False
 
 
 def _contains_governance_term(value: str) -> bool:
     return _GOVERNANCE_VALUE_RE.search(value) is not None
+
+
+def _is_draft_completion_key(key: Any) -> bool:
+    normalized = _normalized_control_key(key)
+    if normalized in _DRAFT_COMPLETION_KEYS:
+        return True
+    for prefix in _DRAFT_EVENT_PREFIXES:
+        for marker in _DRAFT_EVENT_MARKERS:
+            stem = prefix + marker
+            if normalized.startswith(stem):
+                return normalized[len(stem) :] in _DRAFT_EVENT_SUFFIXES
+    if any(
+        normalized == noun + suffix
+        for noun in ("completion", "execution")
+        for suffix in _DRAFT_EVENT_NOUN_SUFFIXES
+    ):
+        return True
+    if any(
+        normalized == prefix + noun
+        for noun in _DRAFT_RESULT_NOUNS
+        for prefix in _DRAFT_RESULT_PREFIXES
+    ):
+        return True
+    return any(
+        normalized == noun + suffix
+        for noun in _DRAFT_RESULT_NOUNS
+        for suffix in _DRAFT_RESULT_SUFFIXES
+    )
 
 
 def _scan_governance_claims(
@@ -1414,7 +1494,7 @@ def _scan_draft_completion_claims(
         for key in sorted(value, key=str):
             child_path = _join(path, str(key))
             normalized = _normalized_control_key(key)
-            if normalized in _DRAFT_COMPLETION_KEYS:
+            if _is_draft_completion_key(key):
                 issues.append(
                     issue(
                         "DRAFT_COMPLETION_CLAIM",

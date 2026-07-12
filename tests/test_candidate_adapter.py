@@ -239,6 +239,26 @@ class CandidateValidityGateTests(unittest.TestCase):
         self.assertEqual(duplicate.data, {"answer": 1})
         self.assertEqual(duplicate.parse_mode, "embedded_json_object")
 
+    def test_embedded_object_after_leading_json_scalar_is_preserved(self):
+        for text in (
+            '1. {"answer": 1}',
+            '2026 response: {"answer": 1}',
+            'true statement: {"answer": 1}',
+            'null then {"answer": 1}',
+            '"note" then {"answer": 1}',
+        ):
+            with self.subTest(text=text):
+                validation = ca.validate_candidate_output(text)
+                self.assertTrue(validation.valid)
+                self.assertEqual(validation.data, {"answer": 1})
+                self.assertEqual(validation.parse_mode, "embedded_json_object")
+
+    def test_leading_json_container_still_blocks_later_object(self):
+        validation = ca.validate_candidate_output('[] then {"answer": 1}')
+        self.assertFalse(validation.valid)
+        self.assertEqual(validation.status, "invalid_model_output")
+        self.assertEqual(validation.parse_mode, "leading_json_non_object")
+
     def test_non_object_container_cannot_expose_a_nested_object(self):
         task = load_task("memory_boundary_001")
         nested = (
