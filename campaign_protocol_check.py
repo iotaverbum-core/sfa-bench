@@ -55,7 +55,7 @@ def _check_schema(path: Path, schema_version: str) -> None:
 
 
 def main() -> int:
-    print("SFA-Bench v2.0.0-alpha.1 campaign-protocol check")
+    print("SFA-Bench v2.0.0-alpha.2 campaign-protocol check")
     print("=" * 56)
     try:
         campaign = _load_object(CAMPAIGN)

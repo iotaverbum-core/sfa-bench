@@ -9,9 +9,10 @@ later verdict was influenced by history.
 
 SFA-Bench treats the failure record as the research object. It is a deterministic
 offline harness for preserving failures, attesting them later, and testing a
-narrow set of trust-boundary invariants. Canonical verification and the alpha.1
-correction/campaign tools are offline. The repository also preserves historical
-external candidate capture evidence produced outside CI and the trusted core.
+narrow set of trust-boundary invariants. Canonical verification and the alpha.2
+correction, campaign, capture, judgment, and review tools are offline. The
+repository also preserves historical external candidate capture evidence
+produced outside CI and the trusted core.
 
 ## Architecture
 
@@ -150,7 +151,7 @@ Before release clearance, run:
 python verify_all.py
 python candidate_integrity_check.py
 python campaign_protocol_check.py
-python release_gate.py --release v2.0.0-alpha.1
+python release_gate.py --release v2.0.0-alpha.2
 git status --short --untracked-files=all
 ```
 
@@ -173,7 +174,9 @@ The repository supports claims about determinism and separation under the
 checked-in implementation and fixtures: replay of sealed artifacts and the
 ledger, re-derivation of supported transcript verdicts, tested verifier
 history-blindness and metadata isolation, fixed-condition fingerprint
-determinism, and deterministic generator-side policy decisions.
+determinism, deterministic generator-side policy decisions, and synthetic
+offline verification of governed capture, separate judgment, and explicitly
+unratified review packaging.
 
 It does not support claims about real-world model rankings, provider performance,
 universal tamper resistance, hidden reasoning correctness, policy-caused model
@@ -189,7 +192,7 @@ Generation reproducibility may be limited; judgment reproducibility is mandatory
 
 Use `CITATION.cff` from the repository root. The release citation is:
 
-> Neal, Matthew. (2026). SFA-Bench v2.0.0-alpha.1: Candidate Integrity and Campaign Foundation. https://github.com/iotaverbum-core/sfa-bench
+> Neal, Matthew. (2026). SFA-Bench v2.0.0-alpha.2: Locked Campaign Execution and Evidence Capture. https://github.com/iotaverbum-core/sfa-bench
 
 SFA-Bench can be cited using its Zenodo DOI:
 

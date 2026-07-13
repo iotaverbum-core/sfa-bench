@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Repository release checks for SFA-Bench v2.0.0-alpha.1."""
+"""Repository release checks for SFA-Bench v2.0.0-alpha.2."""
 from __future__ import annotations
 
 import argparse
@@ -10,7 +10,7 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parent
-EXPECTED_RELEASE = "v2.0.0-alpha.1"
+EXPECTED_RELEASE = "v2.0.0-alpha.2"
 WORKFLOW = ROOT / ".github" / "workflows" / "test.yml"
 VERIFY_ALL = ROOT / "verify_all.py"
 REQUIRED_CI_COMMANDS = (

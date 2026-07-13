@@ -1,12 +1,12 @@
 cff-version: 1.2.0
-title: "SFA-Bench v2.0.0-alpha.1: Candidate Integrity and Campaign Foundation"
+title: "SFA-Bench v2.0.0-alpha.2: Locked Campaign Execution and Evidence Capture"
 message: "If you use SFA-Bench, please cite this repository."
 type: software
 authors:
   - family-names: Neal
     given-names: Matthew
-version: "2.0.0-alpha.1"
-date-released: "2026-07-12"
+version: "2.0.0-alpha.2"
+date-released: "2026-07-13"
 doi: 10.5281/zenodo.20766587
 repository-code: "https://github.com/iotaverbum-core/sfa-bench"
 url: "https://github.com/iotaverbum-core/sfa-bench"
@@ -25,7 +25,7 @@ abstract: >
   supports offline artifact and ledger attestation, transcript re-derivation,
   fixed-condition fixture fingerprinting, and deterministic generator-side
   policy guidance without live model, API, provider, or network calls in CI.
-  The v2.0.0-alpha.1 research tranche adds strict candidate-output integrity,
-  append-only corrected-evidence lineage, provider-neutral campaign
-  pre-registration, and deterministic benchmark locking while preserving the
-  fixed, blind, deterministic verifier boundary.
+  The v2.0.0-alpha.2 research tranche adds lock-bound campaign execution,
+  exact adapter-boundary evidence capture, crash-safe immutable lifecycle
+  records, separate offline judgment, and explicitly unratified human-review
+  packaging while preserving the fixed, blind, deterministic verifier boundary.

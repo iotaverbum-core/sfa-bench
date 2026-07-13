@@ -2,10 +2,7 @@
 
 All notable changes to SFA-Bench will be documented in this file.
 
-## Unreleased - v2.0.0-alpha.2 implementation candidate
-
-The public/package version remains v2.0.0-alpha.1 / 2.0.0a1 until the separate
-human-authorized frozen-zone release amendment.
+## 2.0.0-alpha.2 - 2026-07-13
 
 ### Added
 
@@ -23,12 +20,16 @@ human-authorized frozen-zone release amendment.
 
 ### Governance
 
-- Alpha.1 lock-bound and frozen verifier/release surfaces remain unchanged.
+- Alpha.1 lock-bound campaign inputs, frozen verifier behavior, evidence, and
+  historical release records remain unchanged.
 - Execution authorization permits capture only and cannot ratify, promote,
   publish, release, merge, tag, or amend.
 - Exact-byte and provenance claims are qualified to the declared adapter capture
   boundary; provider/model identity and live scientific results remain
   unsupported.
+- Public and package versions advance through human-authorized frozen-zone
+  amendment `fz-v0.9.0-v2-alpha2-campaign-capture-release`; no tag, publication,
+  provider execution, or evidence ratification is part of this preparation.
 
 ## 2.0.0-alpha.1 - 2026-07-12
 

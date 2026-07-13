@@ -34,7 +34,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ledger", help="occurrence ledger to link (defaults to the causal fixture)")
     args = parser.parse_args(argv)
 
-    print("SFA-Bench v2.0.0-alpha.1 Causal Linkage Report")
+    print("SFA-Bench v2.0.0-alpha.2 Causal Linkage Report")
     print("=" * 58)
 
     taxonomy, version = fam_mod.load_taxonomy(ROOT / "families.json")

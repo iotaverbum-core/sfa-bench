@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the complete SFA-Bench v2.0.0-alpha.1 offline verification suite."""
+"""Run the complete SFA-Bench v2.0.0-alpha.2 offline verification suite."""
 from __future__ import annotations
 
 import fnmatch
@@ -75,7 +75,7 @@ def remove_readonly(function, path: str, _error) -> None:
 
 
 def main() -> int:
-    print("SFA-Bench v2.0.0-alpha.1 full offline verification")
+    print("SFA-Bench v2.0.0-alpha.2 full offline verification")
     print("=" * 56)
     print("workspace: isolated temporary copy (checked-out history is not mutated)")
     print("provenance checks: read-only execution in the checked-out Git repository")

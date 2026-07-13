@@ -51,6 +51,7 @@ def _campaign_and_lock() -> tuple[dict, dict]:
     )
     campaign = copy.deepcopy(campaign)
     campaign["benchmark_commit_sha"] = _head()
+    campaign["release_identifier"] = "v2.0.0-alpha.2"
     campaign["benchmark_inputs"]["schema_paths"].extend(
         [
             "campaign_capture_cli.py",

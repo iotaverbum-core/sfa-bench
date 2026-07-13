@@ -52,7 +52,7 @@ def main(argv: list[str] | None = None) -> int:
                         help="do not attest the ledger hash chain before scoring")
     args = parser.parse_args(argv)
 
-    print("SFA-Bench v2.0.0-alpha.1 Recurrence-Decline Metric")
+    print("SFA-Bench v2.0.0-alpha.2 Recurrence-Decline Metric")
     print("=" * 58)
 
     ledger_path = args.ledger or str(FIXTURE)

@@ -1,9 +1,9 @@
 # Claims and Limitations
 
 This document defines the interpretation boundary for SFA-Bench
-v2.0.0-alpha.1 and the checked-in alpha.2 implementation candidate. Claims apply
-to the checked-in implementation, fixtures, synthetic adapter, and explicit test
-conditions. No new live provider campaign occurred.
+v2.0.0-alpha.2. Claims apply to the checked-in implementation, fixtures,
+synthetic adapter, and documented offline verification conditions. No new live
+provider campaign occurred, and captured evidence remains unratified.
 
 ## Supported claims
 
@@ -69,7 +69,8 @@ conditions. No new live provider campaign occurred.
   training cutoffs. Protected preregistration statements remain historical
   assumptions.
 - Provider rankings, alignment proof, semantic completeness, autonomous
-  self-improvement, automatic ratification, or automatic promotion.
+  self-improvement, or autonomous ratification, promotion, publication, merge,
+  tag, or release authority.
 - Claims of EU AI Act approval, legal conformity, certification, or regulatory
   conformity from an SFA-Bench result.
 - Claims that adapter-boundary bytes prove provider-side origin, complete wire
@@ -123,10 +124,10 @@ implemented and reviewed; alpha.2 implements no such mechanism.
 Any future change to verifier behaviour, taxonomy, provider execution, fixture
 provenance, or security assumptions requires a new claim review. Alpha.1 adds
 candidate-output integrity and campaign controls without changing the frozen
-verifier. The alpha.2 implementation candidate adds a provider-neutral capture
-envelope outside deterministic judgment, tested only with synthetic evidence.
-It does not establish that a live campaign ran or move provider/adapter metadata
-into verifier judgment.
+verifier. Alpha.2 delivers a provider-neutral capture envelope outside
+deterministic judgment, verified offline with synthetic evidence. It does not
+establish that a live campaign ran, ratify captured evidence, or move
+provider/adapter metadata into verifier judgment.
 
 Generation reproducibility may be limited; judgment reproducibility is mandatory.
 

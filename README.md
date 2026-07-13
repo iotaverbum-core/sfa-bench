@@ -1,4 +1,4 @@
-# SFA-Bench v2.0.0-alpha.1
+# SFA-Bench v2.0.0-alpha.2
 
 ![SFA-Bench](https://github.com/iotaverbum-core/sfa-bench/actions/workflows/test.yml/badge.svg)
 
@@ -22,13 +22,13 @@ canonicalisation, append-only correction lineage for provisional external
 evidence, provider-neutral campaign pre-registration, and deterministic
 benchmark locking. It does not add provider capture or change the frozen judge.
 
-The checked-in alpha.2 implementation candidate adds a lock-bound,
-provider-neutral capture lifecycle, exact adapter-boundary byte preservation,
-crash-safe immutable events, synthetic transport, separate offline judgment,
-and an explicitly unratified review bundle. It does not run a live provider
-campaign, authenticate provider/model identity, rank models, or change the
-frozen judge. The public repository version remains alpha.1 until the distinct
-human-authorized release amendment.
+The alpha.2 release-prepared tranche adds a lock-bound, provider-neutral capture
+lifecycle, exact adapter-boundary byte preservation, crash-safe immutable events,
+synthetic transport, separate offline judgment, and an explicitly unratified
+review bundle. It does not run a live provider campaign, authenticate
+provider/model identity, rank models, or change the frozen judge. The release
+identity was advanced only through the distinct human-authorized frozen-zone
+amendment.
 
 ## What this is not
 
@@ -48,7 +48,7 @@ results.
 - Git, for the release gate.
 - No third-party Python packages.
 - No API keys, provider credentials, network access, or live adapter for the
-  canonical verification and alpha.1 campaign tooling.
+  canonical verification and alpha.2 campaign tooling.
 
 From a clean clone:
 
@@ -120,7 +120,7 @@ python policy_demo.py
 ```bash
 python release_gate.py
 python release_gate.py --ci
-python release_gate.py --release v2.0.0-alpha.1
+python release_gate.py --release v2.0.0-alpha.2
 ```
 
 The gate explicitly runs `git status --short --untracked-files=all`; it never
@@ -167,6 +167,8 @@ policy-guided retry
   taxonomy (schema v2)
 - v2.0.0-alpha.1: candidate-output integrity, corrected-evidence lineage,
   campaign pre-registration, and benchmark locking
+- v2.0.0-alpha.2: locked campaign execution, exact evidence capture, separate
+  offline judgment, and explicitly unratified review packaging
 
 v1.1 adds research capability without weakening the spine. The verifier invariants
 hold through every new layer: generators, priors, metrics, and property contracts
@@ -241,7 +243,7 @@ python campaign_cli.py validate-candidate --manifest campaigns/examples/gpt56-dr
 The GPT-5.6 files are `draft_not_executed` examples with unconfirmed provider
 identifiers. They do not assert API access, execution, a result, or a ranking.
 
-## V2 alpha.2 implementation-candidate commands
+## V2 alpha.2 offline commands
 
 ```bash
 python -m unittest tests.test_campaign_capture
@@ -376,7 +378,7 @@ threat model, architecture, reproducibility path, and reviewer commands.
 
 Use the repository metadata in [`CITATION.cff`](CITATION.cff). A plain-text form:
 
-> Neal, Matthew. (2026). SFA-Bench v2.0.0-alpha.1: Candidate Integrity and Campaign Foundation. https://github.com/iotaverbum-core/sfa-bench
+> Neal, Matthew. (2026). SFA-Bench v2.0.0-alpha.2: Locked Campaign Execution and Evidence Capture. https://github.com/iotaverbum-core/sfa-bench
 
 DOI: https://doi.org/10.5281/zenodo.20766587
 

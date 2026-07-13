@@ -23,7 +23,7 @@
     "identity": "REPLACE_WITH_DECLARED_OPERATOR"
   },
   "ratification_status": "unratified",
-  "release_identifier": "v2.0.0-alpha.1",
+  "release_identifier": "v2.0.0-alpha.2",
   "request": {
     "byte_length": 0,
     "case_reference": "sfa_bench/frontier_delta/tasks/memory_boundary_001.json",

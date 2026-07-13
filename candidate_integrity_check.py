@@ -92,7 +92,7 @@ def _check_invalid_boundaries() -> int:
 
 
 def main() -> int:
-    print("SFA-Bench v2.0.0-alpha.1 candidate-integrity check")
+    print("SFA-Bench v2.0.0-alpha.2 candidate-integrity check")
     print("=" * 56)
     try:
         raw_digest = _sha256_file(RAW_EVIDENCE)

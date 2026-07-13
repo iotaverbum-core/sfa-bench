@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v2.0.0-alpha.1 AutoLab end-to-end runner demo (Item 7).
+"""SFA-Bench v2.0.0-alpha.2 AutoLab end-to-end runner demo (Item 7).
 
 Offline, deterministic. Runs a full proposal through controller ordering,
 pre-registration gate, human ratification, lineage inscription, and circuit
@@ -109,7 +109,7 @@ def _builder(_sealed_declaration: dict) -> dict:
 
 
 def main() -> int:
-    print("# SFA-Bench v2.0.0-alpha.1 AutoLab end-to-end runner demo")
+    print("# SFA-Bench v2.0.0-alpha.2 AutoLab end-to-end runner demo")
     print("=" * 56)
     failures: list[str] = []
 

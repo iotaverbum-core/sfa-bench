@@ -1,10 +1,11 @@
 # SFA-Bench V2 Alpha.2 Campaign Execution Protocol
 
-Status: implementation candidate; repository version remains
-`v2.0.0-alpha.1` until the separate human-authorized release amendment.
+Status: release-prepared as `v2.0.0-alpha.2` / `2.0.0a2` through the separate
+human-authorized frozen-zone amendment. No tag or publication is recorded.
 
-Alpha.2 adds an offline-testable execution and evidence-capture envelope outside
-the deterministic judgment boundary. No live provider campaign was run.
+Alpha.2 delivers an offline-verified execution and evidence-capture envelope
+outside the deterministic judgment boundary. No live provider campaign was run,
+no provider credential was used, and campaign evidence remains unratified.
 
 ## Trust flow
 
@@ -128,8 +129,10 @@ the bundle. Runtime evidence is written only to a temporary directory.
 
 ## Compatibility
 
-Alpha.2 is additive. It does not edit the alpha.1 campaign CLI, schemas,
-protocol, locking module, package initializer, frozen verifier, fixed scorer,
-frozen ledger, release gate, or frozen-zone machinery. Alpha.2 campaigns bind
-the new implementation and schemas through existing benchmark input paths;
-alpha.1 lock reproduction remains byte-identical.
+The alpha.2 implementation is additive: it does not edit the alpha.1 campaign
+CLI, schemas, protocol, locking module, frozen verifier, fixed scorer, frozen
+ledger, or alpha.1 lock-bound inputs. The distinct release-preparation amendment
+changes only package/public version surfaces and protected command headers,
+using the existing frozen-zone machinery. Alpha.2 campaigns bind the new
+implementation and schemas through existing benchmark input paths; alpha.1 lock
+reproduction remains byte-identical.

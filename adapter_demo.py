@@ -64,7 +64,7 @@ def main() -> int:
     candidate_normalized = isinstance(normalized.candidate, dict)
     verifier_received_metadata = not metadata_blind
 
-    print("SFA-Bench v2.0.0-alpha.1 adapter boundary demo")
+    print("SFA-Bench v2.0.0-alpha.2 adapter boundary demo")
     print("=" * 56)
     print(f"adapter selected: {adapter.spec.adapter_id}")
     print(f"adapter mode: {adapter.spec.mode}")

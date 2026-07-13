@@ -1,7 +1,9 @@
 # SFA-Bench v2.0.0-alpha.2 Campaign Capture Decision Log
 
-Status: accepted implementation design; implementation version remains
-`v2.0.0-alpha.1` until the separate release-preparation amendment.
+Status: accepted implementation and human-authorized release preparation for
+`v2.0.0-alpha.2` / `2.0.0a2`. This action authorizes no push, PR creation,
+merge, tag, GitHub Release publication, live provider execution, provider
+credential use, ratification, promotion, or GitHub-setting change.
 
 This log records inspectable decisions and evidence. It does not record private
 reasoning or grant authority to software, adapters, captured outputs, or models.
@@ -205,6 +207,28 @@ model identity, or hidden reasoning.
   terminal state without its artifact, duplicates the binding transition, drops
   a referenced recovery record, or silently omits an observed raw blob.
 
+## ADR-A2-011: Advance release identity through the frozen amendment channel
+
+- Problem: accepted alpha.2 implementation cannot become the public/package
+  version while protected release-gate and invariant-command surfaces remain
+  sealed as alpha.1.
+- Alternatives: leave the accepted implementation under alpha.1; bypass or
+  weaken frozen enforcement; use the append-only human amendment channel.
+- Selected option: use amendment
+  `fz-v0.9.0-v2-alpha2-campaign-capture-release` to bind the prior alpha.1 seal
+  to the alpha.2 protected release surfaces, then align public text and package
+  version in one distinct release-preparation commit.
+- Evidence: the persisted operator-supplied user-environment token matches the
+  amendment identifier; the independently derived expected zone seal is
+  `f4d6cb7f9c6faca5f9fe80197abb9f3b55f00de0eeb558ff75268c2e1cc90757`.
+- Affected trust boundary: human release authorization to protected repository
+  release identity.
+- Compatibility impact: alpha.1 campaign artifacts, evidence, hashes, results,
+  and correction-lineage bytes remain unchanged. The frozen-zone amendment
+  chain legitimately gains this append-only fz-v0.9.0 successor. Alpha.2
+  artifacts remain unratified.
+- Rollback or rejection condition: generated seal mismatch, scope drift,
+  compatibility failure, authority-state change, or any failed acceptance gate.
 ## Claims boundary
 
 If supported by final tests, alpha.2 may claim deterministic synthetic lifecycle,

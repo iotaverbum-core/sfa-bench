@@ -1,7 +1,7 @@
 # External Candidate Provenance Boundary
 
 The external boundary, introduced in v0.5-v0.7 and retained through
-v2.0.0-alpha.1, can
+v2.0.0-alpha.2, can
 evaluate candidate answers produced outside this repository
 without letting external metadata contaminate the verifier.
 

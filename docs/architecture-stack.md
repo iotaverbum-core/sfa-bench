@@ -1,8 +1,9 @@
 # Architecture Stack
 
-SFA-Bench v2.0.0-alpha.1 retains the V1/V1.1 research stack and adds a bounded
-candidate-integrity and campaign-governance foundation. The deterministic V1
-verifier and the frozen Frontier Delta lane scorers remain separate fixed judges.
+SFA-Bench v2.0.0-alpha.2 retains the V1/V1.1 research stack, candidate-integrity
+and campaign-governance foundation, and adds governed campaign execution with
+exact evidence capture. The deterministic V1 verifier and the frozen Frontier
+Delta lane scorers remain separate fixed judges.
 
 ```text
 benchmark
@@ -151,6 +152,8 @@ fingerprint, or policy into verifier judgment.
   and causal-taxonomy research extensions
 - v2.0.0-alpha.1: candidate-output integrity, evidence correction lineage,
   campaign pre-registration, and deterministic benchmark locking
+- v2.0.0-alpha.2: governed campaign execution, exact adapter-boundary evidence
+  capture, separate offline judgment, and explicitly unratified review packaging
 
 Internal artifact, taxonomy, adapter, fingerprint, and policy schema versions
 remain independently versioned. The project release label does not imply a
