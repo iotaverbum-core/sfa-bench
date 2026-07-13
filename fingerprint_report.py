@@ -19,7 +19,7 @@ def main() -> int:
         FIXTURE_SET, EXPECTED, ROOT
     )
     conditions = report["conditions"]
-    print("# SFA-Bench v2.0.0-alpha.1 - Failure Fingerprint Report")
+    print("# SFA-Bench v2.0.0-alpha.2 - Failure Fingerprint Report")
     print()
     print(f"fixture set: {FIXTURE_SET.relative_to(ROOT).as_posix()}")
     print(f"fixture set id: {report['fixture_set_id']}")

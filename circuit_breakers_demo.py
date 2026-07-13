@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v2.0.0-alpha.1 AutoLab circuit breakers demo (Item 6).
+"""SFA-Bench v2.0.0-alpha.2 AutoLab circuit breakers demo (Item 6).
 
 Offline, deterministic. Evaluates a clean AutoLab breaker context, then trips a
 breaker with a proposed frozen-path change. The halt is appended to the
@@ -49,7 +49,7 @@ def _clearance(halt_entry: dict) -> dict:
 
 
 def main() -> int:
-    print("# SFA-Bench v2.0.0-alpha.1 AutoLab circuit breakers demo")
+    print("# SFA-Bench v2.0.0-alpha.2 AutoLab circuit breakers demo")
     print("=" * 56)
     failures: list[str] = []
 

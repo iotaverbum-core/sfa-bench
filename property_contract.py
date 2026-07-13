@@ -22,7 +22,7 @@ def _demo_case():
 
 
 def main(argv: list[str] | None = None) -> int:
-    print("SFA-Bench v2.0.0-alpha.1 Property-Based Verifier Contract")
+    print("SFA-Bench v2.0.0-alpha.2 Property-Based Verifier Contract")
     print("=" * 58)
 
     case = _demo_case()

@@ -1,0 +1,4 @@
+interface:
+  display_name: "SFA Governed Campaign Release"
+  short_description: "Audit and build governed SFA campaign releases"
+  default_prompt: "Use $sfa-governed-campaign-release to audit and implement an offline governed campaign release."

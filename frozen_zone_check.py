@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SFA-Bench v2.0.0-alpha.1 frozen-zone check (SFA-AutoLab v0, Item 1).
+"""SFA-Bench v2.0.0-alpha.2 frozen-zone check (SFA-AutoLab v0, Item 1).
 
 FROZEN ZONE — this command is itself listed in ``autolab/frozen_manifest.json``.
 
@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parent
 
 
 def _print_header() -> None:
-    print("# SFA-Bench v2.0.0-alpha.1 frozen-zone check")
+    print("# SFA-Bench v2.0.0-alpha.2 frozen-zone check")
     print("=" * 56)
 
 

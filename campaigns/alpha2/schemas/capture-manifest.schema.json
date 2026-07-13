@@ -1,0 +1,51 @@
+{
+  "$defs": {
+    "attempt": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt_digest": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "attempt_number": {"minimum": 1, "type": "integer"},
+        "complete": {"type": "boolean"},
+        "provider_request_id": {"type": ["string", "null"]},
+        "request_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+        "response_byte_length": {"minimum": 0, "type": ["integer", "null"]},
+        "response_sha256": {"type": ["string", "null"]},
+        "retry_reason": {"type": ["string", "null"]},
+        "transport_status": {"minLength": 1, "type": "string"},
+        "warnings": {"items": {"type": "string"}, "type": "array", "uniqueItems": true}
+      },
+      "required": ["attempt_number", "retry_reason", "transport_status", "complete", "request_sha256", "response_sha256", "response_byte_length", "provider_request_id", "warnings", "attempt_digest"],
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/iotaverbum-core/sfa-bench/campaigns/alpha2/schemas/capture-manifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "adapter": {"additionalProperties": {"type": "string"}, "type": "object"},
+    "attempts": {"items": {"$ref": "#/$defs/attempt"}, "type": "array"},
+    "authorization_digest": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "benchmark_commit": {"type": "string"},
+    "benchmark_lock_digest": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "campaign_id": {"type": "string"},
+    "capture_completed_at": {"format": "date-time", "type": "string"},
+    "capture_content_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "capture_started_at": {"type": ["string", "null"]},
+    "capture_state": {"enum": ["captured", "aborted"]},
+    "case_reference": {"type": "string"},
+    "execution_id": {"type": "string"},
+    "ledger_root_before_seal": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "manifest_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "prompt_reference": {"type": "string"},
+    "provenance_classes": {"items": {"enum": ["git_verified", "capture_observed", "provider_declared_unverified", "adapter_declared", "operator_declared", "derived_deterministic"]}, "type": "array", "uniqueItems": true},
+    "ratification_status": {"const": "unratified"},
+    "raw_evidence_hashes": {"items": {"pattern": "^[0-9a-f]{64}$", "type": "string"}, "type": "array", "uniqueItems": true},
+    "release_identifier": {"type": "string"},
+    "schema_version": {"const": "sfa_bench.campaign_capture.manifest.v1"},
+    "verifier_commit": {"type": "string"},
+    "warnings": {"items": {"type": "string"}, "type": "array", "uniqueItems": true}
+  },
+  "required": ["schema_version", "campaign_id", "execution_id", "benchmark_lock_digest", "benchmark_commit", "verifier_commit", "release_identifier", "authorization_digest", "adapter", "prompt_reference", "case_reference", "attempts", "raw_evidence_hashes", "capture_state", "ledger_root_before_seal", "capture_started_at", "capture_completed_at", "warnings", "provenance_classes", "ratification_status", "capture_content_sha256", "manifest_sha256"],
+  "title": "SFA-Bench Capture Manifest v1",
+  "type": "object"
+}

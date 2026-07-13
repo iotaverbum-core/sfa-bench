@@ -31,7 +31,7 @@ def main():
     agent = SFAAgent(ROOT)
     result = agent.run(task, evidence_pack, DeterministicFakeAdapter())
 
-    print("SFA-Agent v2.0.0-alpha.1 demo")
+    print("SFA-Agent v2.0.0-alpha.2 demo")
     print("=" * 48)
     print(f"run_id: {result.run_id}")
     print(f"run_dir: {os.path.relpath(result.run_dir, ROOT)}")

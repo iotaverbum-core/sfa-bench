@@ -2,6 +2,35 @@
 
 All notable changes to SFA-Bench will be documented in this file.
 
+## 2.0.0-alpha.2 - 2026-07-13
+
+### Added
+
+- Explicit draft-to-review-required campaign lifecycle with immutable,
+  hash-chained event files and interruption/abort recovery branches.
+- Provider-neutral byte transport protocol and deterministic synthetic adapter
+  laboratory; no live provider SDK, credential, network call, or campaign.
+- Exact adapter-boundary request/response byte blobs, exclusive no-overwrite
+  storage, attempt lineage, capture sealing, and offline integrity reports.
+- Separate fixed-path judgment and secret-free human-review bundles that remain
+  explicitly unratified.
+- Alpha.2 JSON Schemas, examples, threat model, recovery guide, contributor
+  guide, release checklist, decision log, CLI examples, Windows/Linux CI, and
+  adversarial tests.
+
+### Governance
+
+- Alpha.1 lock-bound campaign inputs, frozen verifier behavior, evidence, and
+  historical release records remain unchanged.
+- Execution authorization permits capture only and cannot ratify, promote,
+  publish, release, merge, tag, or amend.
+- Exact-byte and provenance claims are qualified to the declared adapter capture
+  boundary; provider/model identity and live scientific results remain
+  unsupported.
+- Public and package versions advance through human-authorized frozen-zone
+  amendment `fz-v0.9.0-v2-alpha2-campaign-capture-release`; no tag, publication,
+  provider execution, or evidence ratification is part of this preparation.
+
 ## 2.0.0-alpha.1 - 2026-07-12
 
 ### Added

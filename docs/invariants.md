@@ -1,4 +1,4 @@
-# SFA-Bench v2.0.0-alpha.1 Verifier, Fingerprint, and Policy Invariants
+# SFA-Bench v2.0.0-alpha.2 Verifier, Fingerprint, and Policy Invariants
 
 `invariant_suite.py` protects the verifier's history-blindness, adapter
 airlock, and fingerprint-blindness boundaries.
@@ -80,6 +80,14 @@ verifier contract:
 The focused unit suite additionally uses canonicaliser/scorer spies and mutates
 each declared lock-input class. These are bounded tests of the implemented
 surfaces, not claims of universal security or semantic completeness.
+
+## Alpha.2 offline capture checks
+
+`tests.test_campaign_capture` and `campaign_capture_check.py` exercise the
+governed lifecycle, deterministic synthetic adapter, byte-preserving capture,
+separate offline judgment, and unratified review bundle. They use no live
+provider, provider credential, network call, ratification, promotion,
+publication, merge, tag, or release action.
 
 Warnings, prior-attempt context, provenance, adapter metadata, fingerprint
 summaries, recurrence data, and policy guidance may shape reporting or

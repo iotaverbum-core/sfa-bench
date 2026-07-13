@@ -1,0 +1,22 @@
+{
+  "cases": [
+    {"expected_capture": "captured", "expected_judgment": "existing_fixed_path", "mode": "valid_json_object"},
+    {"expected_capture": "captured", "expected_judgment": "zero_credit", "mode": "empty_output"},
+    {"expected_capture": "captured", "expected_judgment": "zero_credit", "mode": "refusal_plaintext"},
+    {"expected_capture": "captured", "expected_judgment": "zero_credit", "mode": "malformed_json"},
+    {"expected_capture": "captured", "expected_judgment": "zero_credit", "mode": "non_object_json"},
+    {"expected_capture": "captured", "expected_judgment": "zero_credit", "mode": "non_finite_json"},
+    {"expected_capture": "interrupted", "expected_judgment": "not_permitted", "mode": "timeout"},
+    {"expected_capture": "interrupted", "expected_judgment": "not_permitted", "mode": "transport_error"},
+    {"expected_capture": "interrupted", "expected_judgment": "not_permitted", "mode": "retry"},
+    {"expected_capture": "captured_with_warning", "expected_judgment": "metadata_isolated", "mode": "duplicate_provider_identifier"},
+    {"expected_capture": "interrupted", "expected_judgment": "not_permitted", "mode": "partial_stream"},
+    {"expected_capture": "interrupted", "expected_judgment": "not_permitted", "mode": "interrupted_write"},
+    {"expected_capture": "captured", "expected_judgment": "zero_credit", "mode": "binary_non_utf8"},
+    {"expected_capture": "interrupted_metadata_rejected", "expected_judgment": "not_permitted", "mode": "misleading_provider_metadata"},
+    {"expected_capture": "interrupted_metadata_rejected", "expected_judgment": "not_permitted", "mode": "credential_like_metadata"}
+  ],
+  "live_provider_calls": false,
+  "ratification_status": "unratified",
+  "schema_version": "sfa_bench.campaign_capture.synthetic_laboratory_cases.v1"
+}

@@ -1,0 +1,16 @@
+{
+  "amendment_id": "fz-v0.9.0-v2-alpha2-campaign-capture-release",
+  "applies_to": [
+    "autolab/frozen_manifest.json",
+    "frozen_zone_check.py",
+    "invariant_suite.py",
+    "release_gate.py"
+  ],
+  "author": "Repository owner (human authorization in v2.0.0-alpha.2 release-preparation task brief)",
+  "authored_on": "2026-07-13",
+  "manifest_version": "fz-v0.9.0",
+  "new_zone_hash": "f4d6cb7f9c6faca5f9fe80197abb9f3b55f00de0eeb558ff75268c2e1cc90757",
+  "prev_zone_hash": "706fefaed9ff7a066ca4ee41f9073e1424e04dd9b130bc43c3db30c53217db36",
+  "reason": "The human-authorized v2.0.0-alpha.2 release-preparation amendment advances only the protected release identity and command headers after acceptance of the additive campaign-capture implementation. Alpha.1 campaign artifacts, evidence, hashes, results, correction-lineage bytes, and verifier behavior remain unchanged; the frozen-zone amendment chain legitimately gains this append-only fz-v0.9.0 successor, and alpha.2 review artifacts remain explicitly unratified.",
+  "schema": "sfa.autolab.frozen_zone.amendment.v0"
+}

@@ -1,0 +1,39 @@
+{
+  "adapter": {
+    "adapter_id": "sfa-synthetic-laboratory",
+    "adapter_version": "sfa_bench.synthetic_capture_adapter.v1",
+    "implementation_path": "sfa_bench/campaigns/capture/adapters.py"
+  },
+  "authorization_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "authorization_id": "template-only",
+  "automatic_actions": {
+    "promote": false,
+    "publish": false,
+    "ratify": false,
+    "release": false
+  },
+  "benchmark_commit": "0000000000000000000000000000000000000000",
+  "benchmark_lock_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "campaign_id": "replace-with-lock-bound-campaign",
+  "execution_id": "replace-with-authorized-execution",
+  "issued_at": "2026-07-12T20:00:00+02:00",
+  "operator_declaration": {
+    "authority_type": "declared_human_operator",
+    "authorization_scope": "execution_only",
+    "identity": "REPLACE_WITH_DECLARED_OPERATOR"
+  },
+  "ratification_status": "unratified",
+  "release_identifier": "v2.0.0-alpha.2",
+  "request": {
+    "byte_length": 0,
+    "case_reference": "sfa_bench/frontier_delta/tasks/memory_boundary_001.json",
+    "prompt_reference": "campaigns/examples/prompts/gpt56-study-system-prompt.txt",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "retry_policy": {
+    "allowed_reasons": [],
+    "max_attempts": 1
+  },
+  "schema_version": "sfa_bench.campaign_capture.execution_authorization.v1",
+  "verifier_commit": "0000000000000000000000000000000000000000"
+}
