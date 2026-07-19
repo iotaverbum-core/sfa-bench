@@ -10,7 +10,15 @@ from unittest import mock
 from urllib import error
 
 from sfa_bench.campaigns.capture.adapters import LockedCaptureRequest
-from sfa_bench.campaigns.capture.openai_responses import OpenAIResponsesAdapter
+from sfa_bench.campaigns.capture.judgment import _candidate_response_text
+from sfa_bench.campaigns.capture.openai_responses import (
+    INVALID_OPENAI_RESPONSE_SENTINEL,
+    OPENAI_ADAPTER_ID,
+    OPENAI_ADAPTER_PATH,
+    OPENAI_ADAPTER_VERSION,
+    OpenAIResponsesAdapter,
+    project_candidate_text,
+)
 
 
 REQUEST_BYTES = b'{"model":"gpt-5.6","input":"locked"}'
@@ -26,6 +34,14 @@ def locked_request() -> LockedCaptureRequest:
         prompt_reference="campaigns/prompts/system.txt",
         case_reference="cases/case-1.json",
     )
+
+
+def openai_identity() -> dict[str, str]:
+    return {
+        "adapter_id": OPENAI_ADAPTER_ID,
+        "adapter_version": OPENAI_ADAPTER_VERSION,
+        "implementation_path": OPENAI_ADAPTER_PATH,
+    }
 
 
 class FakeResponse:
@@ -118,6 +134,77 @@ class OpenAIResponsesAdapterTests(unittest.TestCase):
             self.assertIsNone(result.response_bytes)
             self.assertEqual(result.metadata, {})
             self.assertEqual(result.diagnostic_code, code)
+
+    def test_projection_extracts_only_ordered_candidate_text(self):
+        body = json.dumps(
+            {
+                "id": "resp_1",
+                "object": "response",
+                "model": "gpt-5.6",
+                "metadata": {"provider_note": "{\"not\":\"candidate\"}"},
+                "output": [
+                    {"type": "reasoning", "summary": []},
+                    {
+                        "type": "message",
+                        "role": "assistant",
+                        "content": [
+                            {"type": "output_text", "text": "{\"answer\":"},
+                            {"type": "output_text", "text": "\"ok\"}"},
+                        ],
+                    },
+                ],
+            },
+            separators=(",", ":"),
+        ).encode("utf-8")
+        self.assertEqual(project_candidate_text(body), '{"answer":"ok"}')
+
+    def test_projection_preserves_refusal_as_candidate_text(self):
+        body = json.dumps(
+            {
+                "object": "response",
+                "output": [
+                    {
+                        "type": "message",
+                        "content": [{"type": "refusal", "refusal": "I cannot comply."}],
+                    }
+                ],
+            }
+        ).encode("utf-8")
+        self.assertEqual(project_candidate_text(body), "I cannot comply.")
+
+    def test_projection_fails_closed_for_invalid_envelopes(self):
+        bodies = (
+            b"not-json",
+            b"{}",
+            b'{"object":"response","output":"not-an-array"}',
+            b'{"object":"response","output":[{"type":"message","content":[{"type":"output_text"}]}]}',
+        )
+        for body in bodies:
+            with self.subTest(body=body):
+                self.assertEqual(project_candidate_text(body), INVALID_OPENAI_RESPONSE_SENTINEL)
+
+    def test_judgment_projection_requires_exact_adapter_identity(self):
+        body = json.dumps(
+            {
+                "object": "response",
+                "output": [
+                    {
+                        "type": "message",
+                        "content": [{"type": "output_text", "text": '{"answer":"ok"}'}],
+                    }
+                ],
+            },
+            separators=(",", ":"),
+        ).encode("utf-8")
+        projected, status = _candidate_response_text(openai_identity(), body)
+        self.assertEqual(status, "utf8")
+        self.assertEqual(projected, '{"answer":"ok"}')
+
+        substituted = openai_identity()
+        substituted["adapter_version"] = "substituted"
+        raw, raw_status = _candidate_response_text(substituted, body)
+        self.assertEqual(raw_status, "utf8")
+        self.assertEqual(raw, body.decode("utf-8"))
 
 
 if __name__ == "__main__":
