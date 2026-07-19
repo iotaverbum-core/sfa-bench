@@ -13,13 +13,14 @@ from typing import Any, Callable
 from urllib import error, request as urllib_request
 
 from .adapters import LockedCaptureRequest, TransportResult
-from .canonical import CaptureError
+from .canonical import CaptureError, strict_json_loads
 
 OPENAI_ADAPTER_ID = "openai-responses-api"
 OPENAI_ADAPTER_VERSION = "sfa_bench.openai_responses_adapter.v1"
 OPENAI_ADAPTER_PATH = "sfa_bench/campaigns/capture/openai_responses.py"
 DEFAULT_ENDPOINT = "https://api.openai.com/v1/responses"
 DEFAULT_TIMEOUT_SECONDS = 120.0
+INVALID_OPENAI_RESPONSE_SENTINEL = "\x00"
 
 
 def _safe_header(headers: Any, name: str) -> str | None:
@@ -56,6 +57,55 @@ def _model_metadata(response_bytes: bytes) -> str | None:
         return None
     value = body.get("model") if isinstance(body, dict) else None
     return value[:256] if isinstance(value, str) and value else None
+
+
+def project_candidate_text(response_bytes: bytes) -> str:
+    """Project SDK-equivalent output text from one preserved Responses envelope.
+
+    The full provider response remains the captured evidence blob. This function
+    deterministically derives only the candidate-visible text that the fixed
+    offline scorer is allowed to inspect. Invalid or structurally ambiguous
+    envelopes fail closed to an unparseable sentinel rather than exposing provider
+    metadata to the candidate parser.
+    """
+    if not isinstance(response_bytes, bytes):
+        raise TypeError("OpenAI response evidence must be bytes")
+    try:
+        body = strict_json_loads(response_bytes.decode("utf-8"))
+    except (UnicodeDecodeError, CaptureError):
+        return INVALID_OPENAI_RESPONSE_SENTINEL
+    if not isinstance(body, dict) or body.get("object") != "response":
+        return INVALID_OPENAI_RESPONSE_SENTINEL
+    output = body.get("output")
+    if not isinstance(output, list):
+        return INVALID_OPENAI_RESPONSE_SENTINEL
+
+    fragments: list[str] = []
+    for item in output:
+        if not isinstance(item, dict):
+            return INVALID_OPENAI_RESPONSE_SENTINEL
+        if item.get("type") != "message":
+            continue
+        content = item.get("content")
+        if not isinstance(content, list):
+            return INVALID_OPENAI_RESPONSE_SENTINEL
+        for part in content:
+            if not isinstance(part, dict):
+                return INVALID_OPENAI_RESPONSE_SENTINEL
+            part_type = part.get("type")
+            if not isinstance(part_type, str):
+                return INVALID_OPENAI_RESPONSE_SENTINEL
+            if part_type == "output_text":
+                text = part.get("text")
+                if not isinstance(text, str):
+                    return INVALID_OPENAI_RESPONSE_SENTINEL
+                fragments.append(text)
+            elif part_type == "refusal":
+                refusal = part.get("refusal")
+                if not isinstance(refusal, str):
+                    return INVALID_OPENAI_RESPONSE_SENTINEL
+                fragments.append(refusal)
+    return "".join(fragments)
 
 
 class OpenAIResponsesAdapter:
