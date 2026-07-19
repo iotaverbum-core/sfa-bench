@@ -25,7 +25,19 @@ from sfa_bench.campaigns.capture.canonical import (
     write_exclusive_json,
 )
 from sfa_bench.campaigns.capture.judgment import JUDGMENT_FIELDS, JUDGMENT_SCHEMA
+from sfa_bench.campaigns.capture.lifecycle import (
+    EVENT_SCHEMA,
+    OCCURRENCE_STATES,
+    TRANSITION_EVENTS,
+    ZERO_HASH,
+)
 from sfa_bench.campaigns.capture.review import REVIEW_BUNDLE_FIELDS, REVIEW_BUNDLE_SCHEMA
+from sfa_bench.campaigns.capture.run import (
+    CAPTURE_MANIFEST_SCHEMA,
+    MANIFEST_FIELDS,
+)
+from sfa_bench.campaigns.locking import benchmark_lock_digest
+from sfa_bench.campaigns.protocol import BENCHMARK_LOCK_SCHEMA
 
 
 RATIFICATION_PACKET_SCHEMA = "sfa_bench.campaign_capture.ratification_packet.v1"
@@ -72,29 +84,67 @@ LINEAGE_FIELDS = frozenset(
         "lineage_record_sha256",
     }
 )
+LEDGER_EVENT_FIELDS = frozenset(
+    {
+        "schema_version",
+        "sequence",
+        "event_id",
+        "execution_id",
+        "event_type",
+        "transition",
+        "from_state",
+        "to_state",
+        "observed_at",
+        "previous_event_sha256",
+        "payload",
+        "event_sha256",
+    }
+)
 
 
 def _require_string(value: Any, path: str, *, maximum: int = 200) -> str:
     if not isinstance(value, str) or not value.strip() or len(value) > maximum:
-        raise CaptureError("INVALID_RATIFICATION_FIELD", "value must be a non-empty bounded string", path)
+        raise CaptureError(
+            "INVALID_RATIFICATION_FIELD",
+            "value must be a non-empty bounded string",
+            path,
+        )
     return value.strip()
 
 
 def _require_sha(value: Any, path: str) -> str:
     if not isinstance(value, str) or len(value) != 64:
-        raise CaptureError("INVALID_DIGEST", "value must be a lowercase SHA-256 digest", path)
+        raise CaptureError(
+            "INVALID_DIGEST",
+            "value must be a lowercase SHA-256 digest",
+            path,
+        )
     try:
         int(value, 16)
     except ValueError as exc:
-        raise CaptureError("INVALID_DIGEST", "value must be a lowercase SHA-256 digest", path) from exc
+        raise CaptureError(
+            "INVALID_DIGEST",
+            "value must be a lowercase SHA-256 digest",
+            path,
+        ) from exc
     if value != value.lower():
-        raise CaptureError("INVALID_DIGEST", "value must be a lowercase SHA-256 digest", path)
+        raise CaptureError(
+            "INVALID_DIGEST",
+            "value must be a lowercase SHA-256 digest",
+            path,
+        )
     return value
 
 
 def _bundle_digest(bundle: dict[str, Any]) -> str:
     content = dict(bundle)
     content.pop("bundle_sha256", None)
+    return sha256_value(content)
+
+
+def _manifest_digest(manifest: dict[str, Any]) -> str:
+    content = dict(manifest)
+    content.pop("manifest_sha256", None)
     return sha256_value(content)
 
 
@@ -126,6 +176,72 @@ def _record_digest(record: dict[str, Any], field: str) -> str:
     return sha256_value(content)
 
 
+def _event_digest(event: dict[str, Any]) -> str:
+    content = dict(event)
+    content.pop("event_sha256", None)
+    return sha256_value(content)
+
+
+def _validate_review_ledger(
+    ledger: dict[str, Any],
+    *,
+    execution_id: str,
+) -> tuple[list[dict[str, Any]], str]:
+    if set(ledger) != {"events", "root_sha256", "state"}:
+        raise CaptureError("INVALID_REVIEW_LEDGER", "review ledger shape is invalid")
+    events = ledger.get("events")
+    if not isinstance(events, list):
+        raise CaptureError("INVALID_REVIEW_LEDGER", "review ledger events must be a list")
+    previous = ZERO_HASH
+    state: str | None = None
+    validated: list[dict[str, Any]] = []
+    for sequence, item in enumerate(events):
+        event = require_object(item, f"$.lifecycle_ledger.events[{sequence}]")
+        require_exact_fields(
+            event,
+            LEDGER_EVENT_FIELDS,
+            f"$.lifecycle_ledger.events[{sequence}]",
+        )
+        if event.get("schema_version") != EVENT_SCHEMA:
+            raise CaptureError("UNSUPPORTED_EVENT_SCHEMA", "unsupported lifecycle event schema")
+        if event.get("sequence") != sequence:
+            raise CaptureError("LEDGER_SEQUENCE_MISMATCH", "lifecycle sequence is not contiguous")
+        if event.get("execution_id") != execution_id:
+            raise CaptureError("LEDGER_EXECUTION_MISMATCH", "lifecycle execution ID changed")
+        expected_id = f"{execution_id}:{sequence:08d}:{event.get('event_type')}"
+        if event.get("event_id") != expected_id:
+            raise CaptureError("EVENT_ID_MISMATCH", "lifecycle event ID is not deterministic")
+        validate_timestamp(event.get("observed_at"), f"$.lifecycle_ledger.events[{sequence}].observed_at")
+        if event.get("previous_event_sha256") != previous:
+            raise CaptureError("LEDGER_CHAIN_MISMATCH", "lifecycle previous hash is invalid")
+        if event.get("event_sha256") != _event_digest(event):
+            raise CaptureError("EVENT_HASH_MISMATCH", "lifecycle event content hash is invalid")
+        if event.get("from_state") != state:
+            raise CaptureError("LIFECYCLE_FROM_STATE_MISMATCH", "lifecycle event contradicts current state")
+        to_state = event.get("to_state")
+        event_type = event.get("event_type")
+        if event.get("transition") is True:
+            if TRANSITION_EVENTS.get((state, to_state)) != event_type:
+                raise CaptureError("ILLEGAL_LIFECYCLE_TRANSITION", "illegal or skipped lifecycle transition")
+            state = to_state
+        elif event.get("transition") is False:
+            allowed = OCCURRENCE_STATES.get(event_type)
+            if to_state != state or allowed is None or state not in allowed:
+                raise CaptureError("ILLEGAL_LIFECYCLE_OCCURRENCE", "invalid lifecycle occurrence")
+        else:
+            raise CaptureError("INVALID_TRANSITION_FLAG", "lifecycle transition flag must be boolean")
+        if not isinstance(event.get("payload"), dict):
+            raise CaptureError("INVALID_EVENT_PAYLOAD", "lifecycle event payload must be an object")
+        previous = event["event_sha256"]
+        validated.append(event)
+    root = _require_sha(ledger.get("root_sha256"), "$.lifecycle_ledger.root_sha256")
+    if root != previous or ledger.get("state") != state:
+        raise CaptureError("REVIEW_LEDGER_ROOT_MISMATCH", "review ledger root or state is invalid")
+    if state != "judged":
+        raise CaptureError("RATIFICATION_REQUIRES_JUDGMENT", "review bundle predecessor state must be judged")
+    return validated, root
+
+
 def validate_review_bundle_bytes(data: bytes) -> dict[str, Any]:
     """Validate a secret-free review bundle without requiring the private run."""
     bundle = require_object(strict_json_loads(data))
@@ -150,23 +266,55 @@ def validate_review_bundle_bytes(data: bytes) -> dict[str, Any]:
     execution_id = _require_string(bundle.get("execution_id"), "$.execution_id")
 
     lock = require_object(bundle.get("benchmark_lock"), "$.benchmark_lock")
+    if lock.get("schema_version") != BENCHMARK_LOCK_SCHEMA:
+        raise CaptureError("UNSUPPORTED_BENCHMARK_LOCK", "unsupported benchmark lock schema")
     lock_digest = _require_sha(lock.get("lock_digest"), "$.benchmark_lock.lock_digest")
+    if lock_digest != benchmark_lock_digest(lock):
+        raise CaptureError("BENCHMARK_LOCK_DIGEST_MISMATCH", "benchmark lock was modified")
+    if lock.get("campaign_id") != campaign_id:
+        raise CaptureError("RATIFICATION_SOURCE_BINDING_MISMATCH", "benchmark lock identifies another campaign")
     verifier_commit = lock.get("verifier_commit")
-    if not isinstance(verifier_commit, str) or len(verifier_commit) != 40:
-        raise CaptureError("INVALID_COMMIT", "verifier commit must be a 40-character Git SHA", "$.benchmark_lock.verifier_commit")
+    repository_commit = lock.get("repository_commit")
+    for value, path in (
+        (verifier_commit, "$.benchmark_lock.verifier_commit"),
+        (repository_commit, "$.benchmark_lock.repository_commit"),
+    ):
+        if not isinstance(value, str) or len(value) != 40:
+            raise CaptureError("INVALID_COMMIT", "commit must be a 40-character Git SHA", path)
 
     manifest = require_object(bundle.get("capture_manifest"), "$.capture_manifest")
+    require_exact_fields(manifest, MANIFEST_FIELDS, "$.capture_manifest")
+    if manifest.get("schema_version") != CAPTURE_MANIFEST_SCHEMA:
+        raise CaptureError("UNSUPPORTED_CAPTURE_MANIFEST", "unsupported capture manifest schema")
     manifest_sha = _require_sha(manifest.get("manifest_sha256"), "$.capture_manifest.manifest_sha256")
+    if manifest_sha != _manifest_digest(manifest):
+        raise CaptureError("CAPTURE_MANIFEST_DIGEST_MISMATCH", "capture manifest was modified")
     if manifest.get("campaign_id") != campaign_id or manifest.get("execution_id") != execution_id:
         raise CaptureError("RATIFICATION_SOURCE_BINDING_MISMATCH", "capture manifest identifies another run")
-    if manifest.get("benchmark_lock_digest") != lock_digest:
-        raise CaptureError("RATIFICATION_SOURCE_BINDING_MISMATCH", "capture manifest binds another lock")
+    if (
+        manifest.get("benchmark_lock_digest") != lock_digest
+        or manifest.get("benchmark_commit") != repository_commit
+        or manifest.get("verifier_commit") != verifier_commit
+    ):
+        raise CaptureError("RATIFICATION_SOURCE_BINDING_MISMATCH", "capture manifest binds another lock or commit")
     if manifest.get("capture_state") != "captured":
         raise CaptureError("RATIFICATION_REQUIRES_COMPLETED_CAPTURE", "only a completed captured run can be disposed")
     if manifest.get("ratification_status") != "unratified":
         raise CaptureError("SOURCE_ALREADY_DISPOSED", "capture manifest is not unratified")
-    if bundle.get("raw_evidence_hashes") != manifest.get("raw_evidence_hashes"):
+    raw_hashes = manifest.get("raw_evidence_hashes")
+    if not isinstance(raw_hashes, list) or not all(isinstance(item, str) for item in raw_hashes):
+        raise CaptureError("INVALID_RAW_EVIDENCE_HASHES", "raw-evidence hashes must be a list")
+    for index, digest in enumerate(raw_hashes):
+        _require_sha(digest, f"$.capture_manifest.raw_evidence_hashes[{index}]")
+    if bundle.get("raw_evidence_hashes") != raw_hashes:
         raise CaptureError("RATIFICATION_SOURCE_BINDING_MISMATCH", "raw-evidence hashes differ from the manifest")
+    validate_timestamp(manifest.get("capture_completed_at"), "$.capture_manifest.capture_completed_at")
+    if manifest.get("capture_started_at") is not None:
+        validate_timestamp(manifest.get("capture_started_at"), "$.capture_manifest.capture_started_at")
+    capture_content_sha = _require_sha(
+        manifest.get("capture_content_sha256"),
+        "$.capture_manifest.capture_content_sha256",
+    )
 
     judgment = require_object(bundle.get("deterministic_judgment"), "$.deterministic_judgment")
     require_exact_fields(judgment, JUDGMENT_FIELDS, "$.deterministic_judgment")
@@ -192,20 +340,39 @@ def validate_review_bundle_bytes(data: bytes) -> dict[str, Any]:
         judgment.get("response_blob_sha256"),
         "$.deterministic_judgment.response_blob_sha256",
     )
+    if response_blob_sha not in raw_hashes:
+        raise CaptureError("RATIFICATION_SOURCE_BINDING_MISMATCH", "judged response is not in raw evidence hashes")
 
     result = require_object(judgment.get("deterministic_result"), "$.deterministic_judgment.deterministic_result")
-    verdict = _require_string(result.get("verdict"), "$.deterministic_judgment.deterministic_result.verdict")
+    _require_string(result.get("verdict"), "$.deterministic_judgment.deterministic_result.verdict")
     score = result.get("score")
     if not isinstance(score, (int, float)) or isinstance(score, bool):
         raise CaptureError("INVALID_DETERMINISTIC_RESULT", "judgment score must be numeric")
     failure_modes = result.get("detected_failure_modes")
     if not isinstance(failure_modes, list) or not all(isinstance(item, str) for item in failure_modes):
         raise CaptureError("INVALID_DETERMINISTIC_RESULT", "failure modes must be a string list")
-    explanation = _require_string(
+    _require_string(
         result.get("explanation"),
         "$.deterministic_judgment.deterministic_result.explanation",
         maximum=2000,
     )
+
+    ledger = require_object(bundle.get("lifecycle_ledger"), "$.lifecycle_ledger")
+    events, ledger_root = _validate_review_ledger(ledger, execution_id=execution_id)
+    seal_events = [event for event in events if event.get("transition") is True and event.get("to_state") == "sealed"]
+    judgment_events = [event for event in events if event.get("transition") is True and event.get("to_state") == "judged"]
+    if len(seal_events) != 1 or seal_events[0].get("payload") != {
+        "manifest_sha256": manifest_sha,
+        "capture_content_sha256": capture_content_sha,
+    }:
+        raise CaptureError("CAPTURE_SEAL_MISMATCH", "review ledger does not bind the capture manifest")
+    if manifest.get("ledger_root_before_seal") != seal_events[0].get("previous_event_sha256"):
+        raise CaptureError("CAPTURE_LEDGER_ROOT_MISMATCH", "manifest binds the wrong pre-seal ledger root")
+    if len(judgment_events) != 1 or judgment_events[0].get("payload") != {
+        "judgment_sha256": judgment["judgment_sha256"],
+        "verifier_commit": verifier_commit,
+    }:
+        raise CaptureError("JUDGMENT_SEAL_MISMATCH", "review ledger does not bind the judgment")
 
     integrity = require_object(bundle.get("integrity_verification_report"), "$.integrity_verification_report")
     integrity_sha = _require_sha(
@@ -214,22 +381,13 @@ def validate_review_bundle_bytes(data: bytes) -> dict[str, Any]:
     )
     if integrity_sha != _integrity_digest(integrity):
         raise CaptureError("INTEGRITY_REPORT_DIGEST_MISMATCH", "integrity report was modified")
-    ledger = require_object(bundle.get("lifecycle_ledger"), "$.lifecycle_ledger")
-    if set(ledger) != {"events", "root_sha256", "state"}:
-        raise CaptureError("INVALID_REVIEW_LEDGER", "review ledger shape is invalid")
-    ledger_root = _require_sha(ledger.get("root_sha256"), "$.lifecycle_ledger.root_sha256")
-    events = ledger.get("events")
-    if not isinstance(events, list):
-        raise CaptureError("INVALID_REVIEW_LEDGER", "review ledger events must be a list")
-    if ledger.get("state") != "judged":
-        raise CaptureError("RATIFICATION_REQUIRES_JUDGMENT", "review bundle predecessor state must be judged")
     if (
         integrity.get("status") != "verified"
         or integrity.get("campaign_id") != campaign_id
         or integrity.get("execution_id") != execution_id
         or integrity.get("benchmark_lock_digest") != lock_digest
         or integrity.get("capture_manifest_sha256") != manifest_sha
-        or integrity.get("lifecycle_state") != ledger.get("state")
+        or integrity.get("lifecycle_state") != "judged"
         or integrity.get("ledger_root") != ledger_root
         or integrity.get("ledger_events") != len(events)
         or integrity.get("ratification_status") != "unratified"
@@ -371,7 +529,11 @@ def verify_ratification_packet(packet: dict[str, Any]) -> dict[str, Any]:
         "regulatory_or_legal_approval",
     ):
         if scope.get(field) is not False:
-            raise CaptureError("RATIFICATION_AUTHORITY_OVERREACH", "ratification claims forbidden authority", f"$.authority_scope.{field}")
+            raise CaptureError(
+                "RATIFICATION_AUTHORITY_OVERREACH",
+                "ratification claims forbidden authority",
+                f"$.authority_scope.{field}",
+            )
     assert_secret_free(packet)
     return packet
 
@@ -396,7 +558,11 @@ def verify_lineage_record(lineage: dict[str, Any], packet: dict[str, Any]) -> di
         raise CaptureError("RATIFICATION_LINEAGE_OUTCOME_MISMATCH", "lineage outcome is invalid")
     for field in ("promotion_effect", "publication_effect", "release_effect"):
         if outcome.get(field) != "none":
-            raise CaptureError("RATIFICATION_AUTHORITY_OVERREACH", "lineage claims forbidden effect", f"$.outcome.{field}")
+            raise CaptureError(
+                "RATIFICATION_AUTHORITY_OVERREACH",
+                "lineage claims forbidden effect",
+                f"$.outcome.{field}",
+            )
     assert_secret_free(lineage)
     return lineage
 
@@ -441,9 +607,16 @@ def write_ratification_records(
     target.mkdir(parents=True, exist_ok=False)
     write_exclusive_json(target / "ratification-packet.json", packet)
     write_exclusive_json(target / "lineage-record.json", lineage)
-    write_exclusive_bytes(target / "ratification-packet.md", packet_markdown(packet, lineage).encode("utf-8"))
-    stored_packet = require_object(strict_json_loads((target / "ratification-packet.json").read_bytes()))
-    stored_lineage = require_object(strict_json_loads((target / "lineage-record.json").read_bytes()))
+    write_exclusive_bytes(
+        target / "ratification-packet.md",
+        packet_markdown(packet, lineage).encode("utf-8"),
+    )
+    stored_packet = require_object(
+        strict_json_loads((target / "ratification-packet.json").read_bytes())
+    )
+    stored_lineage = require_object(
+        strict_json_loads((target / "lineage-record.json").read_bytes())
+    )
     verify_ratification_packet(stored_packet)
     verify_lineage_record(stored_lineage, stored_packet)
     return target
