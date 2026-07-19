@@ -18,6 +18,12 @@ from .canonical import (
 )
 from .context import lock_binding_map, require_bound_reference
 from .lifecycle import append_transition, verify_ledger
+from .openai_responses import (
+    OPENAI_ADAPTER_ID,
+    OPENAI_ADAPTER_PATH,
+    OPENAI_ADAPTER_VERSION,
+    project_candidate_text,
+)
 from .run import _verify_run_core, verify_run
 from .storage import read_blob, read_record, write_record
 
@@ -73,6 +79,30 @@ def _complete_attempt(run_dir: Path) -> dict[str, Any]:
     if not complete:
         raise CaptureError("NO_COMPLETE_CAPTURE", "sealed evidence has no complete response")
     return complete[-1]
+
+
+def _candidate_response_text(
+    adapter_identity: dict[str, Any], response_bytes: bytes
+) -> tuple[str, str]:
+    """Derive candidate text without exposing provider envelope metadata.
+
+    Raw response bytes remain the sealed evidence. Only the exact known OpenAI
+    Responses adapter identity receives provider-envelope projection; every other
+    adapter retains the historical raw-text behavior.
+    """
+    try:
+        raw_text = response_bytes.decode("utf-8")
+        decode_status = "utf8"
+    except UnicodeDecodeError:
+        raw_text = "\x00"
+        decode_status = "binary_non_utf8"
+    if adapter_identity == {
+        "adapter_id": OPENAI_ADAPTER_ID,
+        "adapter_version": OPENAI_ADAPTER_VERSION,
+        "implementation_path": OPENAI_ADAPTER_PATH,
+    }:
+        return project_candidate_text(response_bytes), decode_status
+    return raw_text, decode_status
 
 
 def judge_run(
@@ -131,12 +161,7 @@ def judge_run(
         raise CaptureError("MALFORMED_TASK", "judgment task must be an object")
     attempt = _complete_attempt(run_dir)
     response_bytes = read_blob(run_dir, attempt["response_blob"])
-    try:
-        response_text = response_bytes.decode("utf-8")
-        decode_status = "utf8"
-    except UnicodeDecodeError:
-        response_text = "\x00"
-        decode_status = "binary_non_utf8"
+    response_text, decode_status = _candidate_response_text(run["adapter"], response_bytes)
     deterministic_result = candidate_adapter.score_response(task, response_text)
     validity = deterministic_result.get("parse_notes", {}).get("candidate_validity")
     if not isinstance(validity, str):
@@ -233,12 +258,7 @@ def _validate_judgment_artifact(
     if attempt["response_blob"]["sha256"] != artifact["response_blob_sha256"]:
         raise CaptureError("JUDGMENT_RESPONSE_BINDING_MISMATCH", "judgment response differs from capture")
     response_bytes = read_blob(run_dir, attempt["response_blob"])
-    try:
-        response_text = response_bytes.decode("utf-8")
-        decode_status = "utf8"
-    except UnicodeDecodeError:
-        response_text = "\x00"
-        decode_status = "binary_non_utf8"
+    response_text, decode_status = _candidate_response_text(run["adapter"], response_bytes)
     expected_result = candidate_adapter.score_response(task, response_text)
     validity = expected_result.get("parse_notes", {}).get("candidate_validity")
     if not isinstance(validity, str):
