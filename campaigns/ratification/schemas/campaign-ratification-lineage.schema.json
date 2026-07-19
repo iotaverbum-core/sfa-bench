@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sfa-bench.local/schemas/campaign-ratification-lineage.v1.json",
+  "title": "SFA-Bench Campaign Ratification Lineage v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "lineage_record_id",
+    "created_at",
+    "ratification_packet_sha256",
+    "source_review_bundle_sha256",
+    "campaign_id",
+    "execution_id",
+    "human_action",
+    "ratification_outcome",
+    "outcome",
+    "lineage_record_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "sfa_bench.campaign_capture.ratification_lineage.v1"
+    },
+    "lineage_record_id": {"type": "string", "minLength": 1, "maxLength": 80},
+    "created_at": {"type": "string", "format": "date-time"},
+    "ratification_packet_sha256": {"$ref": "#/$defs/sha256"},
+    "source_review_bundle_sha256": {"$ref": "#/$defs/sha256"},
+    "campaign_id": {"type": "string", "minLength": 1, "maxLength": 200},
+    "execution_id": {"type": "string", "minLength": 1, "maxLength": 200},
+    "human_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "disposition", "reviewer", "rationale", "explicit"],
+      "properties": {
+        "action": {"enum": ["prepare", "ratify", "reject", "halt"]},
+        "disposition": {"enum": ["pending", "accepted", "disputed", "deferred"]},
+        "reviewer": {"type": "string", "minLength": 1, "maxLength": 200},
+        "rationale": {"type": "string", "maxLength": 2000},
+        "explicit": {"type": "boolean"}
+      }
+    },
+    "ratification_outcome": {
+      "enum": ["RATIFICATION_READY", "RATIFIED", "REJECTED_BY_HUMAN", "HALTED_BY_HUMAN"]
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class", "promotion_effect", "publication_effect", "release_effect", "reason"],
+      "properties": {
+        "class": {"const": "LINEAGE_RECORDED"},
+        "promotion_effect": {"const": "none"},
+        "publication_effect": {"const": "none"},
+        "release_effect": {"const": "none"},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "lineage_record_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}
