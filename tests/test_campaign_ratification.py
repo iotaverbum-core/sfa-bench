@@ -13,7 +13,11 @@ from unittest import mock
 import campaign_ratification_cli as cli
 from sfa_bench.campaigns.capture.canonical import canonical_bytes, sha256_value
 from sfa_bench.campaigns.capture.judgment import JUDGMENT_SCHEMA
+from sfa_bench.campaigns.capture.lifecycle import EVENT_SCHEMA, ZERO_HASH
 from sfa_bench.campaigns.capture.review import REVIEW_BUNDLE_SCHEMA
+from sfa_bench.campaigns.capture.run import CAPTURE_MANIFEST_SCHEMA
+from sfa_bench.campaigns.locking import benchmark_lock_digest
+from sfa_bench.campaigns.protocol import BENCHMARK_LOCK_SCHEMA
 from sfa_bench.campaigns.ratification import (
     build_ratification_records,
     validate_review_bundle_bytes,
@@ -25,15 +29,140 @@ from sfa_bench.campaigns.ratification import (
 NOW = "2026-07-19T20:30:00+02:00"
 CAMPAIGN_ID = "openai-gpt56-memory-boundary-pilot-alpha2-r1"
 EXECUTION_ID = "openai-gpt56-sol-pilot-002"
-LOCK_SHA = "1" * 64
-MANIFEST_SHA = "2" * 64
-RESPONSE_SHA = "3" * 64
-TASK_SHA = "4" * 64
-LEDGER_SHA = "5" * 64
-VERIFIER_COMMIT = "6" * 40
+REPOSITORY_COMMIT = "6" * 40
+VERIFIER_COMMIT = "7" * 40
+REQUEST_SHA = "1" * 64
+RESPONSE_SHA = "2" * 64
+TASK_SHA = "3" * 64
+CAPTURE_CONTENT_SHA = "4" * 64
+AUTHORIZATION_SHA = "5" * 64
 
 
-def _judgment() -> dict:
+def _lock() -> dict:
+    value = {
+        "schema_version": BENCHMARK_LOCK_SCHEMA,
+        "campaign_id": CAMPAIGN_ID,
+        "campaign_digest": "8" * 64,
+        "repository_commit": REPOSITORY_COMMIT,
+        "verifier_commit": VERIFIER_COMMIT,
+        "release_identifier": "v2.0.0-alpha.2",
+        "declared_commands": [],
+        "declared_input_digests": {
+            "cases": "9" * 64,
+            "rules": "a" * 64,
+            "taxonomy": "b" * 64,
+            "system_prompt": "c" * 64,
+            "user_prompt_or_case_set": "d" * 64,
+        },
+        "bindings": {},
+        "digest_scope": {
+            "excluded_fields": ["envelope", "lock_digest"],
+            "campaign_excluded_fields": ["benchmark_lock"],
+        },
+    }
+    value["lock_digest"] = benchmark_lock_digest(value)
+    return value
+
+
+def _event(
+    events: list[dict],
+    *,
+    event_type: str,
+    from_state: str | None,
+    to_state: str,
+    payload: dict,
+    transition: bool = True,
+) -> dict:
+    sequence = len(events)
+    value = {
+        "schema_version": EVENT_SCHEMA,
+        "sequence": sequence,
+        "event_id": f"{EXECUTION_ID}:{sequence:08d}:{event_type}",
+        "execution_id": EXECUTION_ID,
+        "event_type": event_type,
+        "transition": transition,
+        "from_state": from_state,
+        "to_state": to_state,
+        "observed_at": NOW,
+        "previous_event_sha256": events[-1]["event_sha256"] if events else ZERO_HASH,
+        "payload": payload,
+    }
+    value["event_sha256"] = sha256_value(value)
+    events.append(value)
+    return value
+
+
+def _initial_events(lock_digest: str) -> list[dict]:
+    events: list[dict] = []
+    _event(events, event_type="run_drafted", from_state=None, to_state="draft", payload={"campaign_id": CAMPAIGN_ID})
+    _event(events, event_type="campaign_validated", from_state="draft", to_state="validated", payload={"validation": "passed"})
+    _event(events, event_type="benchmark_locked", from_state="validated", to_state="locked", payload={"benchmark_lock_digest": lock_digest})
+    _event(
+        events,
+        event_type="execution_authorization_bound",
+        from_state="locked",
+        to_state="execution_authorized",
+        payload={"authorization_digest": AUTHORIZATION_SHA, "scope": "execution_only", "ratification_status": "unratified"},
+    )
+    _event(events, event_type="capture_started", from_state="execution_authorized", to_state="capturing", payload={"attempt_number": 1})
+    _event(events, event_type="request_preserved", from_state="capturing", to_state="capturing", payload={"attempt_number": 1, "request_sha256": REQUEST_SHA}, transition=False)
+    _event(events, event_type="response_preserved", from_state="capturing", to_state="capturing", payload={"attempt_number": 1, "response_sha256": RESPONSE_SHA}, transition=False)
+    _event(events, event_type="capture_completed", from_state="capturing", to_state="captured", payload={"attempt_number": 1, "complete": True})
+    return events
+
+
+def _manifest(lock: dict, preseal_root: str) -> dict:
+    value = {
+        "schema_version": CAPTURE_MANIFEST_SCHEMA,
+        "campaign_id": CAMPAIGN_ID,
+        "execution_id": EXECUTION_ID,
+        "benchmark_lock_digest": lock["lock_digest"],
+        "benchmark_commit": REPOSITORY_COMMIT,
+        "verifier_commit": VERIFIER_COMMIT,
+        "release_identifier": "v2.0.0-alpha.2",
+        "authorization_digest": AUTHORIZATION_SHA,
+        "adapter": {
+            "adapter_id": "openai-responses-api",
+            "adapter_version": "sfa_bench.openai_responses_adapter.v1",
+            "implementation_path": "sfa_bench/campaigns/capture/openai_responses.py",
+        },
+        "prompt_reference": "campaigns/examples/prompts/gpt56-study-system-prompt.txt",
+        "case_reference": "sfa_bench/frontier_delta/tasks/memory_boundary_001.json",
+        "attempts": [
+            {
+                "attempt_number": 1,
+                "retry_reason": None,
+                "transport_status": "completed",
+                "complete": True,
+                "request_sha256": REQUEST_SHA,
+                "response_sha256": RESPONSE_SHA,
+                "response_byte_length": 256,
+                "provider_request_id": None,
+                "warnings": [],
+                "attempt_digest": "e" * 64,
+            }
+        ],
+        "raw_evidence_hashes": [REQUEST_SHA, RESPONSE_SHA],
+        "capture_state": "captured",
+        "ledger_root_before_seal": preseal_root,
+        "capture_started_at": NOW,
+        "capture_completed_at": NOW,
+        "warnings": [],
+        "provenance_classes": [
+            "git_verified",
+            "capture_observed",
+            "provider_declared_unverified",
+            "adapter_declared",
+            "operator_declared",
+        ],
+        "ratification_status": "unratified",
+        "capture_content_sha256": CAPTURE_CONTENT_SHA,
+    }
+    value["manifest_sha256"] = sha256_value(value)
+    return value
+
+
+def _judgment(lock: dict, manifest: dict) -> dict:
     result = {
         "schema": "sfa_bench.frontier_delta.result.v0",
         "task_id": "memory_boundary_001",
@@ -48,15 +177,15 @@ def _judgment() -> dict:
         "canonical_output": {"claimed_state_keys": [], "used_off_limits_keys": []},
         "checks": [],
         "parse_notes": {"candidate_output_status": "valid_model_output"},
-        "result_hash": "7" * 64,
+        "result_hash": "f" * 64,
     }
     value = {
         "schema_version": JUDGMENT_SCHEMA,
         "campaign_id": CAMPAIGN_ID,
         "execution_id": EXECUTION_ID,
-        "benchmark_lock_digest": LOCK_SHA,
+        "benchmark_lock_digest": lock["lock_digest"],
         "verifier_commit": VERIFIER_COMMIT,
-        "capture_manifest_sha256": MANIFEST_SHA,
+        "capture_manifest_sha256": manifest["manifest_sha256"],
         "response_blob_sha256": RESPONSE_SHA,
         "task_reference": "sfa_bench/frontier_delta/tasks/memory_boundary_001.json",
         "task_sha256": TASK_SHA,
@@ -85,50 +214,61 @@ def _judgment() -> dict:
 
 
 def review_bundle() -> dict:
+    lock = _lock()
+    events = _initial_events(lock["lock_digest"])
+    manifest = _manifest(lock, events[-1]["event_sha256"])
+    _event(
+        events,
+        event_type="capture_sealed",
+        from_state="captured",
+        to_state="sealed",
+        payload={
+            "manifest_sha256": manifest["manifest_sha256"],
+            "capture_content_sha256": CAPTURE_CONTENT_SHA,
+        },
+    )
+    judgment = _judgment(lock, manifest)
+    _event(
+        events,
+        event_type="judgment_sealed",
+        from_state="sealed",
+        to_state="judged",
+        payload={
+            "judgment_sha256": judgment["judgment_sha256"],
+            "verifier_commit": VERIFIER_COMMIT,
+        },
+    )
+    ledger_root = events[-1]["event_sha256"]
     integrity = {
         "schema_version": "sfa_bench.campaign_capture.integrity_report.v1",
         "status": "verified",
         "campaign_id": CAMPAIGN_ID,
         "execution_id": EXECUTION_ID,
         "lifecycle_state": "judged",
-        "ledger_events": 0,
-        "ledger_root": LEDGER_SHA,
+        "ledger_events": len(events),
+        "ledger_root": ledger_root,
         "attempt_count": 1,
         "complete_attempts": 1,
-        "capture_manifest_sha256": MANIFEST_SHA,
-        "benchmark_lock_digest": LOCK_SHA,
+        "capture_manifest_sha256": manifest["manifest_sha256"],
+        "benchmark_lock_digest": lock["lock_digest"],
         "bound_implementation_files": 41,
         "warnings": [],
         "ratification_status": "unratified",
     }
     integrity["integrity_report_sha256"] = sha256_value(integrity)
-    manifest = {
-        "schema_version": "sfa_bench.campaign_capture.manifest.v1",
-        "campaign_id": CAMPAIGN_ID,
-        "execution_id": EXECUTION_ID,
-        "benchmark_lock_digest": LOCK_SHA,
-        "manifest_sha256": MANIFEST_SHA,
-        "capture_state": "captured",
-        "raw_evidence_hashes": [RESPONSE_SHA],
-        "ratification_status": "unratified",
-    }
     value = {
         "schema_version": REVIEW_BUNDLE_SCHEMA,
         "campaign_id": CAMPAIGN_ID,
         "execution_id": EXECUTION_ID,
         "preregistration": {"campaign_id": CAMPAIGN_ID},
-        "benchmark_lock": {
-            "lock_digest": LOCK_SHA,
-            "repository_commit": VERIFIER_COMMIT,
-            "verifier_commit": VERIFIER_COMMIT,
-        },
+        "benchmark_lock": lock,
         "execution_authorization": {"ratification_status": "unratified"},
-        "lifecycle_ledger": {"events": [], "root_sha256": LEDGER_SHA, "state": "judged"},
-        "raw_evidence_hashes": [RESPONSE_SHA],
+        "lifecycle_ledger": {"events": events, "root_sha256": ledger_root, "state": "judged"},
+        "raw_evidence_hashes": [REQUEST_SHA, RESPONSE_SHA],
         "capture_manifest": manifest,
         "adapter_provenance": {"adapter_id": "openai-responses-api"},
         "integrity_verification_report": integrity,
-        "deterministic_judgment": _judgment(),
+        "deterministic_judgment": judgment,
         "claims_and_limitations": {"supported": [], "unsupported": []},
         "unresolved_warnings": [],
         "lineage_references": {"predecessor": None, "successor": None},
@@ -153,7 +293,10 @@ class CampaignRatificationTests(unittest.TestCase):
 
     def run_cli(self, *arguments: str) -> tuple[int, dict]:
         stream = io.StringIO()
-        with mock.patch.dict(os.environ, {"SFA_CAMPAIGN_RATIFICATION_ROOT": str(self.output)}), redirect_stdout(stream):
+        with mock.patch.dict(
+            os.environ,
+            {"SFA_CAMPAIGN_RATIFICATION_ROOT": str(self.output)},
+        ), redirect_stdout(stream):
             code = cli.main(list(arguments))
         return code, json.loads(stream.getvalue())
 
@@ -253,7 +396,7 @@ class CampaignRatificationTests(unittest.TestCase):
         self.assertEqual(result["issue"]["code"], "RATIFICATION_RATIONALE_REQUIRED")
         self.assertFalse(self.output.exists())
 
-    def test_tampered_bundle_is_rejected(self):
+    def test_outer_bundle_tampering_is_rejected(self):
         value = json.loads(self.source.read_text(encoding="utf-8"))
         value["deterministic_judgment"]["deterministic_result"]["score"] = 1.0
         self.source.write_bytes(canonical_bytes(value))
@@ -272,6 +415,50 @@ class CampaignRatificationTests(unittest.TestCase):
         )
         self.assertEqual(code, 2)
         self.assertEqual(result["issue"]["code"], "REVIEW_BUNDLE_DIGEST_MISMATCH")
+
+    def test_inner_manifest_tampering_is_rejected_even_with_resealed_bundle(self):
+        value = review_bundle()
+        value["capture_manifest"]["warnings"] = ["injected"]
+        value.pop("bundle_sha256")
+        value["bundle_sha256"] = sha256_value(value)
+        self.source.write_bytes(canonical_bytes(value))
+        code, result = self.run_cli(
+            "--review-bundle",
+            str(self.source),
+            "--reviewer",
+            "reviewer",
+            "--rationale",
+            "Reviewed.",
+            "--ratification-id",
+            "rat-manifest-tampered",
+            "--now",
+            NOW,
+            "--ratify",
+        )
+        self.assertEqual(code, 2)
+        self.assertEqual(result["issue"]["code"], "CAPTURE_MANIFEST_DIGEST_MISMATCH")
+
+    def test_lifecycle_chain_tampering_is_rejected_even_with_resealed_bundle(self):
+        value = review_bundle()
+        value["lifecycle_ledger"]["events"][0]["payload"]["injected"] = True
+        value.pop("bundle_sha256")
+        value["bundle_sha256"] = sha256_value(value)
+        self.source.write_bytes(canonical_bytes(value))
+        code, result = self.run_cli(
+            "--review-bundle",
+            str(self.source),
+            "--reviewer",
+            "reviewer",
+            "--rationale",
+            "Reviewed.",
+            "--ratification-id",
+            "rat-ledger-tampered",
+            "--now",
+            NOW,
+            "--ratify",
+        )
+        self.assertEqual(code, 2)
+        self.assertEqual(result["issue"]["code"], "EVENT_HASH_MISMATCH")
 
     def test_source_claiming_prior_ratification_is_rejected(self):
         value = review_bundle()
