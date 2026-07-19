@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sfa-bench.local/schemas/campaign-ratification-packet.v1.json",
+  "title": "SFA-Bench Campaign Ratification Packet v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "ratification_id",
+    "created_at",
+    "source_review_bundle",
+    "evidence_binding",
+    "deterministic_result",
+    "human_action",
+    "authority_scope",
+    "outcome",
+    "ratification_packet_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "sfa_bench.campaign_capture.ratification_packet.v1"
+    },
+    "ratification_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source_review_bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filename", "file_sha256", "bundle_sha256", "campaign_id", "execution_id"],
+      "properties": {
+        "filename": {"const": "review-bundle.json"},
+        "file_sha256": {"$ref": "#/$defs/sha256"},
+        "bundle_sha256": {"$ref": "#/$defs/sha256"},
+        "campaign_id": {"type": "string", "minLength": 1, "maxLength": 200},
+        "execution_id": {"type": "string", "minLength": 1, "maxLength": 200}
+      }
+    },
+    "evidence_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark_lock_digest",
+        "capture_manifest_sha256",
+        "judgment_sha256",
+        "response_blob_sha256",
+        "integrity_report_sha256",
+        "ledger_root"
+      ],
+      "properties": {
+        "benchmark_lock_digest": {"$ref": "#/$defs/sha256"},
+        "capture_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "judgment_sha256": {"$ref": "#/$defs/sha256"},
+        "response_blob_sha256": {"$ref": "#/$defs/sha256"},
+        "integrity_report_sha256": {"$ref": "#/$defs/sha256"},
+        "ledger_root": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "deterministic_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "score", "detected_failure_modes", "explanation"],
+      "properties": {
+        "verdict": {"type": "string", "minLength": 1},
+        "score": {"type": "number"},
+        "detected_failure_modes": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "explanation": {"type": "string", "minLength": 1, "maxLength": 2000}
+      }
+    },
+    "human_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "disposition", "reviewer", "rationale", "explicit"],
+      "properties": {
+        "action": {"enum": ["prepare", "ratify", "reject", "halt"]},
+        "disposition": {"enum": ["pending", "accepted", "disputed", "deferred"]},
+        "reviewer": {"type": "string", "minLength": 1, "maxLength": 200},
+        "rationale": {"type": "string", "maxLength": 2000},
+        "explicit": {"type": "boolean"}
+      }
+    },
+    "authority_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accepts_deterministic_judgment",
+        "model_endorsement",
+        "provider_identity_attestation",
+        "promotion",
+        "publication",
+        "release",
+        "regulatory_or_legal_approval"
+      ],
+      "properties": {
+        "accepts_deterministic_judgment": {"type": "boolean"},
+        "model_endorsement": {"const": false},
+        "provider_identity_attestation": {"const": false},
+        "promotion": {"const": false},
+        "publication": {"const": false},
+        "release": {"const": false},
+        "regulatory_or_legal_approval": {"const": false}
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class", "lineage_recorded", "auto_promoted", "reason"],
+      "properties": {
+        "class": {
+          "enum": ["RATIFICATION_READY", "RATIFIED", "REJECTED_BY_HUMAN", "HALTED_BY_HUMAN"]
+        },
+        "lineage_recorded": {"const": true},
+        "auto_promoted": {"const": false},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "ratification_packet_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}
