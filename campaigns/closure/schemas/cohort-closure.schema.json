@@ -1,0 +1,39 @@
+{
+  "$id": "https://sfa-bench.local/schemas/cohort-closure.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority_scope": {"type": "object"},
+    "closed_by": {"type": "object"},
+    "closure_id": {"minLength": 1, "type": "string"},
+    "closure_record_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "cohort": {"type": "object"},
+    "created_at": {"format": "date-time", "type": "string"},
+    "descriptive_summary": {"type": "object"},
+    "interpretation": {"type": "object"},
+    "members": {"items": {"type": "object"}, "minItems": 2, "type": "array"},
+    "outcome": {"type": "object"},
+    "protocol_binding": {"type": "object"},
+    "schema_version": {"const": "sfa_bench.campaign_capture.cohort_closure.v1"},
+    "shared_frozen_inputs": {"type": "object"},
+    "source_spec": {"type": "object"}
+  },
+  "required": [
+    "authority_scope",
+    "closed_by",
+    "closure_id",
+    "closure_record_sha256",
+    "cohort",
+    "created_at",
+    "descriptive_summary",
+    "interpretation",
+    "members",
+    "outcome",
+    "protocol_binding",
+    "schema_version",
+    "shared_frozen_inputs",
+    "source_spec"
+  ],
+  "title": "SFA-Bench Cohort Closure Record",
+  "type": "object"
+}

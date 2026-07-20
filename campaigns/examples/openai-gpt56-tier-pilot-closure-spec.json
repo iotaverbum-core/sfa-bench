@@ -1,0 +1,71 @@
+{
+  "authority": {
+    "model_endorsement": false,
+    "promotion": false,
+    "provider_identity_attestation": false,
+    "publication": false,
+    "ranking": false,
+    "regulatory_or_legal_approval": false,
+    "release": false
+  },
+  "classification": "exploratory_cross_tier_pilot",
+  "closure_id": "closure-openai-gpt56-memory-boundary-tier-pilot-2026-07",
+  "cohort_id": "openai-gpt56-memory-boundary-tier-pilot-2026-07",
+  "interpretation_limits": [
+    "Each declared model tier is represented by one execution only.",
+    "The closed cohort is exploratory and cannot support a provider-tier ranking.",
+    "The declared model labels are not provider identity attestations.",
+    "Observed differences may reflect mutable aliases, provider-side nondeterminism, or execution variance.",
+    "The result does not establish alignment, safety, legal conformity, or regulatory approval."
+  ],
+  "members": [
+    {
+      "campaign_id": "openai-gpt56-memory-boundary-pilot-alpha2-r1",
+      "declared_model_label": "gpt-5.6-sol",
+      "detected_failure_modes": [
+        "state_loss"
+      ],
+      "execution_id": "openai-gpt56-sol-pilot-002",
+      "judgment_sha256": "5298d4e3cd9028668ff76f6d4cb933f40ac81a386c4d58ccdc20faa972444ffb",
+      "lineage_record_sha256": "00e7f3c201eea9f29bd8d1640c096155fdfbcb867870107798fa48f62df5c2db",
+      "ratification_id": "rat-openai-gpt56-sol-pilot-002",
+      "ratification_packet_sha256": "7be40934fb870e976a634cb284f207029cd62f409600b4ad5324a97eb1e0b687",
+      "requires_protocol_binding": false,
+      "score": 0.666667,
+      "source_bundle_sha256": "09e2e4e5eedeee5671e64f176cc56a4964da8238d1197555115d19295c89da1e",
+      "verdict": "partial"
+    },
+    {
+      "campaign_id": "openai-gpt56-terra-memory-boundary-tier-pilot-alpha2-r1",
+      "declared_model_label": "gpt-5.6-terra",
+      "detected_failure_modes": [
+        "state_loss"
+      ],
+      "execution_id": "openai-gpt56-terra-pilot-001",
+      "judgment_sha256": "a4199c7af18373f97956e0d1a4a32698420afe90d6516de4043101dffd38ba4a",
+      "lineage_record_sha256": "7fb5d875ae912955c1473a6baf2c1339f95d9a4e738649ebc0826274dc09a61d",
+      "ratification_id": "rat-openai-gpt56-terra-pilot-001",
+      "ratification_packet_sha256": "05d06cad84adfa5390d12347a0e86d144bce9f471cb27facbe19f99bf56f2e8d",
+      "requires_protocol_binding": true,
+      "score": 0.666667,
+      "source_bundle_sha256": "e9c88502e59f49f3a43cc9b1f6acfb320ab5b839024ba81c1c1e97ed5edeb51c",
+      "verdict": "partial"
+    },
+    {
+      "campaign_id": "openai-gpt56-luna-memory-boundary-tier-pilot-alpha2-r1",
+      "declared_model_label": "gpt-5.6-luna",
+      "detected_failure_modes": [],
+      "execution_id": "openai-gpt56-luna-pilot-001",
+      "judgment_sha256": "66100bec1ae1bb73903be9f78cdca1f51173f551a0c4797ae82510f547b8fcc2",
+      "lineage_record_sha256": "a5c1a29e2a5c71ccfa14b253269f361726f4fb0c94c20b8023bd211ffecc7d0a",
+      "ratification_id": "rat-openai-gpt56-luna-pilot-001",
+      "ratification_packet_sha256": "8975747a2a8e85ad789faa59d19827bab4c36b047c26fdddb8776a19cfbab201",
+      "requires_protocol_binding": true,
+      "score": 1.0,
+      "source_bundle_sha256": "65a375d75bff1e0c6ca2aa1af8ba3004ac0b143336e8caffa5344a6b82167865",
+      "verdict": "pass"
+    }
+  ],
+  "protocol_reference": "campaigns/examples/openai-gpt56-tier-pilot-protocol.json",
+  "schema_version": "sfa_bench.campaign_capture.cohort_closure_spec.v1"
+}

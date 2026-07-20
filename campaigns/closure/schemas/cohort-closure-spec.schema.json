@@ -1,0 +1,87 @@
+{
+  "$id": "https://sfa-bench.local/schemas/cohort-closure-spec.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority": {
+      "additionalProperties": false,
+      "properties": {
+        "model_endorsement": {"const": false},
+        "promotion": {"const": false},
+        "provider_identity_attestation": {"const": false},
+        "publication": {"const": false},
+        "ranking": {"const": false},
+        "regulatory_or_legal_approval": {"const": false},
+        "release": {"const": false}
+      },
+      "required": [
+        "model_endorsement",
+        "promotion",
+        "provider_identity_attestation",
+        "publication",
+        "ranking",
+        "regulatory_or_legal_approval",
+        "release"
+      ],
+      "type": "object"
+    },
+    "classification": {"minLength": 1, "type": "string"},
+    "closure_id": {"minLength": 1, "type": "string"},
+    "cohort_id": {"minLength": 1, "type": "string"},
+    "interpretation_limits": {
+      "items": {"minLength": 1, "type": "string"},
+      "minItems": 1,
+      "type": "array"
+    },
+    "members": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {"minLength": 1, "type": "string"},
+          "declared_model_label": {"minLength": 1, "type": "string"},
+          "detected_failure_modes": {"items": {"type": "string"}, "type": "array"},
+          "execution_id": {"minLength": 1, "type": "string"},
+          "judgment_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+          "lineage_record_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+          "ratification_id": {"minLength": 1, "type": "string"},
+          "ratification_packet_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+          "requires_protocol_binding": {"type": "boolean"},
+          "score": {"maximum": 1, "minimum": 0, "type": "number"},
+          "source_bundle_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+          "verdict": {"minLength": 1, "type": "string"}
+        },
+        "required": [
+          "campaign_id",
+          "declared_model_label",
+          "detected_failure_modes",
+          "execution_id",
+          "judgment_sha256",
+          "lineage_record_sha256",
+          "ratification_id",
+          "ratification_packet_sha256",
+          "requires_protocol_binding",
+          "score",
+          "source_bundle_sha256",
+          "verdict"
+        ],
+        "type": "object"
+      },
+      "minItems": 2,
+      "type": "array"
+    },
+    "protocol_reference": {"minLength": 1, "type": "string"},
+    "schema_version": {"const": "sfa_bench.campaign_capture.cohort_closure_spec.v1"}
+  },
+  "required": [
+    "authority",
+    "classification",
+    "closure_id",
+    "cohort_id",
+    "interpretation_limits",
+    "members",
+    "protocol_reference",
+    "schema_version"
+  ],
+  "title": "SFA-Bench Cohort Closure Specification",
+  "type": "object"
+}
