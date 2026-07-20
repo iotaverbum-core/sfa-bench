@@ -19,6 +19,7 @@ from sfa_bench.campaigns.protocol import validate_campaign
 
 SCRIPT_REFERENCE = "openai_gpt56_tier_pilot.py"
 PROTOCOL_REFERENCE = "campaigns/examples/openai-gpt56-tier-pilot-protocol.json"
+COMMAND_NAME = "openai-gpt56-tier-pilot"
 MODEL_SPECS: dict[str, dict[str, str]] = {
     "gpt-5.6-terra": {
         "tier": "Terra",
@@ -33,6 +34,7 @@ MODEL_SPECS: dict[str, dict[str, str]] = {
 }
 _ORIGINAL_BUILD_CAMPAIGN = base._build_campaign
 _ORIGINAL_PARSE_ARGS = base.parse_args
+_ORIGINAL_EMIT = base._emit
 
 
 def _spec(model: str) -> dict[str, str]:
@@ -110,10 +112,26 @@ def _build_campaign(model: str, repository_commit: str) -> dict[str, Any]:
     return campaign
 
 
+def _emit(value: dict[str, Any]) -> None:
+    document = dict(value)
+    if document.get("command") == "openai-live-pilot":
+        document["command"] = COMMAND_NAME
+    _ORIGINAL_EMIT(document)
+
+
 def main(argv: list[str] | None = None) -> int:
-    base.parse_args = _parse_args
-    base._build_campaign = _build_campaign
-    return base.main(argv)
+    previous_parse = base.parse_args
+    previous_builder = base._build_campaign
+    previous_emit = base._emit
+    try:
+        base.parse_args = _parse_args
+        base._build_campaign = _build_campaign
+        base._emit = _emit
+        return base.main(argv)
+    finally:
+        base.parse_args = previous_parse
+        base._build_campaign = previous_builder
+        base._emit = previous_emit
 
 
 if __name__ == "__main__":
