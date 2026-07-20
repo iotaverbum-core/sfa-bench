@@ -1,0 +1,33 @@
+name: Replication Harness Diagnostic
+
+on:
+  push:
+    branches:
+      - agent/replication-execution-harness
+
+jobs:
+  focused:
+    name: ${{ matrix.test }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test:
+          - test_plan_has_exact_balanced_slots_and_ids
+          - test_offline_commands_are_immutable_and_credential_free
+          - test_authorization_is_next_block_only_canonical_and_tamper_evident
+          - test_slot_state_is_fail_closed
+          - test_execute_requires_explicit_flag_and_derives_exact_slot
+          - test_completed_block_authorization_cannot_be_reused
+          - test_campaign_and_execution_authority_bind_all_controls
+          - test_live_output_forbids_governance_effects
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: >
+          python -m unittest -v
+          tests.test_openai_gpt56_replication.ReplicationHarnessTests.${{ matrix.test }}
