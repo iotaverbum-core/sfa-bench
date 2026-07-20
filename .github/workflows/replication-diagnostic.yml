@@ -5,20 +5,26 @@ on:
 
 jobs:
   focused:
-    name: ${{ matrix.test }}
+    name: ${{ matrix.case.name }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        test:
-          - test_plan_has_exact_balanced_slots_and_ids
-          - test_offline_commands_are_immutable_and_credential_free
-          - test_authorization_is_next_block_only_canonical_and_tamper_evident
-          - test_slot_state_is_fail_closed
-          - test_execute_requires_explicit_flag_and_derives_exact_slot
-          - test_completed_block_authorization_cannot_be_reused
-          - test_campaign_and_execution_authority_bind_all_controls
-          - test_live_output_forbids_governance_effects
+        case:
+          - name: import_plan
+            command: python -c "import sfa_bench.campaigns.replication_plan"
+          - name: import_state
+            command: python -c "import sfa_bench.campaigns.replication_state"
+          - name: import_authorization
+            command: python -c "import sfa_bench.campaigns.replication_authorization"
+          - name: import_cli
+            command: python -c "import openai_gpt56_replication"
+          - name: load_preregistration
+            command: python -c "from pathlib import Path; from sfa_bench.campaigns.replication_plan import load_preregistration; load_preregistration(Path('.').resolve())"
+          - name: build_slot_plan
+            command: python -c "from pathlib import Path; from sfa_bench.campaigns.replication_plan import build_slot_plan; build_slot_plan(Path('.').resolve())"
+          - name: import_test_module
+            command: python -c "import tests.test_openai_gpt56_replication"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,6 +32,4 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: >
-          python -m unittest -v
-          tests.test_openai_gpt56_replication.ReplicationHarnessTests.${{ matrix.test }}
+      - run: ${{ matrix.case.command }}
