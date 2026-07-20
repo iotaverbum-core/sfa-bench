@@ -1,10 +1,13 @@
 """Tests for the preregistered GPT-5.6 Terra and Luna tier pilots."""
 from __future__ import annotations
 
+from contextlib import redirect_stdout
+import io
 import json
 from pathlib import Path
 import subprocess
 import unittest
+from unittest import mock
 
 import openai_gpt56_tier_pilot as tier
 import openai_live_pilot as base
@@ -123,6 +126,32 @@ class GPT56TierPilotTests(unittest.TestCase):
         )
         self.assertTrue(any("cannot support a provider-tier ranking" in item for item in protocol["interpretation_limits"]))
         self.assertFalse(protocol["authority"]["automatic_ratification"])
+
+    def test_wrapper_restores_base_hooks(self):
+        original_parse = base.parse_args
+        original_builder = base._build_campaign
+        original_emit = base._emit
+
+        def delegated(_argv):
+            self.assertIs(base.parse_args, tier._parse_args)
+            self.assertIs(base._build_campaign, tier._build_campaign)
+            self.assertIs(base._emit, tier._emit)
+            return 7
+
+        with mock.patch.object(base, "main", side_effect=delegated):
+            self.assertEqual(tier.main(["ignored"]), 7)
+
+        self.assertIs(base.parse_args, original_parse)
+        self.assertIs(base._build_campaign, original_builder)
+        self.assertIs(base._emit, original_emit)
+
+    def test_output_uses_tier_command_identity(self):
+        stream = io.StringIO()
+        with redirect_stdout(stream):
+            tier._emit({"command": "openai-live-pilot", "status": "captured"})
+        result = json.loads(stream.getvalue())
+        self.assertEqual(result["command"], tier.COMMAND_NAME)
+        self.assertEqual(result["status"], "captured")
 
 
 if __name__ == "__main__":
