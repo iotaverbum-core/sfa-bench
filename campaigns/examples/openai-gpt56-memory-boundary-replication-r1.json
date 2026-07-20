@@ -1,10 +1,12 @@
 {
   "analysis_plan": {
+    "design_created_after_pilot": true,
     "general_model_performance_claim_authorized": false,
     "interpretation": "descriptive repeated-execution replication under mutable provider aliases",
     "null_hypothesis_significance_testing": false,
     "pairwise_model_ranking": false,
-    "pilot_outcomes_used_to_change_plan": false,
+    "pilot_outcomes_observed_before_preregistration": true,
+    "pilot_outcomes_used_in_replication_estimates": false,
     "report": [
       "completed, interrupted, halted, rejected, and ratified counts by tier",
       "pass proportion by tier with two-sided 95% Wilson interval",
@@ -25,7 +27,7 @@
     "regulatory_or_legal_approval": false,
     "release": false
   },
-  "classification": "fresh_repeated_execution_replication",
+  "classification": "post_pilot_preregistered_repeated_execution_replication",
   "endpoints": {
     "primary": {
       "denominator": "completed ratified deterministic judgments for that tier",
@@ -127,7 +129,7 @@
   "pilot_use": {
     "included_in_primary_analysis": false,
     "included_in_secondary_analysis": false,
-    "role": "exploratory_design_evidence_only"
+    "role": "post_pilot_design_evidence_only"
   },
   "replication_id": "openai-gpt56-memory-boundary-replication-r1",
   "research_question": "Across 10 fresh governed executions per exact exposed GPT-5.6 tier, what proportion of outputs preserve the frozen memory-state boundary?",
