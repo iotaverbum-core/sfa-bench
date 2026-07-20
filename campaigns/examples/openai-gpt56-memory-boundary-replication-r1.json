@@ -1,0 +1,160 @@
+{
+  "analysis_plan": {
+    "general_model_performance_claim_authorized": false,
+    "interpretation": "descriptive repeated-execution replication under mutable provider aliases",
+    "null_hypothesis_significance_testing": false,
+    "pairwise_model_ranking": false,
+    "pilot_outcomes_used_to_change_plan": false,
+    "report": [
+      "completed, interrupted, halted, rejected, and ratified counts by tier",
+      "pass proportion by tier with two-sided 95% Wilson interval",
+      "state_loss proportion by tier with two-sided 95% Wilson interval",
+      "mean deterministic score by tier",
+      "exact result-hash frequency table by tier"
+    ]
+  },
+  "authority": {
+    "automatic_judgment": false,
+    "automatic_ratification": false,
+    "model_endorsement": false,
+    "promotion": false,
+    "provider_calls_during_preregistration": false,
+    "provider_identity_attestation": false,
+    "publication": false,
+    "ranking": false,
+    "regulatory_or_legal_approval": false,
+    "release": false
+  },
+  "classification": "fresh_repeated_execution_replication",
+  "endpoints": {
+    "primary": {
+      "denominator": "completed ratified deterministic judgments for that tier",
+      "name": "per_tier_pass_proportion",
+      "numerator": "ratified pass judgments",
+      "report_completion_denominator_separately": true
+    },
+    "secondary": [
+      {
+        "denominator": "completed ratified deterministic judgments for that tier",
+        "name": "per_tier_state_loss_proportion",
+        "numerator": "ratified judgments containing state_loss"
+      },
+      {
+        "aggregation": "arithmetic mean over completed ratified deterministic judgments",
+        "name": "per_tier_mean_deterministic_score"
+      }
+    ]
+  },
+  "execution_blocks": [
+    {
+      "block": 1,
+      "order": ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"]
+    },
+    {
+      "block": 2,
+      "order": ["gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.6-sol"]
+    },
+    {
+      "block": 3,
+      "order": ["gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra"]
+    },
+    {
+      "block": 4,
+      "order": ["gpt-5.6-sol", "gpt-5.6-luna", "gpt-5.6-terra"]
+    },
+    {
+      "block": 5,
+      "order": ["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"]
+    },
+    {
+      "block": 6,
+      "order": ["gpt-5.6-terra", "gpt-5.6-sol", "gpt-5.6-luna"]
+    },
+    {
+      "block": 7,
+      "order": ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"]
+    },
+    {
+      "block": 8,
+      "order": ["gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.6-sol"]
+    },
+    {
+      "block": 9,
+      "order": ["gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra"]
+    },
+    {
+      "block": 10,
+      "order": ["gpt-5.6-sol", "gpt-5.6-luna", "gpt-5.6-terra"]
+    }
+  ],
+  "execution_id_rule": "openai-gpt56-{tier}-replication-r1-{within_tier_sequence:03d}",
+  "execution_policy": {
+    "automatic_retry": false,
+    "max_attempts_per_execution": 1,
+    "outcome_dependent_order_changes": false,
+    "provider_surface": "OpenAI Responses API POST /v1/responses",
+    "reasoning_configuration": {"mode": "provider_default"},
+    "replacement_executions": false,
+    "sampling_configuration": {"mode": "provider_default"},
+    "silent_model_substitution": false,
+    "store": false,
+    "tools": "none"
+  },
+  "models": [
+    {
+      "campaign_id": "openai-gpt56-sol-memory-boundary-replication-r1",
+      "candidate_snapshot_or_alias_status": "mutable_alias",
+      "mutable_alias_use_declared": true,
+      "planned_authorized_executions": 10,
+      "provider_model_identifier": "gpt-5.6-sol"
+    },
+    {
+      "campaign_id": "openai-gpt56-terra-memory-boundary-replication-r1",
+      "candidate_snapshot_or_alias_status": "mutable_alias",
+      "mutable_alias_use_declared": true,
+      "planned_authorized_executions": 10,
+      "provider_model_identifier": "gpt-5.6-terra"
+    },
+    {
+      "campaign_id": "openai-gpt56-luna-memory-boundary-replication-r1",
+      "candidate_snapshot_or_alias_status": "mutable_alias",
+      "mutable_alias_use_declared": true,
+      "planned_authorized_executions": 10,
+      "provider_model_identifier": "gpt-5.6-luna"
+    }
+  ],
+  "pilot_cohort_reference": "campaigns/examples/openai-gpt56-tier-pilot-closure-spec.json",
+  "pilot_use": {
+    "included_in_primary_analysis": false,
+    "included_in_secondary_analysis": false,
+    "role": "exploratory_design_evidence_only"
+  },
+  "replication_id": "openai-gpt56-memory-boundary-replication-r1",
+  "research_question": "Across 10 fresh governed executions per exact exposed GPT-5.6 tier, what proportion of outputs preserve the frozen memory-state boundary?",
+  "schema_version": "sfa_bench.openai_gpt56_memory_boundary_replication.v1",
+  "shared_inputs": {
+    "normalizer_reference": "sfa_bench/frontier_delta/candidate_adapter.py",
+    "required_shared_binding_groups": [
+      "cases",
+      "rules",
+      "taxonomy",
+      "normalizer",
+      "system_prompt",
+      "user_prompt_or_case_set"
+    ],
+    "rule_reference": "sfa_bench/frontier_delta/scorers",
+    "scoring_mode": "deterministic",
+    "system_prompt_reference": "campaigns/examples/prompts/gpt56-study-system-prompt.txt",
+    "task_reference": "sfa_bench/frontier_delta/tasks/memory_boundary_001.json",
+    "taxonomy_reference": "families.json"
+  },
+  "status": "preregistered",
+  "stopping_rule": {
+    "human_halt": "stop remaining executions and retain all completed evidence without inferential completion claims",
+    "model_unavailable": "halt the affected slot and record unavailability; do not substitute",
+    "optional_stopping": false,
+    "planned_authorized_executions": 30,
+    "stop_after_last_preregistered_slot": true,
+    "transport_interruption": "preserve the interrupted attempt; do not retry or replace"
+  }
+}
