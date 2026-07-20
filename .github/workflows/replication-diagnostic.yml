@@ -1,9 +1,7 @@
 name: Replication Harness Diagnostic
 
 on:
-  push:
-    branches:
-      - agent/replication-execution-harness
+  pull_request:
 
 jobs:
   focused:
