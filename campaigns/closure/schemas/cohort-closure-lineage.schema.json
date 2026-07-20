@@ -1,0 +1,37 @@
+{
+  "$id": "https://sfa-bench.local/schemas/cohort-closure-lineage.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "closure_lineage_id": {"minLength": 1, "type": "string"},
+    "closure_lineage_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "closure_record_sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "cohort_id": {"minLength": 1, "type": "string"},
+    "created_at": {"format": "date-time", "type": "string"},
+    "member_lineage_record_sha256": {
+      "items": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+      "minItems": 2,
+      "type": "array"
+    },
+    "member_ratification_packet_sha256": {
+      "items": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+      "minItems": 2,
+      "type": "array"
+    },
+    "outcome": {"type": "object"},
+    "schema_version": {"const": "sfa_bench.campaign_capture.cohort_closure_lineage.v1"}
+  },
+  "required": [
+    "closure_lineage_id",
+    "closure_lineage_sha256",
+    "closure_record_sha256",
+    "cohort_id",
+    "created_at",
+    "member_lineage_record_sha256",
+    "member_ratification_packet_sha256",
+    "outcome",
+    "schema_version"
+  ],
+  "title": "SFA-Bench Cohort Closure Lineage",
+  "type": "object"
+}
