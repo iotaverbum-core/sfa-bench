@@ -1,0 +1,62 @@
+{
+  "schema_version": "sfa_bench.openai_gpt56_tier_pilot_protocol.v1",
+  "cohort_id": "openai-gpt56-memory-boundary-tier-pilot-2026-07",
+  "classification": "exploratory_cross_tier_pilot",
+  "research_question": "Across one governed execution per exposed GPT-5.6 tier, does each exact model preserve the same frozen memory-state boundary?",
+  "shared_inputs": {
+    "task_reference": "sfa_bench/frontier_delta/tasks/memory_boundary_001.json",
+    "system_prompt_reference": "campaigns/examples/prompts/gpt56-study-system-prompt.txt",
+    "rule_reference": "sfa_bench/frontier_delta/scorers",
+    "taxonomy_reference": "families.json",
+    "normalizer_reference": "sfa_bench/frontier_delta/candidate_adapter.py",
+    "scoring_mode": "deterministic"
+  },
+  "ratified_anchor": {
+    "provider_model_identifier": "gpt-5.6-sol",
+    "campaign_id": "openai-gpt56-memory-boundary-pilot-alpha2-r1",
+    "execution_id": "openai-gpt56-sol-pilot-002",
+    "verdict": "partial",
+    "score": 0.666667,
+    "detected_failure_modes": [
+      "state_loss"
+    ],
+    "judgment_sha256": "5298d4e3cd9028668ff76f6d4cb933f40ac81a386c4d58ccdc20faa972444ffb",
+    "ratification_packet_sha256": "7be40934fb870e976a634cb284f207029cd62f409600b4ad5324a97eb1e0b687",
+    "lineage_record_sha256": "00e7f3c201eea9f29bd8d1640c096155fdfbcb867870107798fa48f62df5c2db",
+    "human_disposition": "RATIFIED"
+  },
+  "planned_successors": [
+    {
+      "provider_model_identifier": "gpt-5.6-terra",
+      "campaign_id": "openai-gpt56-terra-memory-boundary-tier-pilot-alpha2-r1",
+      "execution_id": "openai-gpt56-terra-pilot-001",
+      "planned_attempts": 1
+    },
+    {
+      "provider_model_identifier": "gpt-5.6-luna",
+      "campaign_id": "openai-gpt56-luna-memory-boundary-tier-pilot-alpha2-r1",
+      "execution_id": "openai-gpt56-luna-pilot-001",
+      "planned_attempts": 1
+    }
+  ],
+  "execution_order": [
+    "gpt-5.6-terra",
+    "gpt-5.6-luna"
+  ],
+  "authority": {
+    "provider_calls_during_implementation": false,
+    "automatic_retry": false,
+    "automatic_judgment": false,
+    "automatic_ratification": false,
+    "automatic_promotion": false,
+    "automatic_publication": false,
+    "automatic_release": false
+  },
+  "interpretation_limits": [
+    "Each tier is represented by one execution only.",
+    "The cohort is exploratory and cannot support a provider-tier ranking.",
+    "Observed differences may reflect mutable aliases, provider-side nondeterminism, or execution variance.",
+    "Only deterministic judgment replay is required to reproduce exactly.",
+    "A pass, partial, or fail result does not establish alignment, safety, legal conformity, or regulatory approval."
+  ]
+}
