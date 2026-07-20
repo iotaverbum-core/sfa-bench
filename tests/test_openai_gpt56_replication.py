@@ -60,7 +60,7 @@ class ReplicationHarnessTests(unittest.TestCase):
         )
         return plan, value, write_block_authorization(ROOT, value, plan)
 
-    def run(self, root: str, slot: dict, *, attempts: int = 0, model: str | None = None):
+    def write_run(self, root: str, slot: dict, *, attempts: int = 0, model: str | None = None):
         target = Path(root) / "captures" / slot["campaign_id"] / slot["execution_id"]
         (target / "attempts").mkdir(parents=True)
         write_exclusive_json(target / "run.json", {
@@ -134,28 +134,28 @@ class ReplicationHarnessTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root, self.env(root):
             initialize_slot_plan(ROOT)
             plan = read_slot_plan(ROOT)
-            self.run(root, plan["slots"][0])
+            self.write_run(root, plan["slots"][0])
             state = status_document(ROOT, plan)
             self.assertEqual(state["next_slot"]["slot_id"], "slot-002")
             self.assertEqual(state["slots"][0]["capture_state"], "initialized")
         with tempfile.TemporaryDirectory() as root, self.env(root):
             initialize_slot_plan(ROOT)
             plan = read_slot_plan(ROOT)
-            self.run(root, plan["slots"][1])
+            self.write_run(root, plan["slots"][1])
             with self.assertRaises(CaptureError) as caught:
                 scan_slot_states(ROOT, plan)
             self.assertEqual(caught.exception.code, "REPLICATION_SLOT_ORDER_VIOLATION")
         with tempfile.TemporaryDirectory() as root, self.env(root):
             initialize_slot_plan(ROOT)
             plan = read_slot_plan(ROOT)
-            self.run(root, plan["slots"][0], attempts=2)
+            self.write_run(root, plan["slots"][0], attempts=2)
             with self.assertRaises(CaptureError) as caught:
                 scan_slot_states(ROOT, plan)
             self.assertEqual(caught.exception.code, "REPLICATION_ATTEMPT_LIMIT_EXCEEDED")
         with tempfile.TemporaryDirectory() as root, self.env(root):
             initialize_slot_plan(ROOT)
             plan = read_slot_plan(ROOT)
-            self.run(root, plan["slots"][0], model="gpt-5.6-luna")
+            self.write_run(root, plan["slots"][0], model="gpt-5.6-luna")
             with self.assertRaises(CaptureError) as caught:
                 scan_slot_states(ROOT, plan)
             self.assertEqual(caught.exception.code, "REPLICATION_MODEL_SUBSTITUTION_DETECTED")
@@ -193,7 +193,7 @@ class ReplicationHarnessTests(unittest.TestCase):
             initialize_slot_plan(ROOT)
             plan, _value, path = self.authorize(root)
             for slot in plan["slots"][:3]:
-                self.run(root, slot, attempts=1)
+                self.write_run(root, slot, attempts=1)
             stream = io.StringIO()
             with mock.patch.object(base, "_api_key", side_effect=AssertionError("provider access")), redirect_stdout(stream):
                 code = cli.main([
