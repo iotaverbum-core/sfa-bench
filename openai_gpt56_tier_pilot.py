@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare or execute one preregistered GPT-5.6 Terra or Luna tier pilot.
+"""Execute one preregistered GPT-5.6 Terra or Luna tier pilot.
 
 The ratified Sol execution is the cohort anchor. This helper permits only the two
 planned successor model identifiers and their exact execution IDs. Each invocation
@@ -59,6 +59,11 @@ def _parse_args(argv: list[str] | None = None):
             "TIER_EXECUTION_ID_MISMATCH",
             f"{model} is preregistered only as execution {expected_execution!r}",
         )
+    if args.execute is not True:
+        raise base.PilotError(
+            "TIER_EXECUTION_REQUIRED",
+            "fixed tier-pilot execution IDs may only be used with explicit --execute",
+        )
     return args
 
 
@@ -92,9 +97,9 @@ def _build_campaign(model: str, repository_commit: str) -> dict[str, Any]:
     inputs["schema_paths"] = _complete_schema_paths(inputs["schema_paths"])
     command = (
         f"py -3 {SCRIPT_REFERENCE} --operator <declared-operator> --model {model} "
-        f"--execution-id {selected['execution_id']}"
+        f"--execution-id {selected['execution_id']} --execute"
     )
-    inputs["declared_commands"] = [command, command + " --execute"]
+    inputs["declared_commands"] = [command]
 
     issues = validate_campaign(campaign)
     if issues:
