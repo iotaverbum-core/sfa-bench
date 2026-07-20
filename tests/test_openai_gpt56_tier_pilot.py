@@ -38,7 +38,9 @@ class GPT56TierPilotTests(unittest.TestCase):
             ("gpt-5.6-luna", "openai-gpt56-luna-pilot-001"),
         ):
             with self.subTest(model=model):
-                args = tier._parse_args(["--operator", "Matthew Neal", "--model", model])
+                args = tier._parse_args(
+                    ["--operator", "Matthew Neal", "--model", model, "--execute"]
+                )
                 self.assertEqual(args.execution_id, expected)
                 with self.assertRaises(base.PilotError) as caught:
                     tier._parse_args(
@@ -49,9 +51,17 @@ class GPT56TierPilotTests(unittest.TestCase):
                             model,
                             "--execution-id",
                             "wrong-execution-id",
+                            "--execute",
                         ]
                     )
                 self.assertEqual(caught.exception.code, "TIER_EXECUTION_ID_MISMATCH")
+
+    def test_preparation_only_use_is_rejected_before_provider_access(self):
+        with self.assertRaises(base.PilotError) as caught:
+            tier._parse_args(
+                ["--operator", "Matthew Neal", "--model", "gpt-5.6-terra"]
+            )
+        self.assertEqual(caught.exception.code, "TIER_EXECUTION_REQUIRED")
 
     def test_campaigns_have_distinct_identity_and_shared_frozen_inputs(self):
         commit = self.repository_commit()
@@ -76,6 +86,8 @@ class GPT56TierPilotTests(unittest.TestCase):
         self.assertEqual(terra["run_count"], 1)
         self.assertEqual(luna["run_count"], 1)
         self.assertIn("cannot support a provider-tier ranking", " ".join(terra["declared_limitations"]))
+        self.assertEqual(len(terra["benchmark_inputs"]["declared_commands"]), 1)
+        self.assertTrue(terra["benchmark_inputs"]["declared_commands"][0].endswith("--execute"))
 
     def test_protocol_and_complete_capture_core_are_lock_bound(self):
         commit = self.repository_commit()
