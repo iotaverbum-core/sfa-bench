@@ -1,0 +1,49 @@
+﻿{
+    "format_version":  1,
+    "record_type":  "publication_authorization",
+    "publication_id":  "openai-gpt56-memory-boundary-replication-r1",
+    "approved_at":  "2026-07-20",
+    "approved_by":  {
+                        "identity":  "Matthew Neal",
+                        "authority_type":  "declared_human_approver"
+                    },
+    "review":  {
+                   "status":  "completed_and_approved_for_publication",
+                   "declaration_source":  "approver",
+                   "separate_reviewer_identity_recorded_here":  false
+               },
+    "approved_channels":  [
+                              "github_pull_request",
+                              "github_release"
+                          ],
+    "approved_artifacts":  [
+                               "preregistered descriptive report",
+                               "cohort closure record and lineage",
+                               "evidence snapshot manifest and snapshot record",
+                               "hash-verified evidence snapshot archive"
+                           ],
+    "required_release_tag":  "gpt56-memory-boundary-replication-r1-2026-07",
+    "required_release_asset":  {
+                                   "filename":  "snapshot-openai-gpt56-memory-boundary-replication-r1-2026-07.tar.gz",
+                                   "sha256":  "41a8b5f532c530a9b0fc8723e82c429073167ae51af54a9426d9c535d92027ae"
+                               },
+    "evidence_bindings":  {
+                              "closure_record_sha256":  "ef519dc8cafb2cfa60eba183aa618770767f0fc3f662971876f5fce2117566fb",
+                              "closure_lineage_sha256":  "9a36d4556ede9df8c6926a56c98c4b09565a4f97e55b31ad9bf0741f7051fca3",
+                              "report_sha256":  "66c27a1e84eaffbb91e6277154964764b86cc07097aec371f4eb39ee767f75d9",
+                              "snapshot_manifest_sha256":  "e37097e17cf1f86284e7fe3a6f2774d314aa228f3192623148ec9420ba1a6ee4",
+                              "snapshot_archive_sha256":  "41a8b5f532c530a9b0fc8723e82c429073167ae51af54a9426d9c535d92027ae",
+                              "snapshot_record_sha256":  "ac5ba6b3e08d0f59680ab82721291f1b5765bbc4ec16a672ab05c786f36ef25d",
+                              "slot_plan_sha256":  "1cd8fe1b072bc64a61f587309a7a347861824a1dfc00b5fe0cd5f730f38975ea",
+                              "benchmark_commit":  "a0a6c9019691f98dfcc43fb911a0b24c793efb80"
+                          },
+    "publication_scope":  {
+                              "public_distribution_authorized":  true,
+                              "source_capture_runs_may_be_mutated":  false,
+                              "source_ratification_records_may_be_mutated":  false,
+                              "model_endorsement":  false,
+                              "pairwise_model_ranking":  false,
+                              "promotion":  false,
+                              "legal_or_regulatory_approval":  false
+                          }
+}
