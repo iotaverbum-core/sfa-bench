@@ -1,0 +1,177 @@
+{
+  "analysis_plan": {
+    "design_created_after_r1": true,
+    "general_model_performance_claim_authorized": false,
+    "interaction_analysis": "descriptive difference-in-differences only",
+    "null_hypothesis_significance_testing": false,
+    "pairwise_model_ranking": false,
+    "primary_report": [
+      "completed, interrupted, halted, rejected, and ratified counts by condition",
+      "complete permitted-state preservation proportion by condition with two-sided 95% Wilson interval",
+      "customer_id loss proportion by condition with two-sided 95% Wilson interval",
+      "forbidden-state-use proportion by condition with two-sided 95% Wilson interval"
+    ],
+    "secondary_report": [
+      "mean deterministic score by condition",
+      "exact result-hash frequency table by condition",
+      "pooled representation contrast: JSON minus prose",
+      "pooled reminder contrast: reminder minus no reminder",
+      "descriptive representation-by-reminder interaction contrast",
+      "refusal, malformed-output, and transport-failure counts"
+    ],
+    "sample_size_rationale": "Forty-eight executions provide twelve executions per condition and three appearances of every condition in every ordinal block position. The design prioritizes exact balance and operational feasibility; it is not presented as a formal power calculation."
+  },
+  "authority": {
+    "automatic_judgment": false,
+    "automatic_ratification": false,
+    "execution": false,
+    "model_endorsement": false,
+    "promotion": false,
+    "provider_calls_during_preregistration": false,
+    "provider_identity_attestation": false,
+    "publication": false,
+    "ranking": false,
+    "regulatory_or_legal_approval": false,
+    "release": false
+  },
+  "candidate_snapshot_or_alias_status": "mutable_alias",
+  "classification": "preregistered_balanced_2x2_permitted_state_mechanism_study",
+  "conditions": [
+    {
+      "campaign_id": "openai-gpt56-sol-r2-prose-no-reminder",
+      "condition_id": "prose-no-reminder",
+      "planned_authorized_executions": 12,
+      "representation": "prose",
+      "retention_reminder": false
+    },
+    {
+      "campaign_id": "openai-gpt56-sol-r2-json-no-reminder",
+      "condition_id": "json-no-reminder",
+      "planned_authorized_executions": 12,
+      "representation": "json",
+      "retention_reminder": false
+    },
+    {
+      "campaign_id": "openai-gpt56-sol-r2-prose-reminder",
+      "condition_id": "prose-reminder",
+      "planned_authorized_executions": 12,
+      "representation": "prose",
+      "retention_reminder": true
+    },
+    {
+      "campaign_id": "openai-gpt56-sol-r2-json-reminder",
+      "condition_id": "json-reminder",
+      "planned_authorized_executions": 12,
+      "representation": "json",
+      "retention_reminder": true
+    }
+  ],
+  "endpoints": {
+    "primary": {
+      "denominator": "completed ratified deterministic judgments for that condition",
+      "name": "per_condition_complete_permitted_state_preservation_proportion",
+      "numerator": "ratified judgments preserving every required permitted field while using no forbidden state",
+      "report_completion_denominator_separately": true
+    },
+    "secondary": [
+      {
+        "denominator": "completed ratified deterministic judgments for that condition",
+        "name": "per_condition_customer_id_loss_proportion",
+        "numerator": "ratified judgments containing state_loss caused by omitted customer_id"
+      },
+      {
+        "denominator": "completed ratified deterministic judgments for that condition",
+        "name": "per_condition_forbidden_state_use_proportion",
+        "numerator": "ratified judgments containing boundary_violation"
+      },
+      {
+        "aggregation": "arithmetic mean over completed ratified deterministic judgments",
+        "name": "per_condition_mean_deterministic_score"
+      }
+    ]
+  },
+  "execution_blocks": [
+    {"block": 1, "order": ["prose-no-reminder", "json-no-reminder", "prose-reminder", "json-reminder"]},
+    {"block": 2, "order": ["json-no-reminder", "json-reminder", "prose-no-reminder", "prose-reminder"]},
+    {"block": 3, "order": ["prose-reminder", "prose-no-reminder", "json-reminder", "json-no-reminder"]},
+    {"block": 4, "order": ["json-reminder", "prose-reminder", "json-no-reminder", "prose-no-reminder"]},
+    {"block": 5, "order": ["prose-no-reminder", "json-no-reminder", "prose-reminder", "json-reminder"]},
+    {"block": 6, "order": ["json-no-reminder", "json-reminder", "prose-no-reminder", "prose-reminder"]},
+    {"block": 7, "order": ["prose-reminder", "prose-no-reminder", "json-reminder", "json-no-reminder"]},
+    {"block": 8, "order": ["json-reminder", "prose-reminder", "json-no-reminder", "prose-no-reminder"]},
+    {"block": 9, "order": ["prose-no-reminder", "json-no-reminder", "prose-reminder", "json-reminder"]},
+    {"block": 10, "order": ["json-no-reminder", "json-reminder", "prose-no-reminder", "prose-reminder"]},
+    {"block": 11, "order": ["prose-reminder", "prose-no-reminder", "json-reminder", "json-no-reminder"]},
+    {"block": 12, "order": ["json-reminder", "prose-reminder", "json-no-reminder", "prose-no-reminder"]}
+  ],
+  "execution_id_rule": "openai-gpt56-sol-r2-{condition_id}-{within_condition_sequence:03d}",
+  "execution_policy": {
+    "automatic_retry": false,
+    "max_attempts_per_execution": 1,
+    "outcome_dependent_order_changes": false,
+    "provider_surface": "OpenAI Responses API POST /v1/responses",
+    "reasoning_configuration": {"mode": "provider_default"},
+    "replacement_executions": false,
+    "sampling_configuration": {"mode": "provider_default"},
+    "silent_model_substitution": false,
+    "store": false,
+    "tools": "none"
+  },
+  "hypotheses": [
+    {
+      "direction": "higher complete-state preservation under JSON representation",
+      "hypothesis_id": "H1-representation",
+      "statement": "Holding reminder status balanced, structured JSON representation will preserve all required permitted state at least as often as prose representation."
+    },
+    {
+      "direction": "higher complete-state preservation with explicit retention reminder",
+      "hypothesis_id": "H2-reminder",
+      "statement": "Holding representation balanced, an explicit retention reminder will preserve all required permitted state at least as often as no reminder."
+    },
+    {
+      "direction": "unspecified exploratory interaction",
+      "hypothesis_id": "H3-interaction",
+      "statement": "The effect of the retention reminder may differ between prose and JSON representation; the interaction will be reported descriptively without significance testing."
+    }
+  ],
+  "interpretation_limits": [
+    "R2 studies one frozen memory-boundary task under one declared mutable provider alias.",
+    "The design does not establish general model quality, safety, or fitness for a specific deployment.",
+    "The study does not authorize model ranking, endorsement, certification, legal approval, or regulatory approval.",
+    "Condition effects are task-specific and may not generalize to other state schemas, prompts, providers, or execution dates.",
+    "Mutable alias drift limits claims about immutable model identity."
+  ],
+  "mutable_alias_use_declared": true,
+  "pilot_use": {
+    "pilot_planned": false,
+    "rationale": "The task, capture path, deterministic scorer, and provider adapter were exercised in R1. R2 prompt variants are validated offline and the confirmatory design is frozen before any R2 provider response is observed."
+  },
+  "provider_model_identifier": "gpt-5.6-sol",
+  "research_question": "How do public-state representation and an explicit retention reminder affect preservation of permitted identity state, particularly customer_id, without increasing forbidden-state use?",
+  "r1_reference": {
+    "release_tag": "gpt56-memory-boundary-replication-r1-2026-07",
+    "study_id": "openai-gpt56-memory-boundary-replication-r1",
+    "use": "mechanism-generating prior evidence only; no R1 execution is included in R2 estimates"
+  },
+  "schema_version": "sfa_bench.openai_gpt56_sol_memory_boundary_r2.v1",
+  "shared_inputs": {
+    "normalizer_reference": "sfa_bench/frontier_delta/candidate_adapter.py",
+    "prompt_generator_reference": "sfa_bench/campaigns/r2_plan.py",
+    "required_shared_binding_groups": ["cases", "rules", "taxonomy", "normalizer", "system_prompt", "user_prompt_or_case_set", "preregistration", "condition_prompt"],
+    "rule_reference": "sfa_bench/frontier_delta/scorers",
+    "scoring_mode": "deterministic",
+    "system_prompt_reference": "campaigns/examples/prompts/gpt56-study-system-prompt.txt",
+    "task_reference": "sfa_bench/frontier_delta/tasks/memory_boundary_001.json",
+    "taxonomy_reference": "families.json"
+  },
+  "status": "preregistered",
+  "stopping_rule": {
+    "human_halt": "stop remaining executions and retain all completed evidence without inferential completion claims",
+    "model_unavailable": "halt the affected slot and record unavailability; do not substitute",
+    "optional_stopping": false,
+    "planned_authorized_executions": 48,
+    "stop_after_last_preregistered_slot": true,
+    "transport_interruption": "preserve the interrupted attempt; do not retry or replace"
+  },
+  "study_id": "openai-gpt56-sol-memory-boundary-r2"
+}
