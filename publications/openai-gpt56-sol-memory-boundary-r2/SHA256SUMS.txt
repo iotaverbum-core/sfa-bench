@@ -1,0 +1,22 @@
+# SFA-Bench R2 publication package SHA-256 bindings
+# Standard package entries use: <sha256><two spaces><filename>
+# SHA256SUMS.txt uses a canonical self-hash because ordinary self-hashing is circular.
+# Self-hash rule: replace the 64 hex digits after 'SELF ' with 64 zeroes,
+# preserve all other UTF-8 bytes exactly, and compute SHA-256 over those bytes.
+# PACKAGE FILES
+8d4a5036a47028a5a6effcbf675e81d46fc61e122c9c63c2a548ea2c7417a4d5  README.md
+248fa50a116de600edc0b01e71512a9c9b16fffd2ce7605a88251e8d9bbe1302  cohort-closure-lineage.json
+ef071576a46bfb6fe6edb23e2547a683fae80733fd8cb2f65e51d06ccfdf2932  cohort-closure.json
+3c943f1766c026b4dd1fe07fa201eb1971d1d620cc78e81bc6995abca3cc9ffb  cohort-closure.md
+c1d89331bd4db4619d8b3beebce16263cafe88741f6765eb438bfcde575f17a9  evidence-manifest.json
+7143c300ff47506ab35effcd38bbc4a3e32c47acf2941dbfe157930ac6ce8f41  final-harness-status.json
+6e78f7c8c310109f14a80e85e223fd5b4e46561346ed426b27b3e7fd08846b85  preregistered-descriptive-report.json
+ca3753466d113272c53cb54e9baa04115f18689a9b8ebbc971bfdbcd3b71715c  preregistered-descriptive-report.md
+fd90c92f2bce54223408b5702495d999036bbbdf1cca64c27aface825e470535  preregistration.json
+c9f69566ea45b4f5065bc8b4f75dbbe12160dbe1a0a81170215c8abab2320ee7  publication-authorization.json
+803fd47c6cefe845bb93622e9a89300d8d6adbca4ab1e7eafa59fc45b9f8e59a  r2-closure-spec.json
+09625894e80d5f07d86a118b167afc49ee3d4e55c9f99f12169f79481a48de92  slot-plan.json
+91090479e18f55aba36b528ef0997700c5de00f7738e6a2368b69d0b04863943  snapshot-record.json
+SELF 66f18b7bb3c64cd08193e182246cc1c758f77f87e78b34f3d478a2f437da1b82  SHA256SUMS.txt
+# DETACHED RELEASE ASSET — NOT STORED IN THIS DIRECTORY
+RELEASE 336d244a4865c6b88c52a89fddecba177f681dab26e40d0d9b7f336f1dd8e1c6  1020719  snapshot-openai-gpt56-sol-memory-boundary-r2-2026-07.tar.gz
