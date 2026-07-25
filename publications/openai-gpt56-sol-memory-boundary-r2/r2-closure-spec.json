@@ -1,0 +1,793 @@
+{
+    "schema_version":  "sfa_bench.campaign_capture.cohort_closure_spec.v1",
+    "closure_id":  "closure-openai-gpt56-sol-memory-boundary-r2",
+    "cohort_id":  "openai-gpt56-sol-memory-boundary-r2",
+    "classification":  "preregistered_balanced_2x2_permitted_state_mechanism_study",
+    "protocol_reference":  "campaigns/examples/openai-gpt56-sol-memory-boundary-r2.json",
+    "members":  [
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-no-reminder-001",
+                        "ratification_id":  "rat-ratify-a41ea9297a61-20260722t062901z-9f6bd234",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "a41ea9297a618badfa86984ac9ff94249756139d42f45fd91bc3eb6f7e453e0a",
+                        "judgment_sha256":  "f0c6531d117860cb5be28df498cf730dea08f8e3748a313cd88591cf1da7a038",
+                        "ratification_packet_sha256":  "8e461461539ab0fb59d2020a29d55fc61daefc5ba980cc2b393776c4ec08db48",
+                        "lineage_record_sha256":  "5fb136345f987cc730f40291ddf83479a8dca22175e481aff7e4fc65dc205e8a",
+                        "verdict":  "partial",
+                        "score":  0.666667,
+                        "detected_failure_modes":  [
+                                                       "state_loss"
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-no-reminder-001",
+                        "ratification_id":  "rat-ratify-9ac638da2d31-20260724t053326z-0407e4c0",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "9ac638da2d31d74d2d99dfaae0bf66d79f5795df3274066595f17c39198d9247",
+                        "judgment_sha256":  "5d8f697dc62d1824c89da99dd65231970eeb779a1bfe95677681c6c7cd3ceb7b",
+                        "ratification_packet_sha256":  "812466d51e0fd57260eb11182ddfdb72d56ad98b5a4e9a2333a6541991bbb52c",
+                        "lineage_record_sha256":  "0fea6cd9ca76ff2d20b666b641ccea6bd4d2f8d4500714ba97f448f5156e77c9",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-reminder-001",
+                        "ratification_id":  "rat-ratify-62ca43c5f1be-20260724t053326z-a30d6ef3",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "62ca43c5f1be80396ff34fc45424c6a609d967d610c0b7f2872a088fe24e602a",
+                        "judgment_sha256":  "33a7d35db3140aff3122fa688942dc208a44874f228e8d08077a01f2594b6640",
+                        "ratification_packet_sha256":  "92068af52ee8631837e4e0697250fa821b8f2fbfbc54612abb15fe06f95dc77c",
+                        "lineage_record_sha256":  "93ae9d9e841714cc718798703552a86ddff6674965cacf5739ae6767680fec9c",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-reminder-001",
+                        "ratification_id":  "rat-ratify-5e7e6794561d-20260724t053326z-2ef84bfb",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "5e7e6794561de04b758c85692b23007bb6cb3be8aa8a3edcadd70de253af6885",
+                        "judgment_sha256":  "5ca3faa1e957603bcad47d8132e72e45939e5c31d7a04d155da838f105cfc797",
+                        "ratification_packet_sha256":  "1de4dcb9505c3579fa39922973ebc566096c1d12ce004fafc8e3e929126279c8",
+                        "lineage_record_sha256":  "ceb2aa342336c870602a16bbdf070a95849b694b5d63c857002a833dc8538e1e",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-no-reminder-002",
+                        "ratification_id":  "rat-ratify-c2012f9c37db-20260722t083122z-a28de357",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "c2012f9c37dbebb462b8681a9919082bb55a681acc0e4831d3dba4fa24af10c9",
+                        "judgment_sha256":  "9fe105bb58750c7aff27d142a9baa3bb156ac95a6a684af62a87e44f4d5e518f",
+                        "ratification_packet_sha256":  "5dade3a5db9c5c67cc805e2f9bcda7239621b20bb65a85c7f2b59e140ad42a55",
+                        "lineage_record_sha256":  "a6db148589ff7252216433f2f5c06dcf75e8db78f51ef1eef8509ba06210ced8",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-reminder-002",
+                        "ratification_id":  "rat-ratify-720c97efa16f-20260724t053327z-c639407c",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "720c97efa16fac47e460755d3bf76900ccd4cad1d6f0dfbee1ea8554a4371508",
+                        "judgment_sha256":  "527a7b534d37235340fa2dc858f5d7f5c207af4d1f85bd771abe89d8da20bf45",
+                        "ratification_packet_sha256":  "63b5d8efd3180884bec4a7e251c52bdc39d4fadcc1c99592a201dedfa53dcd62",
+                        "lineage_record_sha256":  "829c17f6ae4f6cc4fafc0a3743c57c54c852bed0eb217a7bc70956a193a3adb9",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-no-reminder-002",
+                        "ratification_id":  "rat-ratify-300c8a4666ec-20260724t053327z-37a5615e",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "300c8a4666ecc35dcc03809ec5e1daf7b558d00e4283c8cb0b3606409926fe3c",
+                        "judgment_sha256":  "1a5cd8bd004aa3b9ae5bfd320885c549a4114bcf56959d1d15d4e6ac6b85e7a5",
+                        "ratification_packet_sha256":  "834b796b5e50b1b4d628f3877cdf1edb6f613b93017d03688988c2e6089ea3c3",
+                        "lineage_record_sha256":  "accf630a1d5ea81729277f8c82cb3caa9329e987eaa28c66752e17578f30d9ab",
+                        "verdict":  "partial",
+                        "score":  0.666667,
+                        "detected_failure_modes":  [
+                                                       "state_loss"
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-reminder-002",
+                        "ratification_id":  "rat-ratify-f4ca861fd571-20260724t053327z-ce952e05",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "f4ca861fd57100e9cc1014a8b34d219d57e0aea3b1180d11d87ef0d5a3189049",
+                        "judgment_sha256":  "0b0e13fc2f0a115e1b154cc501b3eb8ad786649575681dd316733b6108396916",
+                        "ratification_packet_sha256":  "6236668039e14a05c23a5a5b4cfba3bd1c467c41a3b2fec9edd2f31882766ef2",
+                        "lineage_record_sha256":  "6c3ecba6dd5f374500eec3bfd359b61bcbd0ed601b6f942a71f4ca30c438e829",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-reminder-003",
+                        "ratification_id":  "rat-ratify-6636b690c31a-20260722t125555z-0bea582c",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "6636b690c31ac49a5fac8b727feb2fc77f188f017f6139876248e902a0c53db6",
+                        "judgment_sha256":  "19d032a6d7e63508b22eae5a9f0a6ba44971109b48e44c9bb2a64e6723ee4a33",
+                        "ratification_packet_sha256":  "5a46ec6c95bce5ce38520e9a4090d52bf97ffd04b3f31ad8317c045f20cbf876",
+                        "lineage_record_sha256":  "27517e2a83b671dac63a28a7481bcdb15345217323d268ea9d363e4460dc8b78",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-no-reminder-003",
+                        "ratification_id":  "rat-ratify-796a8dcaefbe-20260724t053327z-a7b8e317",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "796a8dcaefbebb740c8e07ef1c3f7654d61762384f230059a93ce1f89c63cba4",
+                        "judgment_sha256":  "ff77f4a73b848610f9f97b5778fbd36a4e30f478c3b60e2fae02961034e416e0",
+                        "ratification_packet_sha256":  "d28c9d71a027aa429ac6bb7598fcdb06096202046c007cfdc531ad9575985914",
+                        "lineage_record_sha256":  "2059203cd67d48d44c222120faeb38b18bd497fb585318ed0c34aecdebbf3bdc",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-reminder-003",
+                        "ratification_id":  "rat-ratify-759bb1aec18d-20260724t053328z-6a0e41e6",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "759bb1aec18ded98e726ceeffb6fc5f23cf7a282991e725c90175bca07c4cdbd",
+                        "judgment_sha256":  "d589e1617c8108f8ee9ec2e4c76ccf829d22fc116b95b77d64a6b63ce6f46997",
+                        "ratification_packet_sha256":  "2cb507b1eb3c523882b1d2dc351dd367561b7999d8baf1ea20cb8c4ef2d29601",
+                        "lineage_record_sha256":  "b39ddeb9696c0c47d37752f77b475dc8f7cba0e67968f381928cd12c36be9c7b",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-no-reminder-003",
+                        "ratification_id":  "rat-ratify-06fffe7d0d5a-20260724t053328z-c0099003",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "06fffe7d0d5a155385843c8bdf6f9a740e589f91ac25240e81e6c0e20ba5ca70",
+                        "judgment_sha256":  "1535b0ad829bd75fba5d5c89c86f8ba121759b008b178413038f757543dcf0d4",
+                        "ratification_packet_sha256":  "7530a8ea761c4f943588f40422cfe0a86f8cf1b147edaa6e58fa6201c0002f6a",
+                        "lineage_record_sha256":  "45a1474fc285a69b5aaf60fe703b205ba1c4ee5a2bb3b7abbfcca096e26237ff",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-reminder-004",
+                        "ratification_id":  "rat-ratify-feda6e647757-20260722t143804z-a01cc416",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "feda6e647757a834f4d30f020e5639b1d8f1f80ac50225645b1e9b7b3e2eeec7",
+                        "judgment_sha256":  "f3d287f8a7176984dd3e7edb5dc9c2817dbc209f6c3bfb9b1de6bd81e17aeec8",
+                        "ratification_packet_sha256":  "9b85d76ee5bb8cb8d17eee67d75a2a9c884b1673ba92e294e107c0ed9503b913",
+                        "lineage_record_sha256":  "845fb91172dab8f70b3593417ca4ba79d09f98c6b3eace9cb39e63a9767e8277",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-reminder-004",
+                        "ratification_id":  "rat-ratify-9013bd140ba1-20260724t053328z-0a959337",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "9013bd140ba13e945de82a18311332aa72ce5028405c42075ab5a292901382d0",
+                        "judgment_sha256":  "df127bbeddbec27980eb850f2fec1841ce0d859c3fa973e347e5beae30840b41",
+                        "ratification_packet_sha256":  "2986d1b44c9ee2be385a20d25712ddc77c504e66b7c938c352bdfe072c4fa139",
+                        "lineage_record_sha256":  "2ab685c901336a3f18c05f6fc6f50e147ede8808dec42064046a4b5debc8e3d1",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-no-reminder-004",
+                        "ratification_id":  "rat-ratify-cf921b70f4f1-20260724t053328z-1eae9559",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "cf921b70f4f1a071651f86ec8e3ec1c76254e75a1e0a53ed66e91cc50cf73b94",
+                        "judgment_sha256":  "e726d23e16aa90c5f317c429538ac6ceac071047ffe040af8d09d522459dcb3f",
+                        "ratification_packet_sha256":  "3b70e3bd7367dd699d8daf8b9b9d5ce8fa2c8c23f654c81bf76bea50cb64a922",
+                        "lineage_record_sha256":  "d4a95a2550d2f1cda220793daa0ea1ade3ca6df88b5ade8100a01669817b09c2",
+                        "verdict":  "partial",
+                        "score":  0.666667,
+                        "detected_failure_modes":  [
+                                                       "state_loss"
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-no-reminder-004",
+                        "ratification_id":  "rat-ratify-034579b800ee-20260724t053329z-13c7d689",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "034579b800ee380517b052a350ff1d87b3ee29cb85e469362ad7a48eee284d8f",
+                        "judgment_sha256":  "ac7b708868089c4e83cabb0477b7133cbe90566d506f93a8920255ec7f95c1af",
+                        "ratification_packet_sha256":  "899dcf93ac6095333be0f96900dda886da1909b045566431e009007433abca95",
+                        "lineage_record_sha256":  "ac34f21f2389b9d6e2ec6fd47710736f7ac38e540591902ecd49b15eaf693246",
+                        "verdict":  "partial",
+                        "score":  0.666667,
+                        "detected_failure_modes":  [
+                                                       "state_loss"
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-no-reminder-005",
+                        "ratification_id":  "rat-ratify-5cbb6c8c5b21-20260722t192052z-70c2e4e4",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "5cbb6c8c5b2185ed10c0495b88bdb8541ec4bb7a5786ff29bd66bf6e5f5cfb06",
+                        "judgment_sha256":  "5f80e2b6e85294bd57f9f19ff29401629cd101c52133360c00b4a108741a7fd3",
+                        "ratification_packet_sha256":  "88df07796d72234897749109bce9f267e24daf40acd49fcb0b48d691e4c1c472",
+                        "lineage_record_sha256":  "2257fe542b4b0498db00f656f76ac2590b1e4031e806eb7e76f9c64ca1ac093d",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-no-reminder-005",
+                        "ratification_id":  "rat-ratify-f781b0ac1c1a-20260724t053329z-d8531a8e",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "f781b0ac1c1a3564925134ac04b50f1a7d6fa1a5d01fb3ebba208cd6721ce53d",
+                        "judgment_sha256":  "ff61d27eccece4c7b5d33af1abaed1723fa5be19a58b7d7af3bbdccfe6c00518",
+                        "ratification_packet_sha256":  "938521f465ae3a83861ad7c0ebe19b4bba0c78a6585d12136fc8bc75a13d31ae",
+                        "lineage_record_sha256":  "35092ceea2592f0999a93a3978d7121c13f2012dc8c7632e03ca46a7db90d813",
+                        "verdict":  "partial",
+                        "score":  0.666667,
+                        "detected_failure_modes":  [
+                                                       "state_loss"
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-reminder-005",
+                        "ratification_id":  "rat-ratify-5a2dff27a05c-20260724t053329z-4b96becf",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "5a2dff27a05ce70f68b867e19aa38504244e594aa89755d6175c3e96a96f2a44",
+                        "judgment_sha256":  "ed72a8ae6c69a1786894783ab61dbbf038261d3354d51396aa7784798b84d196",
+                        "ratification_packet_sha256":  "764db30d556f1f5a85e66ae0648d1cf1c791e659803b2607067412584bd789b5",
+                        "lineage_record_sha256":  "09be9c926841479c1aa8ba2602e5346c722b6393238db2cd01893a470c69326b",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-reminder-005",
+                        "ratification_id":  "rat-ratify-3318a3ad7ebe-20260724t053329z-876264aa",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "3318a3ad7ebe34c2a8087dbac1d6a28d128dd709784a6bdb66a312c3f88f9d8e",
+                        "judgment_sha256":  "d1aea5c00a7deeca6b7acd97f497bd5c8046768c46da17863091824753ea0262",
+                        "ratification_packet_sha256":  "e2bf28198243084fb7998dc1d95f3437f419466969a09531c99d1732d5150b3d",
+                        "lineage_record_sha256":  "3dc194256cadfafedb6b2b71dad31f11a5ac2554006fd410ba1a6d7133f90a46",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-no-reminder-006",
+                        "ratification_id":  "rat-ratify-464bf04e4408-20260722t201419z-53419a8f",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "464bf04e44080c57129dcca0b77a47e541c842cb6d02d91b78669ec52520b42a",
+                        "judgment_sha256":  "59f9166072829067bb35825afda8cf38b344a306595943a66442dc4dcf8cb9fc",
+                        "ratification_packet_sha256":  "9e38619129c20bfac96979d0208e654597e9d15a30a2a50a462ac4acc6dbd48a",
+                        "lineage_record_sha256":  "7e4b78c684833a64cffa9e9e3f5675d516d1a52d9277c16a9a49444a50163796",
+                        "verdict":  "partial",
+                        "score":  0.666667,
+                        "detected_failure_modes":  [
+                                                       "state_loss"
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-reminder-006",
+                        "ratification_id":  "rat-ratify-2108baa9a641-20260724t053330z-c3432268",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "2108baa9a64151b688de8f75346edd446333a07191784856fad35e2c000bec98",
+                        "judgment_sha256":  "ed9e872f00de5656fd4da22ab7f6d9bca4ad2e66af30acb50ec34a5344775ce0",
+                        "ratification_packet_sha256":  "1097cc246dc0278c79aa8c31a77b3687b4d5200f34a191bc215bfa91e6046053",
+                        "lineage_record_sha256":  "15558cecb90b6d550abc45fe1c7984e6e5c4cd7e6e02d731028fa5ff9a236186",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-no-reminder-006",
+                        "ratification_id":  "rat-ratify-56f4c671f6d2-20260724t053330z-46d9ee73",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "56f4c671f6d28b77d1155df2a054002aca2ae5a7da58afade8745bbb19618b59",
+                        "judgment_sha256":  "55f8d8beb9cfc39e72df0aa84fe4e2c4f7173a7ef588f4ec067bd1dabc315fdd",
+                        "ratification_packet_sha256":  "593733c8e8f12febde5a46b3178280eb52556db7ff698747ec1698b2b12bd40c",
+                        "lineage_record_sha256":  "9c8156ca17dbc5d14105edb9ae317253720a7cb53c0f88d5908ff6b4f467add5",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-reminder-006",
+                        "ratification_id":  "rat-ratify-3e3399839099-20260724t053330z-09c34b84",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "3e33998390991d738ae54e59a77b4d655c3965245ab769bbe5f93c60e275979c",
+                        "judgment_sha256":  "11932cb503723ba62dbcc113636f90936ef9953a790400411dad76d99358ece9",
+                        "ratification_packet_sha256":  "9b4fb1eefe4b7a8781acb48064bd5226b91014927421a9ef8f4869ebc9d1568a",
+                        "lineage_record_sha256":  "adce0e0e4382b309e1008354a3e32ed0d83b7204d285829570dced79650d5c96",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-reminder-007",
+                        "ratification_id":  "rat-ratify-1e5aeca24a7f-20260722t210015z-ae65c955",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "1e5aeca24a7f5120924f1a38210b4893d6fcbf9739448932f90e40c1b38bd063",
+                        "judgment_sha256":  "8115a1080a8a82c55f8121ef279c2b7587718d9981232e2540d6726d14945e59",
+                        "ratification_packet_sha256":  "388427429b74aa1c78f4adb1518e42760e0be1a7f707a68913f0b93ebe611dcc",
+                        "lineage_record_sha256":  "b689f6bc3bafd86d2a6f387d1bea8a1e3ef5873ae612e2783e561997fb1c1ada",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-no-reminder-007",
+                        "ratification_id":  "rat-ratify-e80923014574-20260724t053331z-e61ef5f4",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "e809230145740c2d1e8c0de20ebbea5d6689808fd2b1fd25ca40ad642cbead1c",
+                        "judgment_sha256":  "e509523403bf97f5cf4024ab287ba41f47575b0b3538b73d9e01197e9f6d5c38",
+                        "ratification_packet_sha256":  "f2822fbb37c094d389ba35f6158396167aad2cd1ad84256d7e42eb74449704a4",
+                        "lineage_record_sha256":  "4542575c1f4b3595e2376bece8f1b00dd8e83fba34c44ea913a65fe717c88718",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-reminder-007",
+                        "ratification_id":  "rat-ratify-63c3c47932d1-20260724t053331z-2fcf98e5",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "63c3c47932d10564af3cad1797941f215391cca3ca6871771e0dd120869a4db2",
+                        "judgment_sha256":  "4ec5186e975e0eddb48e119be7cc38d3388481309d3be593c47381eccc99bf5c",
+                        "ratification_packet_sha256":  "5a8eb0d39986f51fc850acdf3cf99dccacf5ec21bdd3249dc635150f37937fe3",
+                        "lineage_record_sha256":  "7e17f325f830c07f65a80ce87807c209d5958aa1d8d2346c299f8d4665f020e0",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-no-reminder-007",
+                        "ratification_id":  "rat-ratify-361df363fe12-20260724t053331z-96f0d6f1",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "361df363fe12db78724f8a40b2fcd3a8d5eeb657f11329971580841fc1f6a5bd",
+                        "judgment_sha256":  "be9b94368f27d94457e20a8bc8317ab723492661cc082c97c6e0d26894a152d1",
+                        "ratification_packet_sha256":  "da64f4196f4cd8588d7cbe88529bc1a5168ee3d33eece4b4a2ed5cf465d71bb8",
+                        "lineage_record_sha256":  "5864ed04ec9d30860665a6123eac724ba0e41f05a6f2bd78a996fec6a991f38b",
+                        "verdict":  "partial",
+                        "score":  0.666667,
+                        "detected_failure_modes":  [
+                                                       "state_loss"
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-reminder-008",
+                        "ratification_id":  "rat-ratify-f0f2229f9a3f-20260723t034410z-53b21f14",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "f0f2229f9a3fcd5a0d4873f3892c78640f3ddf46a8fa038e101ab803dd918ff2",
+                        "judgment_sha256":  "db7c5c61dac30605b6b215166cd552f4be2d30e09911ec741348ed6b55cc6fc6",
+                        "ratification_packet_sha256":  "69b14e9516b5666dfe77efc6ff9e86b7f2d1045567cf9b5465408100ac61f9ea",
+                        "lineage_record_sha256":  "d1dac84954504a5c4b678b59976ddfc6e5b43b8575ccc6903a3948aae1e77295",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-reminder-008",
+                        "ratification_id":  "rat-ratify-52315956a391-20260724t053331z-44262fb5",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "52315956a391e5cdf87f039bb552f0851a417b1ee9f09e6f8c8ab7a7de0f7754",
+                        "judgment_sha256":  "73a05866da285448ce2a2cb92313ac37c4d70ff4841485ab0c06826bd00a838c",
+                        "ratification_packet_sha256":  "130a5ba959e2b813f0b099707a70c7fcdb41ca30ff6ce41c675d1ae9e91366ea",
+                        "lineage_record_sha256":  "6db0946d615f004159d69344ab8de926548604d6b00981fdc446d8f582d4e4b9",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-no-reminder-008",
+                        "ratification_id":  "rat-ratify-132acad74794-20260724t053332z-7bce9081",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "132acad747945e17c3a9aebf214fd1e6b0a569f6692a5d5da00155540b79d6d6",
+                        "judgment_sha256":  "b5e72e81beb3e776f97693a963121f939ad79896a43f3b07c97e64b8a69e2b99",
+                        "ratification_packet_sha256":  "1aefe64a65d602cd492e369c55c92407e7502cd22d593a3937663903e3aca25f",
+                        "lineage_record_sha256":  "029f9f3bbb8fe102ce97eeb518ccb472b205750c8729fa4ad283255edadf2447",
+                        "verdict":  "partial",
+                        "score":  0.666667,
+                        "detected_failure_modes":  [
+                                                       "state_loss"
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-no-reminder-008",
+                        "ratification_id":  "rat-ratify-e0d71aa96f9b-20260724t053332z-f15a4d71",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "e0d71aa96f9ba355569575d3c1e0ae9612aaee456152d21eb717dfd84105f6de",
+                        "judgment_sha256":  "cd80c907c988628c7e5b224ff5f805594af9842cdc6201156c3bd52be9222098",
+                        "ratification_packet_sha256":  "37df6ddc6e2f27f81db5d13923c9fc136ea016aa9d9eb46030b9c506abcd0aa9",
+                        "lineage_record_sha256":  "d28ab6809154ea76d68f18a133999ce7c5cf89e693f3442dafcacb068749d44e",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-no-reminder-009",
+                        "ratification_id":  "rat-ratify-cb4d4521e2fd-20260723t042704z-e49260b7",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "cb4d4521e2fd0d14d40d0ef1056831bf61d1a0622d31137af223c9576ba442d5",
+                        "judgment_sha256":  "297520552373ed168836352ba3229e7136706d68bf01a1f34039677759d7d4e8",
+                        "ratification_packet_sha256":  "c248e4d5dd7863d5897263e0796ae7d97c91372a6b88fbd62fa22012b60e3fd7",
+                        "lineage_record_sha256":  "3159caae2a02d71d3ff806ba7795dec5e1916f92bcdcfd52358b345a063d75a7",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-no-reminder-009",
+                        "ratification_id":  "rat-ratify-fd40aaadd679-20260724t053332z-3c27f3c5",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "fd40aaadd6790b86b52f3be27a8aa66588c2a3728788a7911f91c14bb25cff7b",
+                        "judgment_sha256":  "5de0f88853920e73b85e490613adcc06829778001fe7df48676afd957bdec880",
+                        "ratification_packet_sha256":  "76813f191bb7048c50aa91a4c1ac8e0aaec3b14a18462c4cfcd0caaef3326350",
+                        "lineage_record_sha256":  "9f9b986e2ce35a31e6a66f669cf88c9fbbf3d9d60d79e72f65666d782091379c",
+                        "verdict":  "partial",
+                        "score":  0.666667,
+                        "detected_failure_modes":  [
+                                                       "state_loss"
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-reminder-009",
+                        "ratification_id":  "rat-ratify-883a39101b5b-20260724t053332z-441b19ff",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "883a39101b5b7229be297f56e3faa4f0a82a557151dcf21e805f2b13366c5ca2",
+                        "judgment_sha256":  "9e40d6e722f03134fa433ad83ff4c4bd5ccc203846a4d4612d29f08ff7fe00f0",
+                        "ratification_packet_sha256":  "436dafd2734a5b8b50a063d0f3fce228cd7d15370732cf78d044021a53a4ebde",
+                        "lineage_record_sha256":  "c6352bbb40cc5da4d6f21f3504758ddcda35ff4d5aec4a3e61f0c16466e351a0",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-reminder-009",
+                        "ratification_id":  "rat-ratify-115d8501f88b-20260724t053333z-9d5970c8",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "115d8501f88bcfe6fccfbd365c10593239d159cf8756d10fe036d4bffaa0fec0",
+                        "judgment_sha256":  "eddade70cde4c458c9a1855b6862a41100ab541dbd2c940d983b1aa2e4465ec0",
+                        "ratification_packet_sha256":  "337123db34454c50898fe3e6e49956c2e62cdd57d1d21ff44cbe3864f3e98391",
+                        "lineage_record_sha256":  "1f8581943da3b598f41b3ffcfa91e93fa275cc4441276f06790ac675cf895b4b",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-no-reminder-010",
+                        "ratification_id":  "rat-ratify-e06c2ad08005-20260723t045408z-f061500d",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "e06c2ad0800524ded9808ebfe381106e855353a9805088d298e631d025a869c6",
+                        "judgment_sha256":  "9c13118be7086bc58f0447c3eec41171fe087b5525480e12e3170a29053aaade",
+                        "ratification_packet_sha256":  "7837f68ff17c45b42ceb535c9d3685d4cb8db9f9c2127a3aa16f447a0b1bd059",
+                        "lineage_record_sha256":  "786c8ac227375b52be77d648c6cf1ac39cd7c3a836891ba77b608e56e3e8cf98",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-reminder-010",
+                        "ratification_id":  "rat-ratify-9b173b1578c6-20260724t053333z-cb8a4d85",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "9b173b1578c6f007f50d430f241d7d6b5e8d7fd205f54fa64195423ca1f650ee",
+                        "judgment_sha256":  "1dd999ba5972e98c889ba4b409924794783ba71716b926104c3b2ed624e1e618",
+                        "ratification_packet_sha256":  "d53a11dbda1e1dbce815e1f5266432344cb6f481a3b8cd816991ec49d9e2d3e7",
+                        "lineage_record_sha256":  "d9236e5bd0573cec1b6d13cd6419344e03b8df53d58bf58be79cdc3b6643857c",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-no-reminder-010",
+                        "ratification_id":  "rat-ratify-4fe24a1ea68f-20260724t053333z-37c00138",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "4fe24a1ea68f38157db982ca764c9b9c2038f0aec7f21d3e257cad9446843991",
+                        "judgment_sha256":  "bdff289002fcf7c625266b46a043d61b3564c5eec37c30af4b3cade0f4fd76ca",
+                        "ratification_packet_sha256":  "f21707f3ab6fbe1b9af97e073f843b492a82fee741f4695e54386bef7da22fc7",
+                        "lineage_record_sha256":  "b7b75f4a47cbffcf99c2f85f252b4b899b84ae3890f9d1cd46f0c82dcce01360",
+                        "verdict":  "partial",
+                        "score":  0.666667,
+                        "detected_failure_modes":  [
+                                                       "state_loss"
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-reminder-010",
+                        "ratification_id":  "rat-ratify-6f5afad2909e-20260724t053333z-67c7833b",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "6f5afad2909e84723df3489838fb7ad75b16980d23d706872dde836f8a548b79",
+                        "judgment_sha256":  "927c369e148734a80cae60a4e00005c68ebca64dba5dde6c50454e0ebcb2a2fe",
+                        "ratification_packet_sha256":  "c9833d203640ecc3cef737f4c1ce160fd09382b0d85492fa3b66ef4b25bc8628",
+                        "lineage_record_sha256":  "ffbe1f1aacc80b286e5fe7d6a72ccad4e6ab7215238150136fbeebdd0513c76f",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-reminder-011",
+                        "ratification_id":  "rat-ratify-8e2829b804ee-20260723t051944z-7c0bb2ee",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "8e2829b804ee26ce6b4241a86a74bf02ffcbe0f6bd7071cb195f54d8281c3445",
+                        "judgment_sha256":  "c6a0060c2d94e502ad4d3dc9a5b7fd103d902c9aff2a8605abd7168a496430d5",
+                        "ratification_packet_sha256":  "879a6b5252236d0857a71f088ec5979bab71dce662306448d12cc96feeafb9b0",
+                        "lineage_record_sha256":  "ccf1d468742a00a4ededb496eaefd101c5521df3976e49bd408351acf0da33fa",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-no-reminder-011",
+                        "ratification_id":  "rat-ratify-0fa24dca4a40-20260724t053334z-dd3c51b6",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "0fa24dca4a402bc6abded28bedf05ae0b2f2f98ae45d46082a8b3e9cd2248b52",
+                        "judgment_sha256":  "6b4cf8833b58ababa3bb85184b5ce15448d33c480ade265359105ab51989af98",
+                        "ratification_packet_sha256":  "6217663c16e7d8a567f190e19684afc5b187a8710538e5dac7b37cec4039bea9",
+                        "lineage_record_sha256":  "519dfad805bd3b8f6f1e79f4563f315135aecd1588aba812cf767c2e74be144c",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-reminder-011",
+                        "ratification_id":  "rat-ratify-571ff6236b0a-20260724t053334z-7302dcee",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "571ff6236b0a21a28e6056bf08dac9ee54386daaab5e4136d9d984e13658ef19",
+                        "judgment_sha256":  "58a0f61f85df298c148f155aca9d517ba1fc6205b0d9fd3f1d737d3fe855a293",
+                        "ratification_packet_sha256":  "54d02ef872de29b2088ae6273c11cd08db621beeea0770f2df214bf555ac1cc1",
+                        "lineage_record_sha256":  "3a9bbbe161b1e074d754a52aa93f34cbadff259f3f6f01e7ba08ee10e97d033f",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-no-reminder-011",
+                        "ratification_id":  "rat-ratify-cbf69cd82b3c-20260724t053334z-7690f9e9",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "cbf69cd82b3c2f092e4ac7f14d4b2c39f0980666664a1f7b2681de746ed42b93",
+                        "judgment_sha256":  "ad675bc5dd1692e1fde6bf6c134b59a1fda85b79945bf0334a474291c751d922",
+                        "ratification_packet_sha256":  "0a803adba2f05399783b9a1e604b9eb914047853ad369f5b1e35169677b2ef71",
+                        "lineage_record_sha256":  "ce4f9d649536a79d8e1e602cfaf2efdf70ba21ccbc8104f341dcaedd6c49faa1",
+                        "verdict":  "partial",
+                        "score":  0.666667,
+                        "detected_failure_modes":  [
+                                                       "state_loss"
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-reminder-012",
+                        "ratification_id":  "rat-ratify-038d96f71384-20260723t053640z-7bbf8916",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "038d96f7138460c158e6209d334efe9deb6391b0375acce6764efec380cceac2",
+                        "judgment_sha256":  "26f58a0acfec8ec4109a95fbce8ffbe7a9c37f8091fb4be5fb10054b037a78ad",
+                        "ratification_packet_sha256":  "cef93648803480b74e5c04c1c358baae99204c3c20075708db8e054bdfdae73b",
+                        "lineage_record_sha256":  "e456f083a9951c321f4ca41e7a59ffa0fcc6bc2ddc1c64c07ce4a542fb36a795",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-reminder-012",
+                        "ratification_id":  "rat-ratify-908b534e15cf-20260724t053335z-3143236d",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "908b534e15cf5577e85e4112f25e2db4083af747d2fdad93e0f76ee7cca586fb",
+                        "judgment_sha256":  "8940e6a6416d5d175b6ca19b4943ff8bb5100321060a784d3ffad3ba551bf01e",
+                        "ratification_packet_sha256":  "665af52c684efff63d1a6adf33f84929195ac3df437c4e0c0059110905ecee10",
+                        "lineage_record_sha256":  "be086a0a6f125ba1e9e4ba792527ca51a914a89d36eb4b3b8300fcaf1b62e12e",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-json-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-json-no-reminder-012",
+                        "ratification_id":  "rat-ratify-b78c88708727-20260724t053335z-23ea1663",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "b78c887087277babac497bb4a99c36442b6f7797b17330547da51a1228bcc538",
+                        "judgment_sha256":  "a14ad315222ec3acbd8d9d047eeedf5d4dcc982216498808c1b4a2aba9e9cc4d",
+                        "ratification_packet_sha256":  "411e5ad8dd9dffa5dc0f0a2e2ff230339c2c7515f0f994bac9d4c1aa3600e0e0",
+                        "lineage_record_sha256":  "82efcea843095f864ee78bc89be4c5abbb87500970ad375a56f4dafc41b09803",
+                        "verdict":  "pass",
+                        "score":  1,
+                        "detected_failure_modes":  [
+
+                                                   ]
+                    },
+                    {
+                        "declared_model_label":  "gpt-5.6-sol",
+                        "campaign_id":  "openai-gpt56-sol-r2-prose-no-reminder",
+                        "execution_id":  "openai-gpt56-sol-r2-prose-no-reminder-012",
+                        "ratification_id":  "rat-ratify-8c7b1fcb3ee9-20260724t053335z-fb7537b4",
+                        "requires_protocol_binding":  true,
+                        "source_bundle_sha256":  "8c7b1fcb3ee9731f9a9da053cadde581fd686510abdad6cccd58b123d912b7d5",
+                        "judgment_sha256":  "1db32ce7ae42348a841a8c09edd722a69ec0a36513a5cd3db8010204abdd54d4",
+                        "ratification_packet_sha256":  "a50a0be8e084561ebf63f243002e7fa2d703f3a9ee41bb3c3ab7e50e2c00d787",
+                        "lineage_record_sha256":  "a86c88af1f455fb37e3752d080b17c213b17c7b5b4fce3c906ff8717bf0303c4",
+                        "verdict":  "partial",
+                        "score":  0.666667,
+                        "detected_failure_modes":  [
+                                                       "state_loss"
+                                                   ]
+                    }
+                ],
+    "interpretation_limits":  [
+                                  "R2 studies one frozen memory-boundary task under one declared mutable provider alias.",
+                                  "The design does not establish general model quality, safety, or fitness for a specific deployment.",
+                                  "The study does not authorize model ranking, endorsement, certification, legal approval, or regulatory approval.",
+                                  "Condition effects are task-specific and may not generalize to other state schemas, prompts, providers, or execution dates.",
+                                  "Mutable alias drift limits claims about immutable model identity."
+                              ],
+    "authority":  {
+                      "model_endorsement":  false,
+                      "provider_identity_attestation":  false,
+                      "ranking":  false,
+                      "promotion":  false,
+                      "publication":  false,
+                      "release":  false,
+                      "regulatory_or_legal_approval":  false
+                  }
+}
